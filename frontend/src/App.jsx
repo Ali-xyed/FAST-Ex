@@ -11,6 +11,7 @@ function App() {
     <>
       <h1 class="text-3xl font-bold underline border-4 border-red-500">
         Hello world!
+        hi
       </h1>
     </>
   )
