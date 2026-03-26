@@ -13,5 +13,6 @@ router.get('/:email', verifyAuth, userController.getPublicProfile);
 router.get('/:email/reputation', verifyAuth, userController.getReputation);
 router.post('/:email/reputation/add', verifyAuth, userController.addReputation);
 router.post('/:email/reputation/deduct', verifyAuth, userController.deductReputation);
+router.patch('/:email/ban', verifyAuth, userController.toggleBan);
 
 module.exports = router;

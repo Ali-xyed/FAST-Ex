@@ -33,8 +33,9 @@ const createListing = async (req, res) => {
   try {
     const email = req.headers['x-user-email'];
     const { type, title, description, price, pricePerHour, withTitle, withDescription } = req.body;
+    const imageUrl = req.file ? req.file.location : null;
 
-    const listing = await listingRepo.createListing({ email, type, title, description });
+    const listing = await listingRepo.createListing({ email, type, title, description, imageUrl });
 
     if (type === 'SELL' && price) {
       await listingRepo.createSellListing({ listingId: listing.id, price: parseFloat(price) });
@@ -136,7 +137,7 @@ const postComment = async (req, res) => {
 
     await delCache(`listing:${id}`);
 
-    res.status(201).json(comment);
+    res.status(201).json({ message: 'Comment posted' });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: 'Error posting comment' });
@@ -189,7 +190,7 @@ const submitBargain = async (req, res) => {
 const respondBargain = async (req, res) => {
   try {
     const { bargainId } = req.params;
-    const { status } = req.body;
+    const { status, message } = req.body;
 
     if (!['ACCEPTED', 'DECLINED'].includes(status)) {
       return res.status(400).json({ message: 'Invalid status' });
@@ -198,6 +199,16 @@ const respondBargain = async (req, res) => {
     const bargain = await listingRepo.updateBargainStatus(bargainId, status);
     const topic = status === 'ACCEPTED' ? 'bargain.accepted' : 'bargain.declined';
     await sendEvent(topic, { bargainId: bargain.id, fromEmail: bargain.fromEmail, toEmail: bargain.toEmail });
+
+    if (status === 'ACCEPTED') {
+      const listing = bargain.sellListing?.listing || bargain.rentListing?.listing;
+      publishMessage('email.approve', {
+        requesterEmail: bargain.fromEmail,
+        ownerEmail: bargain.toEmail,
+        listingTitle: listing?.title || 'Your requested item',
+        message: message || ''
+      });
+    }
 
     res.status(200).json(bargain);
   } catch (err) {

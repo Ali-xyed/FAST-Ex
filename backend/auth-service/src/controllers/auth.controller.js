@@ -280,4 +280,22 @@ const getToken = async (req, res) => {
   }
 };
 
-module.exports = { register, verifyOTP, login, checkEmail, changePassword, promote, getToken };
+const toggleBan = async (req, res) => {
+  try {
+    const { email } = req.body;
+    if (!email) return res.status(400).json({ message: 'Email is required' });
+
+    const user = await authRepo.findUserByEmail(email);
+    if (!user) return res.status(404).json({ message: 'User not found' });
+
+    const newBanStatus = !user.isBan;
+    await authRepo.updateUserBanStatus(email, newBanStatus);
+
+    res.status(200).json({ message: `User ${email} ${newBanStatus ? 'banned' : 'unbanned'} successfully`, isBan: newBanStatus });
+  } catch (error) {
+    console.error('Toggle ban error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+module.exports = { register, verifyOTP, login, checkEmail, changePassword, promote, getToken, toggleBan };

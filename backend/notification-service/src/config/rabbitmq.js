@@ -136,6 +136,35 @@ const connectRabbitMQConsumer = async () => {
       }
     });
 
+    await channel.assertQueue('email.approve', { durable: true });
+    channel.consume('email.approve', async (msg) => {
+      if (msg !== null) {
+        const { requesterEmail, ownerEmail, listingTitle, message } = JSON.parse(msg.content.toString());
+        try {
+          await transporter.sendMail({
+            from: `"FAST-Ex" <${process.env.EMAIL_USER}>`,
+            to: requesterEmail,
+            subject: 'Request Approved!',
+            html: createEmailTemplate('Status Update: Approved', `
+              <p>Great news! Your request for an item on FAST-Ex has been approved by the owner.</p>
+              <div style="background-color: #f1f5f9; padding: 20px; border-radius: 6px; margin: 24px 0; border-left: 4px solid #10b981;">
+                <p style="margin: 0; font-weight: 700; color: #0f172a;">Item: ${listingTitle}</p>
+                <p style="margin: 8px 0 0 0; color: #1e293b;">Owner Contact: <span style="font-weight: 600;">${ownerEmail}</span></p>
+                ${message ? `<p style="margin: 12px 0 0 0; font-style: italic; color: #475569;">" ${message} "</p>` : ''}
+              </div>
+              <p>You can now directly contact the lister using the email address above to coordinate the next steps.</p>
+              <p>Happy trading!</p>
+            `)
+          });
+          console.log(`Approval Email sent to ${requesterEmail}`);
+          channel.ack(msg);
+        } catch (err) {
+          console.error(`Failed to send approval email to ${requesterEmail}`, err);
+          channel.ack(msg);
+        }
+      }
+    });
+
   } catch (err) {
     console.error('Failed to connect RabbitMQ (notification-service)', err);
   }

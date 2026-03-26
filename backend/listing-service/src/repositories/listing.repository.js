@@ -38,7 +38,18 @@ class ListingRepository {
   }
 
   async deleteListing(id) {
-    return prisma.listing.delete({ where: { id } });
+    return prisma.$transaction(async (tx) => {
+      // 1. Delete associated sub-models
+      await tx.sellListing.deleteMany({ where: { listingId: id } });
+      await tx.rentListing.deleteMany({ where: { listingId: id } });
+      await tx.exchangeListing.deleteMany({ where: { listingId: id } });
+
+      // 2. Delete associated comments
+      await tx.comment.deleteMany({ where: { listingId: id } });
+
+      // 3. Finally delete the parent listing
+      return tx.listing.delete({ where: { id } });
+    });
   }
 
   async createComment(data) {
@@ -54,7 +65,14 @@ class ListingRepository {
   }
 
   async updateBargainStatus(id, status) {
-    return prisma.bargaining.update({ where: { id }, data: { status } });
+    return prisma.bargaining.update({
+      where: { id },
+      data: { status },
+      include: {
+        sellListing: { include: { listing: true } },
+        rentListing: { include: { listing: true } }
+      }
+    });
   }
 
   async findBargainById(id) {

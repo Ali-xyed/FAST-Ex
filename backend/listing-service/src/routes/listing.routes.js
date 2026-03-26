@@ -1,10 +1,11 @@
 const express = require('express');
 const listingController = require('../controllers/listing.controller');
 const { verifyAuth } = require('../middleware/auth.middleware');
+const upload = require('../config/s3');
 
 const router = express.Router();
 
-router.post('/', verifyAuth, listingController.createListing);
+router.post('/', verifyAuth, upload.single('image'), listingController.createListing);
 router.get('/', listingController.getListings);
 router.get('/my', verifyAuth, listingController.getMyListings);
 router.get('/:id', listingController.getListingById);
