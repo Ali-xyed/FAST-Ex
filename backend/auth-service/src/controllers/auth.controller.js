@@ -22,7 +22,7 @@ const register = async (req, res) => {
 
     const existing = await authRepo.findUserByEmailOrRoll(email, rollNo);
     if (existing) {
-      if (existing.isVerified) return res.status(400).json({ message: 'User already verified' });
+      if (existing.isVerified) return res.status(400).json({ message: 'Email or Roll Number already registered and verified' });
     } else {
       const hashed = await bcrypt.hash(password, 10);
       await authRepo.createUser({ email, name, rollNo, password: hashed });
