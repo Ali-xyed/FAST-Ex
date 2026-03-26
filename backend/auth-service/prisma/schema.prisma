@@ -13,6 +13,7 @@ model User {
   rollNo     String   @unique
   password   String
   isVerified Boolean  @default(false)
+  isBan      Boolean  @default(false)
   role       Role     @default(STUDENT)
   createdAt  DateTime @default(now())
 }

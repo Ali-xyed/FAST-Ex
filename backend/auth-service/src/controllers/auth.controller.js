@@ -80,6 +80,7 @@ const login = async (req, res) => {
     const user = await authRepo.findUserByEmail(targetEmail);
     if (!user) return res.status(400).json({ message: 'Invalid credentials' });
     if (!user.isVerified) return res.status(403).json({ message: 'Please verify your email first' });
+    if (user.isBan) return res.status(403).json({ message: 'Your account has been banned' });
 
     const isValid = await bcrypt.compare(password, user.password);
     if (!isValid) return res.status(400).json({ message: 'Invalid credentials' });
@@ -213,5 +214,24 @@ const promote = async (req, res) => {
   }
 };
 
-module.exports = { register, verifyOTP, login, checkEmail, changePassword, promote };
+const toggleBan = async (req, res) => {
+  try {
+    const { email, isBan } = req.body;
+    let newStatus = isBan;
+
+    if (newStatus === undefined) {
+      const user = await authRepo.findUserByEmail(email);
+      if (!user) return res.status(404).json({ message: 'User not found' });
+      newStatus = !user.isBan;
+    }
+
+    await authRepo.updateUserBanStatus(email, newStatus);
+    res.status(200).json({ message: `User ban status updated to ${newStatus}`, isBan: newStatus });
+  } catch (error) {
+    console.error('Toggle ban error:', error.message);
+    res.status(500).json({ message: 'Server error updating ban status', error: error.message });
+  }
+};
+
+module.exports = { register, verifyOTP, login, checkEmail, changePassword, promote, toggleBan };
 

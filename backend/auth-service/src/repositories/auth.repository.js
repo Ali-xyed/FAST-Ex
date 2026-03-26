@@ -50,6 +50,13 @@ class AuthRepository {
       data: { isVerified: true }
     });
   }
+
+  async updateUserBanStatus(email, isBan) {
+    return prisma.user.update({
+      where: { email },
+      data: { isBan }
+    });
+  }
 }
 
 module.exports = new AuthRepository();
