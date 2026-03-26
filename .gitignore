@@ -1,0 +1,33 @@
+# Environment Files
+.env
+.env-prod
+.env.*
+!.env.example
+
+# Dependencies
+node_modules/
+backend/*/node_modules/
+frontend/node_modules/
+
+# OS Files
+.DS_Store
+Thumbs.db
+
+# Build and Temp Files
+dist/
+build/
+.npm/
+.prisma/
+backend/*/dist/
+backend/*/build/
+backend/*/prisma/migrations/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Project specific
+backend/*/mongodb/data/
+backend/shared/*/data/

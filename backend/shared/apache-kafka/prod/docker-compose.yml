@@ -39,6 +39,22 @@ services:
     networks:
       - fast-ex-network
 
+  kafka-ui:
+    image: provectuslabs/kafka-ui:latest
+    container_name: kafka-ui
+    ports:
+      - "8080:8080"
+    environment:
+      KAFKA_CLUSTERS_0_NAME: production
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:29092
+      KAFKA_CLUSTERS_0_ZOOKEEPER: zookeeper:2181
+      KAFKA_CLUSTERS_0_READONLY: "false"
+    depends_on:
+      - kafka
+    restart: always
+    networks:
+      - fast-ex-network
+
 volumes:
   zookeeper_data:
   zookeeper_logs:
