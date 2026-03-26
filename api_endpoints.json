@@ -1,7 +1,7 @@
 {
   "info": {
     "_postman_id": "4f7d5175-bf9a-4f29-bd9b-4606d10d1c6f",
-    "name": "FAST-Ex Microservices Workspace Complete",
+    "name": "FAST-Ex",
     "description": "Exhaustive collection of all API Gateway endpoints for FAST-Ex.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
     "_exporter_id": "52770136",
