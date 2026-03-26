@@ -9,6 +9,7 @@ const { Server } = require('socket.io');
 const listingRoutes = require('./routes/listing.routes');
 const { connectKafkaProducer } = require('./config/kafka');
 const { initSocket } = require('./socket');
+const { connectRabbitMQ } = require('./config/rabbitmq');
 
 const app = express();
 const server = http.createServer(app);
@@ -18,12 +19,13 @@ app.use(express.json());
 
 app.use('/api/listings', listingRoutes);
 
-const PORT = process.env.PORT || 5004;
+const PORT = process.env.LISTING_PORT || 5004;
 
 const io = new Server(server, { cors: { origin: '*' } });
 initSocket(io);
 
 server.listen(PORT, async () => {
   connectKafkaProducer();
+  connectRabbitMQ();
   console.log(`Listing service running on port ${PORT}`);
 });

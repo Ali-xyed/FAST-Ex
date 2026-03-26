@@ -81,7 +81,7 @@ const postComment = async (req, res) => {
 
     const comment = await listingRepo.createComment({ listingId: id, fromEmail: email, content });
 
-    try { getIo().to(id).emit('new_comment', comment); } catch (e) {}
+    try { getIo().to(id).emit('new_comment', comment); } catch (e) { }
 
     await sendEvent('comment.posted', { listingId: id, fromEmail: email, content });
 
@@ -173,6 +173,36 @@ const verifyListingStatus = async (req, res) => {
   }
 };
 
+const { publishMessage } = require('../config/rabbitmq');
+
+const requestListing = async (req, res) => {
+  try {
+    const requesterEmail = req.headers['x-user-email'];
+    const { id } = req.params;
+
+    const listing = await listingRepo.findListingById(id);
+    if (!listing) return res.status(404).json({ message: 'Listing not found' });
+
+    await sendEvent('listing.requested', {
+      listingId: id,
+      listingTitle: listing.title,
+      ownerEmail: listing.email,
+      requesterEmail
+    });
+
+    publishMessage('email.request', {
+      ownerEmail: listing.email,
+      requesterEmail,
+      listingTitle: listing.title
+    });
+
+    res.status(200).json({ message: 'Request sent to listing owner' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Error sending request' });
+  }
+};
+
 module.exports = {
   createListing,
   getListings,
@@ -183,5 +213,6 @@ module.exports = {
   submitBargain,
   respondBargain,
   deleteListing,
-  verifyListingStatus
+  verifyListingStatus,
+  requestListing
 };

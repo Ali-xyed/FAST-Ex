@@ -234,4 +234,3 @@ const toggleBan = async (req, res) => {
 };
 
 module.exports = { register, verifyOTP, login, checkEmail, changePassword, promote, toggleBan };
-

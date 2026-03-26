@@ -14,7 +14,7 @@ app.use(cors());
 app.use(express.json());
 app.use('/api/auth', authRoutes);
 
-const PORT = process.env.PORT || 5002;
+const PORT = process.env.AUTH_PORT || 5002;
 
 app.listen(PORT, async () => {
   connectKafka();

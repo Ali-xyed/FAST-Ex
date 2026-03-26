@@ -15,6 +15,7 @@ router.delete('/:id/comments/:commentId', verifyAuth, listingController.deleteCo
 router.patch('/:id/verify', verifyAuth, listingController.verifyListingStatus);
 
 router.post('/:id/bargain', verifyAuth, listingController.submitBargain);
+router.post('/:id/request', verifyAuth, listingController.requestListing);
 router.patch('/bargain/:bargainId', verifyAuth, listingController.respondBargain);
 
 module.exports = router;

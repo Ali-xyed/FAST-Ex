@@ -14,7 +14,7 @@ app.use(express.json());
 
 app.use('/api/admin', adminRoutes);
 
-const PORT = process.env.PORT || 5007;
+const PORT = process.env.ADMIN_PORT || 5007;
 
 app.listen(PORT, async () => {
   await connectKafkaProducer();
