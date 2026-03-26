@@ -3,6 +3,13 @@
 .env-prod
 .env.*
 !.env.example
+aws.ps1
+*.pem
+stop-dockers.ps1
+open-aws-ports.js
+domains.txt
+dockers.ps1
+
 
 # Dependencies
 node_modules/
