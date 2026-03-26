@@ -1,0 +1,18 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+model UserProfile {
+  email            String   @id @map("_id")
+  name             String
+  rollNo           String
+  imageUrl         String?
+  reputationScore  Int      @default(0)
+  isBan            Boolean  @default(false)
+  createdAt        DateTime @default(now())
+}
