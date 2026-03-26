@@ -135,7 +135,7 @@ deploy-auth:
     - scp -o StrictHostKeyChecking=no -r ./backend/auth-service/mongodb/prod/* ubuntu@$AUTH_IP:~/auth-mongodb/
     - ssh -o StrictHostKeyChecking=no ubuntu@$AUTH_IP "cd ~/auth-mongodb && docker compose pull && docker compose up -d"
     - sleep 10
-    - ssh -o StrictHostKeyChecking=no ubuntu@$AUTH_IP "docker pull $DOCKER_USERNAME/web-auth:latest && docker rm -f auth || true && docker run -d --name auth -p 5002:5002 -e CLERK_SECRET_KEY=$CLERK_SECRET_KEY -e CLERK_PUBLISHABLE_KEY=$CLERK_PUBLISHABLE_KEY -e DATABASE_URL='mongodb://admin:admin123@localhost:27017/auth_db?authSource=admin&directConnection=true' -e KAFKA_BROKER=$SHARED_IP:9092 -e RABBITMQ_URL=amqp://$RABBITMQ_USER:$RABBITMQ_PASSWORD@$SHARED_IP:5672$RABBITMQ_VHOST $DOCKER_USERNAME/web-auth:latest"
+    - ssh -o StrictHostKeyChecking=no ubuntu@$AUTH_IP "docker pull $DOCKER_USERNAME/web-auth:latest && docker rm -f auth || true && docker run -d --name auth -p 5002:5002 -e CLERK_SECRET_KEY=$CLERK_SECRET_KEY -e CLERK_PUBLISHABLE_KEY=$CLERK_PUBLISHABLE_KEY -e DATABASE_URL='mongodb://admin:admin123@localhost:27017/auth_db?authSource=admin&directConnection=true' -e KAFKA_BROKER=$SHARED_IP:9092 -e RABBITMQ_URL=amqp://$RABBITMQ_USER:$RABBITMQ_PASSWORD@$SHARED_IP:5672/$RABBITMQ_VHOST $DOCKER_USERNAME/web-auth:latest"
     - sleep 5
     - ssh -o StrictHostKeyChecking=no ubuntu@$AUTH_IP "docker exec auth npx prisma db push"
   only:
@@ -165,7 +165,7 @@ deploy-listing:
     - scp -o StrictHostKeyChecking=no -r ./backend/listing-service/mongodb/prod/* ubuntu@$LISTING_IP:~/listing-mongodb/
     - ssh -o StrictHostKeyChecking=no ubuntu@$LISTING_IP "cd ~/listing-mongodb && docker compose pull && docker compose up -d"
     - sleep 10
-    - ssh -o StrictHostKeyChecking=no ubuntu@$LISTING_IP "docker pull $DOCKER_USERNAME/web-listing:latest && docker rm -f listing || true && docker run -d --name listing -p 5004:5004 -e DATABASE_URL='mongodb://admin:admin123@localhost:27017/listing_db?authSource=admin&directConnection=true' -e KAFKA_BROKER=$SHARED_IP:9092 -e REDIS_URL=redis://:$REDIS_PASSWORD@$SHARED_IP:6379 -e RABBITMQ_URL=amqp://$RABBITMQ_USER:$RABBITMQ_PASSWORD@$SHARED_IP:5672$RABBITMQ_VHOST -e AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID -e AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY -e AWS_REGION=$AWS_REGION -e S3_BUCKET_NAME=$S3_BUCKET_NAME $DOCKER_USERNAME/web-listing:latest"
+    - ssh -o StrictHostKeyChecking=no ubuntu@$LISTING_IP "docker pull $DOCKER_USERNAME/web-listing:latest && docker rm -f listing || true && docker run -d --name listing -p 5004:5004 -e DATABASE_URL='mongodb://admin:admin123@localhost:27017/listing_db?authSource=admin&directConnection=true' -e KAFKA_BROKER=$SHARED_IP:9092 -e REDIS_URL=redis://:$REDIS_PASSWORD@$SHARED_IP:6379 -e RABBITMQ_URL=amqp://$RABBITMQ_USER:$RABBITMQ_PASSWORD@$SHARED_IP:5672/$RABBITMQ_VHOST -e AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID -e AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY -e AWS_REGION=$AWS_REGION -e S3_BUCKET_NAME=$S3_BUCKET_NAME $DOCKER_USERNAME/web-listing:latest"
     - sleep 5
     - ssh -o StrictHostKeyChecking=no ubuntu@$LISTING_IP "docker exec listing npx prisma db push"
   only:
@@ -195,7 +195,7 @@ deploy-notification:
     - scp -o StrictHostKeyChecking=no -r ./backend/notification-service/mongodb/prod/* ubuntu@$NOTIFICATIONS_IP:~/notification-mongodb/
     - ssh -o StrictHostKeyChecking=no ubuntu@$NOTIFICATIONS_IP "cd ~/notification-mongodb && docker compose pull && docker compose up -d"
     - sleep 10
-    - ssh -o StrictHostKeyChecking=no ubuntu@$NOTIFICATIONS_IP "docker pull $DOCKER_USERNAME/web-notifications:latest && docker rm -f notification || true && docker run -d --name notification -p 5006:5006 -e DATABASE_URL='mongodb://admin:admin123@localhost:27017/notification_db?authSource=admin&directConnection=true' -e KAFKA_BROKER=$SHARED_IP:9092 -e RABBITMQ_URL=amqp://$RABBITMQ_USER:$RABBITMQ_PASSWORD@$SHARED_IP:5672$RABBITMQ_VHOST -e EMAIL_USER=$EMAIL_USER -e EMAIL_PASS=$EMAIL_PASS $DOCKER_USERNAME/web-notifications:latest"
+    - ssh -o StrictHostKeyChecking=no ubuntu@$NOTIFICATIONS_IP "docker pull $DOCKER_USERNAME/web-notifications:latest && docker rm -f notification || true && docker run -d --name notification -p 5006:5006 -e DATABASE_URL='mongodb://admin:admin123@localhost:27017/notification_db?authSource=admin&directConnection=true' -e KAFKA_BROKER=$SHARED_IP:9092 -e RABBITMQ_URL=amqp://$RABBITMQ_USER:$RABBITMQ_PASSWORD@$SHARED_IP:5672/$RABBITMQ_VHOST -e EMAIL_USER=$EMAIL_USER -e EMAIL_PASS=$EMAIL_PASS $DOCKER_USERNAME/web-notifications:latest"
     - sleep 5
     - ssh -o StrictHostKeyChecking=no ubuntu@$NOTIFICATIONS_IP "docker exec notification npx prisma db push"
   only:
@@ -206,6 +206,6 @@ deploy-admin:
   image: alpine:latest
   script:
     - *ssh-setup
-    - ssh -o StrictHostKeyChecking=no ubuntu@$ADMIN_IP "docker image prune -f && docker pull $DOCKER_USERNAME/web-admin:latest && docker rm -f admin || true && docker run -d --name admin -p 5007:5007 -e PORT=5007 -e KAFKA_BROKER=$SHARED_IP:9092 -e RABBITMQ_URL=amqp://$RABBITMQ_USER:$RABBITMQ_PASSWORD@$SHARED_IP:5672$RABBITMQ_VHOST -e LISTING_SERVICE_URL=http://$LISTING_IP:5004 -e USER_SERVICE_URL=http://$USER_IP:5003 -e AUTH_SERVICE_URL=http://$AUTH_IP:5002 $DOCKER_USERNAME/web-admin:latest"
+    - ssh -o StrictHostKeyChecking=no ubuntu@$ADMIN_IP "docker image prune -f && docker pull $DOCKER_USERNAME/web-admin:latest && docker rm -f admin || true && docker run -d --name admin -p 5007:5007 -e PORT=5007 -e KAFKA_BROKER=$SHARED_IP:9092 -e RABBITMQ_URL=amqp://$RABBITMQ_USER:$RABBITMQ_PASSWORD@$SHARED_IP:5672/$RABBITMQ_VHOST -e LISTING_SERVICE_URL=http://$LISTING_IP:5004 -e USER_SERVICE_URL=http://$USER_IP:5003 -e AUTH_SERVICE_URL=http://$AUTH_IP:5002 $DOCKER_USERNAME/web-admin:latest"
   only:
     - main
