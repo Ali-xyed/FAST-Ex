@@ -10,6 +10,5 @@ router.post('/token', authController.getToken);
 router.post('/check-email', authController.checkEmail);
 router.post('/change-password', authController.changePassword);
 router.post('/promote', authController.promote);
-router.patch('/toggle-ban', authController.toggleBan);
 
 module.exports = router;
