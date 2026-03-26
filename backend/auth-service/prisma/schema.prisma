@@ -1,0 +1,30 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  email      String   @id @map("_id")
+  name       String
+  rollNo     String   @unique
+  password   String
+  isVerified Boolean  @default(false)
+  role       Role     @default(STUDENT)
+  createdAt  DateTime @default(now())
+}
+
+model OTP {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  email     String
+  code      String
+  createdAt DateTime @default(now())
+}
+
+enum Role {
+  STUDENT
+  ADMIN
+}
