@@ -1,0 +1,98 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+model Listing {
+  id          String        @id @default(auto()) @map("_id") @db.ObjectId
+  email       String
+  type        ListingType
+  title       String
+  description String
+  imageUrl    String?
+  isVerified  Boolean       @default(false)
+  marked      MarkedStatus  @default(PENDING)
+  createdAt   DateTime      @default(now())
+
+  sellListing     SellListing?
+  rentListing     RentListing?
+  exchangeListing ExchangeListing?
+  comments        Comment[]
+}
+
+model SellListing {
+  id            String       @id @default(auto()) @map("_id") @db.ObjectId
+  listingId     String       @unique @db.ObjectId
+  listing       Listing      @relation(fields: [listingId], references: [id])
+  price         Float
+  bargainings   Bargaining[] @relation("SellBargainings")
+}
+
+model RentListing {
+  id            String       @id @default(auto()) @map("_id") @db.ObjectId
+  listingId     String       @unique @db.ObjectId
+  listing       Listing      @relation(fields: [listingId], references: [id])
+  pricePerHour  Float
+  bargainings   Bargaining[] @relation("RentBargainings")
+}
+
+model ExchangeListing {
+  id              String   @id @default(auto()) @map("_id") @db.ObjectId
+  listingId       String   @unique @db.ObjectId
+  listing         Listing  @relation(fields: [listingId], references: [id])
+  withListNo      String?  @db.ObjectId
+  withTitle       String
+  withDescription String
+  withImageUrl    String?
+}
+
+model Bargaining {
+  id              String          @id @default(auto()) @map("_id") @db.ObjectId
+  fromEmail       String
+  toEmail         String
+  price           Float
+  status          BargainStatus   @default(PENDING)
+  type            BargainType
+  sellListingId   String?         @db.ObjectId
+  rentListingId   String?         @db.ObjectId
+  sellListing     SellListing?    @relation("SellBargainings", fields: [sellListingId], references: [id])
+  rentListing     RentListing?    @relation("RentBargainings", fields: [rentListingId], references: [id])
+}
+
+model Comment {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  content    String
+  listingId  String   @db.ObjectId
+  listing    Listing  @relation(fields: [listingId], references: [id])
+  fromEmail  String
+  isVerified Boolean  @default(false)
+  createdAt  DateTime @default(now())
+}
+
+enum ListingType {
+  SELL
+  RENT
+  EXCHANGE
+}
+
+enum MarkedStatus {
+  PENDING
+  SOLD
+  RENTED
+  EXCHANGED
+}
+
+enum BargainType {
+  SELL
+  RENT
+}
+
+enum BargainStatus {
+  PENDING
+  ACCEPTED
+  DECLINED
+}

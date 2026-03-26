@@ -1,0 +1,19 @@
+const express = require('express');
+const listingController = require('../controllers/listing.controller');
+const { verifyAuth } = require('../middleware/auth.middleware');
+
+const router = express.Router();
+
+router.post('/', verifyAuth, listingController.createListing);
+router.get('/', listingController.getListings);
+router.get('/my', verifyAuth, listingController.getMyListings);
+router.get('/:id', listingController.getListingById);
+router.delete('/:id', verifyAuth, listingController.deleteListing);
+
+router.post('/:id/comments', verifyAuth, listingController.postComment);
+router.delete('/:id/comments/:commentId', verifyAuth, listingController.deleteComment);
+
+router.post('/:id/bargain', verifyAuth, listingController.submitBargain);
+router.patch('/bargain/:bargainId', verifyAuth, listingController.respondBargain);
+
+module.exports = router;
