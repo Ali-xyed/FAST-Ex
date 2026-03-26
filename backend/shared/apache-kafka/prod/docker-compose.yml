@@ -62,4 +62,4 @@ volumes:
 
 networks:
   fast-ex-network:
-    driver: bridge
+    external: true

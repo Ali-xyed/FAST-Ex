@@ -114,6 +114,7 @@ deploy-shared:
     - apk add --no-cache rsync
     - ssh -o PubkeyAcceptedAlgorithms=+ssh-rsa ubuntu@$SHARED_IP "mkdir -p ~/shared"
     - scp -o PubkeyAcceptedAlgorithms=+ssh-rsa -r ./backend/shared/* ubuntu@$SHARED_IP:~/shared/
+    - ssh -o PubkeyAcceptedAlgorithms=+ssh-rsa ubuntu@$SHARED_IP "docker network create fast-ex-network || true"
     - ssh -o PubkeyAcceptedAlgorithms=+ssh-rsa ubuntu@$SHARED_IP "export KAFKA_EC2_PUBLIC_IP=$SHARED_IP && cd ~/shared/apache-kafka/prod && docker compose up -d"
     - ssh -o PubkeyAcceptedAlgorithms=+ssh-rsa ubuntu@$SHARED_IP "export REDIS_PASSWORD=$REDIS_PASSWORD && cd ~/shared/redis/prod && docker compose up -d"
     - ssh -o PubkeyAcceptedAlgorithms=+ssh-rsa ubuntu@$SHARED_IP "export RABBITMQ_USER=$RABBITMQ_USER RABBITMQ_PASSWORD=$RABBITMQ_PASSWORD RABBITMQ_VHOST=$RABBITMQ_VHOST && cd ~/shared/rabbit-mq/prod && docker compose up -d"
