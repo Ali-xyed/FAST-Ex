@@ -103,21 +103,21 @@ build-admin:
   - echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
   - mkdir -p ~/.ssh
   - chmod 700 ~/.ssh
-  - ssh-keyscan -H $SHARED_IP $API_GATEWAY_IP $AUTH_IP $USER_IP $LISTING_IP $MESSAGE_IP $NOTIFICATIONS_IP $ADMIN_IP >> ~/.ssh/known_hosts
-  - chmod 644 ~/.ssh/known_hosts
+  - chmod 644 ~/.ssh/known_hosts 2>/dev/null || true
 
 deploy-shared:
   stage: deploy
   image: alpine:latest
   script:
     - *deploy-ssh-setup
+    - ssh-keyscan -T 10 -H $SHARED_IP >> ~/.ssh/known_hosts
     - apk add --no-cache rsync
-    - ssh -o PubkeyAcceptedAlgorithms=+ssh-rsa ubuntu@$SHARED_IP "mkdir -p ~/shared"
-    - scp -o PubkeyAcceptedAlgorithms=+ssh-rsa -r ./backend/shared/* ubuntu@$SHARED_IP:~/shared/
-    - ssh -o PubkeyAcceptedAlgorithms=+ssh-rsa ubuntu@$SHARED_IP "docker network create fast-ex-network || true"
-    - ssh -o PubkeyAcceptedAlgorithms=+ssh-rsa ubuntu@$SHARED_IP "export KAFKA_EC2_PUBLIC_IP=$SHARED_IP && cd ~/shared/apache-kafka/prod && docker compose up -d"
-    - ssh -o PubkeyAcceptedAlgorithms=+ssh-rsa ubuntu@$SHARED_IP "export REDIS_PASSWORD=$REDIS_PASSWORD && cd ~/shared/redis/prod && docker compose up -d"
-    - ssh -o PubkeyAcceptedAlgorithms=+ssh-rsa ubuntu@$SHARED_IP "export RABBITMQ_USER=$RABBITMQ_USER RABBITMQ_PASSWORD=$RABBITMQ_PASSWORD RABBITMQ_VHOST=$RABBITMQ_VHOST && cd ~/shared/rabbit-mq/prod && docker compose up -d"
+    - ssh -o PubkeyAcceptedAlgorithms=+ssh-rsa -o ConnectTimeout=30 ubuntu@$SHARED_IP "mkdir -p ~/shared"
+    - scp -o PubkeyAcceptedAlgorithms=+ssh-rsa -o ConnectTimeout=30 -r ./backend/shared/* ubuntu@$SHARED_IP:~/shared/
+    - ssh -o PubkeyAcceptedAlgorithms=+ssh-rsa -o ConnectTimeout=30 ubuntu@$SHARED_IP "docker network create fast-ex-network || true"
+    - ssh -o PubkeyAcceptedAlgorithms=+ssh-rsa -o ConnectTimeout=30 ubuntu@$SHARED_IP "export KAFKA_EC2_PUBLIC_IP=$SHARED_IP && cd ~/shared/apache-kafka/prod && docker compose up -d"
+    - ssh -o PubkeyAcceptedAlgorithms=+ssh-rsa -o ConnectTimeout=30 ubuntu@$SHARED_IP "export REDIS_PASSWORD=$REDIS_PASSWORD && cd ~/shared/redis/prod && docker compose up -d"
+    - ssh -o PubkeyAcceptedAlgorithms=+ssh-rsa -o ConnectTimeout=30 ubuntu@$SHARED_IP "export RABBITMQ_USER=$RABBITMQ_USER RABBITMQ_PASSWORD=$RABBITMQ_PASSWORD RABBITMQ_VHOST=$RABBITMQ_VHOST && cd ~/shared/rabbit-mq/prod && docker compose up -d"
   only:
     - main
 
@@ -126,7 +126,8 @@ deploy-gateway:
   image: alpine:latest
   script:
     - *deploy-ssh-setup
-    - ssh -o PubkeyAcceptedAlgorithms=+ssh-rsa ubuntu@$API_GATEWAY_IP "docker image prune -f && docker pull $DOCKER_USERNAME/web-api-gateway:latest && docker rm -f gateway || true && docker run -d --name gateway -p 5000:5000 -e PORT=5000 -e REDIS_URL=redis://:$REDIS_PASSWORD@$SHARED_IP:6379 -e AUTH_SERVICE_URL=http://$AUTH_IP:5002 -e USER_SERVICE_URL=http://$USER_IP:5003 -e LISTING_SERVICE_URL=http://$LISTING_IP:5004 -e MESSAGE_SERVICE_URL=http://$MESSAGE_IP:5005 -e NOTIFICATION_SERVICE_URL=http://$NOTIFICATIONS_IP:5006 -e ADMIN_SERVICE_URL=http://$ADMIN_IP:5007 -e CLERK_SECRET_KEY=$CLERK_SECRET_KEY -e CLIENT_URL='$CLIENT_PROD_URL' $DOCKER_USERNAME/web-api-gateway:latest"
+    - ssh-keyscan -T 10 -H $API_GATEWAY_IP >> ~/.ssh/known_hosts
+    - ssh -o PubkeyAcceptedAlgorithms=+ssh-rsa -o ConnectTimeout=30 ubuntu@$API_GATEWAY_IP "docker image prune -f && docker pull $DOCKER_USERNAME/web-api-gateway:latest && docker rm -f gateway || true && docker run -d --name gateway -p 5000:5000 -e PORT=5000 -e REDIS_URL=redis://:$REDIS_PASSWORD@$SHARED_IP:6379 -e AUTH_SERVICE_URL=http://$AUTH_IP:5002 -e USER_SERVICE_URL=http://$USER_IP:5003 -e LISTING_SERVICE_URL=http://$LISTING_IP:5004 -e MESSAGE_SERVICE_URL=http://$MESSAGE_IP:5005 -e NOTIFICATION_SERVICE_URL=http://$NOTIFICATIONS_IP:5006 -e ADMIN_SERVICE_URL=http://$ADMIN_IP:5007 -e CLERK_SECRET_KEY=$CLERK_SECRET_KEY -e CLIENT_URL='$CLIENT_PROD_URL' $DOCKER_USERNAME/web-api-gateway:latest"
   only:
     - main
 
@@ -135,14 +136,15 @@ deploy-auth:
   image: alpine:latest
   script:
     - *deploy-ssh-setup
-    - ssh -o PubkeyAcceptedAlgorithms=+ssh-rsa ubuntu@$AUTH_IP "mkdir -p ~/.docker/cli-plugins && curl -SL https://github.com/docker/compose/releases/latest/download/docker-compose-linux-x86_64 -o ~/.docker/cli-plugins/docker-compose && chmod +x ~/.docker/cli-plugins/docker-compose || true"
-    - ssh -o PubkeyAcceptedAlgorithms=+ssh-rsa ubuntu@$AUTH_IP "mkdir -p ~/auth-mongodb"
-    - scp -o PubkeyAcceptedAlgorithms=+ssh-rsa -r ./backend/auth-service/mongodb/prod/* ubuntu@$AUTH_IP:~/auth-mongodb/
-    - ssh -o PubkeyAcceptedAlgorithms=+ssh-rsa ubuntu@$AUTH_IP "cd ~/auth-mongodb && docker compose pull && docker compose up -d"
+    - ssh-keyscan -T 10 -H $AUTH_IP >> ~/.ssh/known_hosts
+    - ssh -o PubkeyAcceptedAlgorithms=+ssh-rsa -o ConnectTimeout=30 ubuntu@$AUTH_IP "mkdir -p ~/.docker/cli-plugins && curl -SL https://github.com/docker/compose/releases/latest/download/docker-compose-linux-x86_64 -o ~/.docker/cli-plugins/docker-compose && chmod +x ~/.docker/cli-plugins/docker-compose || true"
+    - ssh -o PubkeyAcceptedAlgorithms=+ssh-rsa -o ConnectTimeout=30 ubuntu@$AUTH_IP "mkdir -p ~/auth-mongodb"
+    - scp -o PubkeyAcceptedAlgorithms=+ssh-rsa -o ConnectTimeout=30 -r ./backend/auth-service/mongodb/prod/* ubuntu@$AUTH_IP:~/auth-mongodb/
+    - ssh -o PubkeyAcceptedAlgorithms=+ssh-rsa -o ConnectTimeout=30 ubuntu@$AUTH_IP "cd ~/auth-mongodb && docker compose pull && docker compose up -d"
     - sleep 10
-    - ssh -o PubkeyAcceptedAlgorithms=+ssh-rsa ubuntu@$AUTH_IP "docker pull $DOCKER_USERNAME/web-auth:latest && docker rm -f auth || true && docker run -d --name auth -p 5002:5002 -e CLERK_SECRET_KEY=$CLERK_SECRET_KEY -e CLERK_PUBLISHABLE_KEY=$CLERK_PUBLISHABLE_KEY -e DATABASE_URL='mongodb://admin:admin123@localhost:27017/auth_db?authSource=admin&directConnection=true' -e KAFKA_BROKER=$SHARED_IP:9092 -e RABBITMQ_URL=amqp://$RABBITMQ_USER:$RABBITMQ_PASSWORD@$SHARED_IP:5672$RABBITMQ_VHOST $DOCKER_USERNAME/web-auth:latest"
+    - ssh -o PubkeyAcceptedAlgorithms=+ssh-rsa -o ConnectTimeout=30 ubuntu@$AUTH_IP "docker pull $DOCKER_USERNAME/web-auth:latest && docker rm -f auth || true && docker run -d --name auth -p 5002:5002 -e CLERK_SECRET_KEY=$CLERK_SECRET_KEY -e CLERK_PUBLISHABLE_KEY=$CLERK_PUBLISHABLE_KEY -e DATABASE_URL='mongodb://admin:admin123@localhost:27017/auth_db?authSource=admin&directConnection=true' -e KAFKA_BROKER=$SHARED_IP:9092 -e RABBITMQ_URL=amqp://$RABBITMQ_USER:$RABBITMQ_PASSWORD@$SHARED_IP:5672$RABBITMQ_VHOST $DOCKER_USERNAME/web-auth:latest"
     - sleep 5
-    - ssh -o PubkeyAcceptedAlgorithms=+ssh-rsa ubuntu@$AUTH_IP "docker exec auth npx prisma db push"
+    - ssh -o PubkeyAcceptedAlgorithms=+ssh-rsa -o ConnectTimeout=30 ubuntu@$AUTH_IP "docker exec auth npx prisma db push"
   only:
     - main
 
@@ -151,14 +153,15 @@ deploy-user:
   image: alpine:latest
   script:
     - *deploy-ssh-setup
-    - ssh -o PubkeyAcceptedAlgorithms=+ssh-rsa ubuntu@$USER_IP "mkdir -p ~/.docker/cli-plugins && curl -SL https://github.com/docker/compose/releases/latest/download/docker-compose-linux-x86_64 -o ~/.docker/cli-plugins/docker-compose && chmod +x ~/.docker/cli-plugins/docker-compose || true"
-    - ssh -o PubkeyAcceptedAlgorithms=+ssh-rsa ubuntu@$USER_IP "mkdir -p ~/user-mongodb"
-    - scp -o PubkeyAcceptedAlgorithms=+ssh-rsa -r ./backend/user-service/mongodb/prod/* ubuntu@$USER_IP:~/user-mongodb/
-    - ssh -o PubkeyAcceptedAlgorithms=+ssh-rsa ubuntu@$USER_IP "cd ~/user-mongodb && docker compose pull && docker compose up -d"
+    - ssh-keyscan -T 10 -H $USER_IP >> ~/.ssh/known_hosts
+    - ssh -o PubkeyAcceptedAlgorithms=+ssh-rsa -o ConnectTimeout=30 ubuntu@$USER_IP "mkdir -p ~/.docker/cli-plugins && curl -SL https://github.com/docker/compose/releases/latest/download/docker-compose-linux-x86_64 -o ~/.docker/cli-plugins/docker-compose && chmod +x ~/.docker/cli-plugins/docker-compose || true"
+    - ssh -o PubkeyAcceptedAlgorithms=+ssh-rsa -o ConnectTimeout=30 ubuntu@$USER_IP "mkdir -p ~/user-mongodb"
+    - scp -o PubkeyAcceptedAlgorithms=+ssh-rsa -o ConnectTimeout=30 -r ./backend/user-service/mongodb/prod/* ubuntu@$USER_IP:~/user-mongodb/
+    - ssh -o PubkeyAcceptedAlgorithms=+ssh-rsa -o ConnectTimeout=30 ubuntu@$USER_IP "cd ~/user-mongodb && docker compose pull && docker compose up -d"
     - sleep 10
-    - ssh -o PubkeyAcceptedAlgorithms=+ssh-rsa ubuntu@$USER_IP "docker pull $DOCKER_USERNAME/web-user:latest && docker rm -f user || true && docker run -d --name user -p 5003:5003 -e DATABASE_URL='mongodb://admin:admin123@localhost:27017/user_db?authSource=admin&directConnection=true' -e KAFKA_BROKER=$SHARED_IP:9092 -e REDIS_URL=redis://:$REDIS_PASSWORD@$SHARED_IP:6379 -e AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID -e AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY -e AWS_REGION=$AWS_REGION -e S3_BUCKET_NAME=$S3_BUCKET_NAME $DOCKER_USERNAME/web-user:latest"
+    - ssh -o PubkeyAcceptedAlgorithms=+ssh-rsa -o ConnectTimeout=30 ubuntu@$USER_IP "docker pull $DOCKER_USERNAME/web-user:latest && docker rm -f user || true && docker run -d --name user -p 5003:5003 -e DATABASE_URL='mongodb://admin:admin123@localhost:27017/user_db?authSource=admin&directConnection=true' -e KAFKA_BROKER=$SHARED_IP:9092 -e REDIS_URL=redis://:$REDIS_PASSWORD@$SHARED_IP:6379 -e AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID -e AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY -e AWS_REGION=$AWS_REGION -e S3_BUCKET_NAME=$S3_BUCKET_NAME $DOCKER_USERNAME/web-user:latest"
     - sleep 5
-    - ssh -o PubkeyAcceptedAlgorithms=+ssh-rsa ubuntu@$USER_IP "docker exec user npx prisma db push"
+    - ssh -o PubkeyAcceptedAlgorithms=+ssh-rsa -o ConnectTimeout=30 ubuntu@$USER_IP "docker exec user npx prisma db push"
   only:
     - main
 
@@ -167,14 +170,15 @@ deploy-listing:
   image: alpine:latest
   script:
     - *deploy-ssh-setup
-    - ssh -o PubkeyAcceptedAlgorithms=+ssh-rsa ubuntu@$LISTING_IP "mkdir -p ~/.docker/cli-plugins && curl -SL https://github.com/docker/compose/releases/latest/download/docker-compose-linux-x86_64 -o ~/.docker/cli-plugins/docker-compose && chmod +x ~/.docker/cli-plugins/docker-compose || true"
-    - ssh -o PubkeyAcceptedAlgorithms=+ssh-rsa ubuntu@$LISTING_IP "mkdir -p ~/listing-mongodb"
-    - scp -o PubkeyAcceptedAlgorithms=+ssh-rsa -r ./backend/listing-service/mongodb/prod/* ubuntu@$LISTING_IP:~/listing-mongodb/
-    - ssh -o PubkeyAcceptedAlgorithms=+ssh-rsa ubuntu@$LISTING_IP "cd ~/listing-mongodb && docker compose pull && docker compose up -d"
+    - ssh-keyscan -T 10 -H $LISTING_IP >> ~/.ssh/known_hosts
+    - ssh -o PubkeyAcceptedAlgorithms=+ssh-rsa -o ConnectTimeout=30 ubuntu@$LISTING_IP "mkdir -p ~/.docker/cli-plugins && curl -SL https://github.com/docker/compose/releases/latest/download/docker-compose-linux-x86_64 -o ~/.docker/cli-plugins/docker-compose && chmod +x ~/.docker/cli-plugins/docker-compose || true"
+    - ssh -o PubkeyAcceptedAlgorithms=+ssh-rsa -o ConnectTimeout=30 ubuntu@$LISTING_IP "mkdir -p ~/listing-mongodb"
+    - scp -o PubkeyAcceptedAlgorithms=+ssh-rsa -o ConnectTimeout=30 -r ./backend/listing-service/mongodb/prod/* ubuntu@$LISTING_IP:~/listing-mongodb/
+    - ssh -o PubkeyAcceptedAlgorithms=+ssh-rsa -o ConnectTimeout=30 ubuntu@$LISTING_IP "cd ~/listing-mongodb && docker compose pull && docker compose up -d"
     - sleep 10
-    - ssh -o PubkeyAcceptedAlgorithms=+ssh-rsa ubuntu@$LISTING_IP "docker pull $DOCKER_USERNAME/web-listing:latest && docker rm -f listing || true && docker run -d --name listing -p 5004:5004 -e DATABASE_URL='mongodb://admin:admin123@localhost:27017/listing_db?authSource=admin&directConnection=true' -e KAFKA_BROKER=$SHARED_IP:9092 -e REDIS_URL=redis://:$REDIS_PASSWORD@$SHARED_IP:6379 -e RABBITMQ_URL=amqp://$RABBITMQ_USER:$RABBITMQ_PASSWORD@$SHARED_IP:5672$RABBITMQ_VHOST -e AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID -e AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY -e AWS_REGION=$AWS_REGION -e S3_BUCKET_NAME=$S3_BUCKET_NAME $DOCKER_USERNAME/web-listing:latest"
+    - ssh -o PubkeyAcceptedAlgorithms=+ssh-rsa -o ConnectTimeout=30 ubuntu@$LISTING_IP "docker pull $DOCKER_USERNAME/web-listing:latest && docker rm -f listing || true && docker run -d --name listing -p 5004:5004 -e DATABASE_URL='mongodb://admin:admin123@localhost:27017/listing_db?authSource=admin&directConnection=true' -e KAFKA_BROKER=$SHARED_IP:9092 -e REDIS_URL=redis://:$REDIS_PASSWORD@$SHARED_IP:6379 -e RABBITMQ_URL=amqp://$RABBITMQ_USER:$RABBITMQ_PASSWORD@$SHARED_IP:5672$RABBITMQ_VHOST -e AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID -e AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY -e AWS_REGION=$AWS_REGION -e S3_BUCKET_NAME=$S3_BUCKET_NAME $DOCKER_USERNAME/web-listing:latest"
     - sleep 5
-    - ssh -o PubkeyAcceptedAlgorithms=+ssh-rsa ubuntu@$LISTING_IP "docker exec listing npx prisma db push"
+    - ssh -o PubkeyAcceptedAlgorithms=+ssh-rsa -o ConnectTimeout=30 ubuntu@$LISTING_IP "docker exec listing npx prisma db push"
   only:
     - main
 
@@ -183,14 +187,15 @@ deploy-messaging:
   image: alpine:latest
   script:
     - *deploy-ssh-setup
-    - ssh -o PubkeyAcceptedAlgorithms=+ssh-rsa ubuntu@$MESSAGE_IP "mkdir -p ~/.docker/cli-plugins && curl -SL https://github.com/docker/compose/releases/latest/download/docker-compose-linux-x86_64 -o ~/.docker/cli-plugins/docker-compose && chmod +x ~/.docker/cli-plugins/docker-compose || true"
-    - ssh -o PubkeyAcceptedAlgorithms=+ssh-rsa ubuntu@$MESSAGE_IP "mkdir -p ~/messaging-mongodb"
-    - scp -o PubkeyAcceptedAlgorithms=+ssh-rsa -r ./backend/messaging-service/mongodb/prod/* ubuntu@$MESSAGE_IP:~/messaging-mongodb/
-    - ssh -o PubkeyAcceptedAlgorithms=+ssh-rsa ubuntu@$MESSAGE_IP "cd ~/messaging-mongodb && docker compose pull && docker compose up -d"
+    - ssh-keyscan -T 10 -H $MESSAGE_IP >> ~/.ssh/known_hosts
+    - ssh -o PubkeyAcceptedAlgorithms=+ssh-rsa -o ConnectTimeout=30 ubuntu@$MESSAGE_IP "mkdir -p ~/.docker/cli-plugins && curl -SL https://github.com/docker/compose/releases/latest/download/docker-compose-linux-x86_64 -o ~/.docker/cli-plugins/docker-compose && chmod +x ~/.docker/cli-plugins/docker-compose || true"
+    - ssh -o PubkeyAcceptedAlgorithms=+ssh-rsa -o ConnectTimeout=30 ubuntu@$MESSAGE_IP "mkdir -p ~/messaging-mongodb"
+    - scp -o PubkeyAcceptedAlgorithms=+ssh-rsa -o ConnectTimeout=30 -r ./backend/messaging-service/mongodb/prod/* ubuntu@$MESSAGE_IP:~/messaging-mongodb/
+    - ssh -o PubkeyAcceptedAlgorithms=+ssh-rsa -o ConnectTimeout=30 ubuntu@$MESSAGE_IP "cd ~/messaging-mongodb && docker compose pull && docker compose up -d"
     - sleep 10
-    - ssh -o PubkeyAcceptedAlgorithms=+ssh-rsa ubuntu@$MESSAGE_IP "docker pull $DOCKER_USERNAME/web-messages:latest && docker rm -f messaging || true && docker run -d --name messaging -p 5005:5005 -e DATABASE_URL='mongodb://admin:admin123@localhost:27017/messaging_db?authSource=admin&directConnection=true' -e KAFKA_BROKER=$SHARED_IP:9092 $DOCKER_USERNAME/web-messages:latest"
+    - ssh -o PubkeyAcceptedAlgorithms=+ssh-rsa -o ConnectTimeout=30 ubuntu@$MESSAGE_IP "docker pull $DOCKER_USERNAME/web-messages:latest && docker rm -f messaging || true && docker run -d --name messaging -p 5005:5005 -e DATABASE_URL='mongodb://admin:admin123@localhost:27017/messaging_db?authSource=admin&directConnection=true' -e KAFKA_BROKER=$SHARED_IP:9092 $DOCKER_USERNAME/web-messages:latest"
     - sleep 5
-    - ssh -o PubkeyAcceptedAlgorithms=+ssh-rsa ubuntu@$MESSAGE_IP "docker exec messaging npx prisma db push"
+    - ssh -o PubkeyAcceptedAlgorithms=+ssh-rsa -o ConnectTimeout=30 ubuntu@$MESSAGE_IP "docker exec messaging npx prisma db push"
   only:
     - main
 
@@ -199,14 +204,15 @@ deploy-notification:
   image: alpine:latest
   script:
     - *deploy-ssh-setup
-    - ssh -o PubkeyAcceptedAlgorithms=+ssh-rsa ubuntu@$NOTIFICATIONS_IP "mkdir -p ~/.docker/cli-plugins && curl -SL https://github.com/docker/compose/releases/latest/download/docker-compose-linux-x86_64 -o ~/.docker/cli-plugins/docker-compose && chmod +x ~/.docker/cli-plugins/docker-compose || true"
-    - ssh -o PubkeyAcceptedAlgorithms=+ssh-rsa ubuntu@$NOTIFICATIONS_IP "mkdir -p ~/notification-mongodb"
-    - scp -o PubkeyAcceptedAlgorithms=+ssh-rsa -r ./backend/notification-service/mongodb/prod/* ubuntu@$NOTIFICATIONS_IP:~/notification-mongodb/
-    - ssh -o PubkeyAcceptedAlgorithms=+ssh-rsa ubuntu@$NOTIFICATIONS_IP "cd ~/notification-mongodb && docker compose pull && docker compose up -d"
+    - ssh-keyscan -T 10 -H $NOTIFICATIONS_IP >> ~/.ssh/known_hosts
+    - ssh -o PubkeyAcceptedAlgorithms=+ssh-rsa -o ConnectTimeout=30 ubuntu@$NOTIFICATIONS_IP "mkdir -p ~/.docker/cli-plugins && curl -SL https://github.com/docker/compose/releases/latest/download/docker-compose-linux-x86_64 -o ~/.docker/cli-plugins/docker-compose && chmod +x ~/.docker/cli-plugins/docker-compose || true"
+    - ssh -o PubkeyAcceptedAlgorithms=+ssh-rsa -o ConnectTimeout=30 ubuntu@$NOTIFICATIONS_IP "mkdir -p ~/notification-mongodb"
+    - scp -o PubkeyAcceptedAlgorithms=+ssh-rsa -o ConnectTimeout=30 -r ./backend/notification-service/mongodb/prod/* ubuntu@$NOTIFICATIONS_IP:~/notification-mongodb/
+    - ssh -o PubkeyAcceptedAlgorithms=+ssh-rsa -o ConnectTimeout=30 ubuntu@$NOTIFICATIONS_IP "cd ~/notification-mongodb && docker compose pull && docker compose up -d"
     - sleep 10
-    - ssh -o PubkeyAcceptedAlgorithms=+ssh-rsa ubuntu@$NOTIFICATIONS_IP "docker pull $DOCKER_USERNAME/web-notifications:latest && docker rm -f notification || true && docker run -d --name notification -p 5006:5006 -e DATABASE_URL='mongodb://admin:admin123@localhost:27017/notification_db?authSource=admin&directConnection=true' -e KAFKA_BROKER=$SHARED_IP:9092 -e RABBITMQ_URL=amqp://$RABBITMQ_USER:$RABBITMQ_PASSWORD@$SHARED_IP:5672$RABBITMQ_VHOST -e EMAIL_USER=$EMAIL_USER -e EMAIL_PASS=$EMAIL_PASS $DOCKER_USERNAME/web-notifications:latest"
+    - ssh -o PubkeyAcceptedAlgorithms=+ssh-rsa -o ConnectTimeout=30 ubuntu@$NOTIFICATIONS_IP "docker pull $DOCKER_USERNAME/web-notifications:latest && docker rm -f notification || true && docker run -d --name notification -p 5006:5006 -e DATABASE_URL='mongodb://admin:admin123@localhost:27017/notification_db?authSource=admin&directConnection=true' -e KAFKA_BROKER=$SHARED_IP:9092 -e RABBITMQ_URL=amqp://$RABBITMQ_USER:$RABBITMQ_PASSWORD@$SHARED_IP:5672$RABBITMQ_VHOST -e EMAIL_USER=$EMAIL_USER -e EMAIL_PASS=$EMAIL_PASS $DOCKER_USERNAME/web-notifications:latest"
     - sleep 5
-    - ssh -o PubkeyAcceptedAlgorithms=+ssh-rsa ubuntu@$NOTIFICATIONS_IP "docker exec notification npx prisma db push"
+    - ssh -o PubkeyAcceptedAlgorithms=+ssh-rsa -o ConnectTimeout=30 ubuntu@$NOTIFICATIONS_IP "docker exec notification npx prisma db push"
   only:
     - main
 
@@ -215,6 +221,7 @@ deploy-admin:
   image: alpine:latest
   script:
     - *deploy-ssh-setup
-    - ssh -o PubkeyAcceptedAlgorithms=+ssh-rsa ubuntu@$ADMIN_IP "docker image prune -f && docker pull $DOCKER_USERNAME/web-admin:latest && docker rm -f admin || true && docker run -d --name admin -p 5007:5007 -e PORT=5007 -e KAFKA_BROKER=$SHARED_IP:9092 -e RABBITMQ_URL=amqp://$RABBITMQ_USER:$RABBITMQ_PASSWORD@$SHARED_IP:5672$RABBITMQ_VHOST -e LISTING_SERVICE_URL=http://$LISTING_IP:5004 -e USER_SERVICE_URL=http://$USER_IP:5003 -e AUTH_SERVICE_URL=http://$AUTH_IP:5002 $DOCKER_USERNAME/web-admin:latest"
+    - ssh-keyscan -T 10 -H $ADMIN_IP >> ~/.ssh/known_hosts
+    - ssh -o PubkeyAcceptedAlgorithms=+ssh-rsa -o ConnectTimeout=30 ubuntu@$ADMIN_IP "docker image prune -f && docker pull $DOCKER_USERNAME/web-admin:latest && docker rm -f admin || true && docker run -d --name admin -p 5007:5007 -e PORT=5007 -e KAFKA_BROKER=$SHARED_IP:9092 -e RABBITMQ_URL=amqp://$RABBITMQ_USER:$RABBITMQ_PASSWORD@$SHARED_IP:5672$RABBITMQ_VHOST -e LISTING_SERVICE_URL=http://$LISTING_IP:5004 -e USER_SERVICE_URL=http://$USER_IP:5003 -e AUTH_SERVICE_URL=http://$AUTH_IP:5002 $DOCKER_USERNAME/web-admin:latest"
   only:
     - main
