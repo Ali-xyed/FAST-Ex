@@ -161,6 +161,18 @@ const deleteListing = async (req, res) => {
   }
 };
 
+const verifyListingStatus = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { isVerified } = req.body;
+    const listing = await listingRepo.updateListing(id, { isVerified });
+    res.status(200).json(listing);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Error verifying listing' });
+  }
+};
+
 module.exports = {
   createListing,
   getListings,
@@ -170,5 +182,6 @@ module.exports = {
   deleteComment,
   submitBargain,
   respondBargain,
-  deleteListing
+  deleteListing,
+  verifyListingStatus
 };

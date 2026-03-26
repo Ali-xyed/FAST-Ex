@@ -12,6 +12,7 @@ router.delete('/:id', verifyAuth, listingController.deleteListing);
 
 router.post('/:id/comments', verifyAuth, listingController.postComment);
 router.delete('/:id/comments/:commentId', verifyAuth, listingController.deleteComment);
+router.patch('/:id/verify', verifyAuth, listingController.verifyListingStatus);
 
 router.post('/:id/bargain', verifyAuth, listingController.submitBargain);
 router.patch('/bargain/:bargainId', verifyAuth, listingController.respondBargain);
