@@ -135,6 +135,7 @@ deploy-auth:
   image: alpine:latest
   script:
     - *deploy-ssh-setup
+    - ssh -o PubkeyAcceptedAlgorithms=+ssh-rsa ubuntu@$AUTH_IP "mkdir -p ~/.docker/cli-plugins && curl -SL https://github.com/docker/compose/releases/latest/download/docker-compose-linux-x86_64 -o ~/.docker/cli-plugins/docker-compose && chmod +x ~/.docker/cli-plugins/docker-compose || true"
     - ssh -o PubkeyAcceptedAlgorithms=+ssh-rsa ubuntu@$AUTH_IP "mkdir -p ~/auth-mongodb"
     - scp -o PubkeyAcceptedAlgorithms=+ssh-rsa -r ./backend/auth-service/mongodb/prod/* ubuntu@$AUTH_IP:~/auth-mongodb/
     - ssh -o PubkeyAcceptedAlgorithms=+ssh-rsa ubuntu@$AUTH_IP "cd ~/auth-mongodb && docker compose pull && docker compose up -d"
@@ -150,6 +151,7 @@ deploy-user:
   image: alpine:latest
   script:
     - *deploy-ssh-setup
+    - ssh -o PubkeyAcceptedAlgorithms=+ssh-rsa ubuntu@$USER_IP "mkdir -p ~/.docker/cli-plugins && curl -SL https://github.com/docker/compose/releases/latest/download/docker-compose-linux-x86_64 -o ~/.docker/cli-plugins/docker-compose && chmod +x ~/.docker/cli-plugins/docker-compose || true"
     - ssh -o PubkeyAcceptedAlgorithms=+ssh-rsa ubuntu@$USER_IP "mkdir -p ~/user-mongodb"
     - scp -o PubkeyAcceptedAlgorithms=+ssh-rsa -r ./backend/user-service/mongodb/prod/* ubuntu@$USER_IP:~/user-mongodb/
     - ssh -o PubkeyAcceptedAlgorithms=+ssh-rsa ubuntu@$USER_IP "cd ~/user-mongodb && docker compose pull && docker compose up -d"
@@ -165,6 +167,7 @@ deploy-listing:
   image: alpine:latest
   script:
     - *deploy-ssh-setup
+    - ssh -o PubkeyAcceptedAlgorithms=+ssh-rsa ubuntu@$LISTING_IP "mkdir -p ~/.docker/cli-plugins && curl -SL https://github.com/docker/compose/releases/latest/download/docker-compose-linux-x86_64 -o ~/.docker/cli-plugins/docker-compose && chmod +x ~/.docker/cli-plugins/docker-compose || true"
     - ssh -o PubkeyAcceptedAlgorithms=+ssh-rsa ubuntu@$LISTING_IP "mkdir -p ~/listing-mongodb"
     - scp -o PubkeyAcceptedAlgorithms=+ssh-rsa -r ./backend/listing-service/mongodb/prod/* ubuntu@$LISTING_IP:~/listing-mongodb/
     - ssh -o PubkeyAcceptedAlgorithms=+ssh-rsa ubuntu@$LISTING_IP "cd ~/listing-mongodb && docker compose pull && docker compose up -d"
@@ -180,6 +183,7 @@ deploy-messaging:
   image: alpine:latest
   script:
     - *deploy-ssh-setup
+    - ssh -o PubkeyAcceptedAlgorithms=+ssh-rsa ubuntu@$MESSAGE_IP "mkdir -p ~/.docker/cli-plugins && curl -SL https://github.com/docker/compose/releases/latest/download/docker-compose-linux-x86_64 -o ~/.docker/cli-plugins/docker-compose && chmod +x ~/.docker/cli-plugins/docker-compose || true"
     - ssh -o PubkeyAcceptedAlgorithms=+ssh-rsa ubuntu@$MESSAGE_IP "mkdir -p ~/messaging-mongodb"
     - scp -o PubkeyAcceptedAlgorithms=+ssh-rsa -r ./backend/messaging-service/mongodb/prod/* ubuntu@$MESSAGE_IP:~/messaging-mongodb/
     - ssh -o PubkeyAcceptedAlgorithms=+ssh-rsa ubuntu@$MESSAGE_IP "cd ~/messaging-mongodb && docker compose pull && docker compose up -d"
@@ -195,6 +199,7 @@ deploy-notification:
   image: alpine:latest
   script:
     - *deploy-ssh-setup
+    - ssh -o PubkeyAcceptedAlgorithms=+ssh-rsa ubuntu@$NOTIFICATIONS_IP "mkdir -p ~/.docker/cli-plugins && curl -SL https://github.com/docker/compose/releases/latest/download/docker-compose-linux-x86_64 -o ~/.docker/cli-plugins/docker-compose && chmod +x ~/.docker/cli-plugins/docker-compose || true"
     - ssh -o PubkeyAcceptedAlgorithms=+ssh-rsa ubuntu@$NOTIFICATIONS_IP "mkdir -p ~/notification-mongodb"
     - scp -o PubkeyAcceptedAlgorithms=+ssh-rsa -r ./backend/notification-service/mongodb/prod/* ubuntu@$NOTIFICATIONS_IP:~/notification-mongodb/
     - ssh -o PubkeyAcceptedAlgorithms=+ssh-rsa ubuntu@$NOTIFICATIONS_IP "cd ~/notification-mongodb && docker compose pull && docker compose up -d"
