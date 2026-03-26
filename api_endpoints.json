@@ -1,0 +1,2031 @@
+{
+  "info": {
+    "_postman_id": "4f7d5175-bf9a-4f29-bd9b-4606d10d1c6f",
+    "name": "FAST-Ex Microservices Workspace Complete",
+    "description": "Exhaustive collection of all API Gateway endpoints for FAST-Ex.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "52770136",
+    "_collection_link": "https://go.postman.co/collection/52770136-4f7d5175-bf9a-4f29-bd9b-4606d10d1c6f?source=collection_link"
+  },
+  "item": [
+    {
+      "name": "1. Auth Service",
+      "item": [
+        {
+          "name": "Register User",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"test@nu.edu.pk\",\n  \"name\": \"Test User\",\n  \"rollNo\": \"23L-3067\",\n  \"password\": \"securepass123\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/register",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "register"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "Register User",
+              "originalRequest": {
+                "method": "POST",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"email\": \"l233059@lhr.nu.edu.pk\",\n  \"name\": \"Muhammad Ahmad Butt\",\n  \"rollNo\": \"23L-3059\",\n  \"password\": \"Okkake999$#@\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/auth/register",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "auth",
+                    "register"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "Text",
+              "header": [
+                {
+                  "key": "x-powered-by",
+                  "value": "Express"
+                },
+                {
+                  "key": "access-control-allow-origin",
+                  "value": "*"
+                },
+                {
+                  "key": "Vary",
+                  "value": "Origin"
+                },
+                {
+                  "key": "Access-Control-Allow-Credentials",
+                  "value": "true"
+                },
+                {
+                  "key": "content-type",
+                  "value": "application/json; charset=utf-8"
+                },
+                {
+                  "key": "content-length",
+                  "value": "56"
+                },
+                {
+                  "key": "etag",
+                  "value": "W/\"38-059SJEDZCwVWERRKLvG1s2GE+7E\""
+                },
+                {
+                  "key": "date",
+                  "value": "Thu, 26 Mar 2026 10:09:23 GMT"
+                },
+                {
+                  "key": "connection",
+                  "value": "close"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n    \"message\": \"Registration initiated. OTP sent to email.\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Verify OTP",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"test@nu.edu.pk\",\n  \"code\": \"123456\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/verify-otp",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "verify-otp"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "Verify OTP",
+              "originalRequest": {
+                "method": "POST",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"email\": \"l233059@lhr.nu.edu.pk\",\n  \"code\": \"646196\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/auth/verify-otp",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "auth",
+                    "verify-otp"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "Text",
+              "header": [
+                {
+                  "key": "x-powered-by",
+                  "value": "Express"
+                },
+                {
+                  "key": "access-control-allow-origin",
+                  "value": "*"
+                },
+                {
+                  "key": "Vary",
+                  "value": "Origin"
+                },
+                {
+                  "key": "Access-Control-Allow-Credentials",
+                  "value": "true"
+                },
+                {
+                  "key": "content-type",
+                  "value": "application/json; charset=utf-8"
+                },
+                {
+                  "key": "content-length",
+                  "value": "44"
+                },
+                {
+                  "key": "etag",
+                  "value": "W/\"2c-D+YkULF7jqp0zIHQSeZYF9uaJFU\""
+                },
+                {
+                  "key": "date",
+                  "value": "Thu, 26 Mar 2026 10:18:52 GMT"
+                },
+                {
+                  "key": "connection",
+                  "value": "close"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n    \"message\": \"Account verified successfully.\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Login",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"test@nu.edu.pk\",\n  \"password\": \"securepass123\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "Login",
+              "originalRequest": {
+                "method": "POST",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"email\": \"l233059@lhr.nu.edu.pk\",\n  \"password\": \"Okkake999$#@\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/auth/login",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "auth",
+                    "login"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": null,
+              "header": [
+                {
+                  "key": "x-powered-by",
+                  "value": "Express"
+                },
+                {
+                  "key": "access-control-allow-origin",
+                  "value": "*"
+                },
+                {
+                  "key": "Vary",
+                  "value": "Origin"
+                },
+                {
+                  "key": "Access-Control-Allow-Credentials",
+                  "value": "true"
+                },
+                {
+                  "key": "content-type",
+                  "value": "application/json; charset=utf-8"
+                },
+                {
+                  "key": "content-length",
+                  "value": "1195"
+                },
+                {
+                  "key": "etag",
+                  "value": "W/\"4ab-Ami0BRL4uAVld0LZ0uHuZmEecsY\""
+                },
+                {
+                  "key": "date",
+                  "value": "Thu, 26 Mar 2026 10:54:07 GMT"
+                },
+                {
+                  "key": "connection",
+                  "value": "close"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n    \"message\": \"Login successful\",\n    \"token\": \"eyJhbGciOiJSUzI1NiIsImNhdCI6ImNsX0I3ZDRQRDExMUFBQSIsImtpZCI6Imluc18zQXdzS1dDNEJoM2tSR3N6R29WTVRiZDFhZEwiLCJ0eXAiOiJKV1QifQ.eyJleHAiOjE3NzQ1MjI1MDksImZ2YSI6WzAsLTFdLCJpYXQiOjE3NzQ1MjI0NDksImlzcyI6Imh0dHBzOi8vZmVhc2libGUtcGhvZW5peC0xMy5jbGVyay5hY2NvdW50cy5kZXYiLCJuYmYiOjE3NzQ1MjI0MzksInNpZCI6InNlc3NfM0JUb1c0SW1IeW1FZ0M5aE9mVExPQ0FTY1hVIiwic3RzIjoiYWN0aXZlIiwic3ViIjoidXNlcl8zQlRrQ2pNQkVpU0NmclJKMTM2NDNsOUVYTWYiLCJ2IjoyfQ.p6rJQrtmUAV1n62Edt7-kxcWa0kzdMag9A4Wph29bc1WNDAYo5a3KhcDyhHdzheAjb2Hl2-kqGNE7GPVlkaX7FT1i3wBbR6JIJhujg1B7VQAPQ_SsTU9t5fhczqDzibGJ2c_Wj9evtK51UvpsBc3TEIla0g4UA12rlbhRNcETjv3puPKzDgjZAI5CPdzD6aiC6KaZur-ztxndMF9vBwTVVFiccV6WnCwrKFEF4Odd0ZRnQ-P9jDkFMRx3uRGC6e2krUOiD31yV0GVM2DlrBAB0aUeASu2XtxUCf61m_vufEwLq197tN19uloGu-wXtd_wCd5CVo_xJiOLGQV4zKsqQ\",\n    \"user\": {\n        \"email\": \"l233059@lhr.nu.edu.pk\",\n        \"name\": \"Muhammad Ahmad Butt\",\n        \"rollNo\": \"23L-3059\",\n        \"isVerified\": true,\n        \"isBan\": false,\n        \"role\": \"STUDENT\",\n        \"reputationScore\": 100,\n        \"imageUrl\": \"https://img.clerk.com/eyJ0eXBlIjoiZGVmYXVsdCIsImlpZCI6Imluc18zQXdzS1dDNEJoM2tSR3N6R29WTVRiZDFhZEwiLCJyaWQiOiJ1c2VyXzNCVGtDak1CRWlTQ2ZyUkoxMzY0M2w5RVhNZiIsImluaXRpYWxzIjoiTUEifQ\",\n        \"createdAt\": \"2026-03-26T10:18:38.209Z\"\n    }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Get Token",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"test@nu.edu.pk\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/token",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "token"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "Get Token",
+              "originalRequest": {
+                "method": "POST",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"email\": \"l233059@lhr.nu.edu.pk\",\n  \"password\": \"Okkake999$#@\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/auth/token",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "auth",
+                    "token"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "Text",
+              "header": [
+                {
+                  "key": "x-powered-by",
+                  "value": "Express"
+                },
+                {
+                  "key": "access-control-allow-origin",
+                  "value": "*"
+                },
+                {
+                  "key": "Vary",
+                  "value": "Origin"
+                },
+                {
+                  "key": "Access-Control-Allow-Credentials",
+                  "value": "true"
+                },
+                {
+                  "key": "content-type",
+                  "value": "application/json; charset=utf-8"
+                },
+                {
+                  "key": "content-length",
+                  "value": "776"
+                },
+                {
+                  "key": "etag",
+                  "value": "W/\"308-rmwmA2ddcBNvd8xNw5tTkhG2v1E\""
+                },
+                {
+                  "key": "date",
+                  "value": "Thu, 26 Mar 2026 10:24:57 GMT"
+                },
+                {
+                  "key": "connection",
+                  "value": "close"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n    \"token\": \"eyJhbGciOiJSUzI1NiIsImNhdCI6ImNsX0I3ZDRQRDExMUFBQSIsImtpZCI6Imluc18zQXdzS1dDNEJoM2tSR3N6R29WTVRiZDFhZEwiLCJ0eXAiOiJKV1QifQ.eyJleHAiOjE3NzQ1MjA3NTgsImZ2YSI6WzAsLTFdLCJpYXQiOjE3NzQ1MjA2OTgsImlzcyI6Imh0dHBzOi8vZmVhc2libGUtcGhvZW5peC0xMy5jbGVyay5hY2NvdW50cy5kZXYiLCJuYmYiOjE3NzQ1MjA2ODgsInNpZCI6InNlc3NfM0JUa3k4cUROZ0dOaEhQRzlSQmRjdVljNnJkIiwic3RzIjoiYWN0aXZlIiwic3ViIjoidXNlcl8zQlRrQ2pNQkVpU0NmclJKMTM2NDNsOUVYTWYiLCJ2IjoyfQ.mfO043-DHot8cE_k4ukERJqwMlw8QjS5tRBWe5QTSY9BwUP3rPLcxajRgVC3GE9nL-6CImtx-TqaIFK5y9zsD3PuVokF4jFgSQ2Z1yezNa-FNH2Rh4hFvZwFZfu9CG0fekcG-eyaYAMkz5NuuQBztbF--30-vY7Buxukj6cX7O2neKJewFfH3k4ls7jMHLZPIFqDwK8rrQGTU8tX1670zxqXYlPOTcUVo_USP7BSrXfcJgbjWfcw3zIJyqjAL8Ft4emoUlPkGEkjhPMSt18uWO3chkYTNuiWMySwa6wt3xxbJDzTLS8CkijG_hJRZdboX8FuPnFWzKrWLqMEBe8GPA\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Check Email",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"test@nu.edu.pk\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/check-email",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "check-email"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "Check Email",
+              "originalRequest": {
+                "method": "POST",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"email\": \"l233059@lhr.nu.edu.pk\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/auth/check-email",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "auth",
+                    "check-email"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "Text",
+              "header": [
+                {
+                  "key": "x-powered-by",
+                  "value": "Express"
+                },
+                {
+                  "key": "access-control-allow-origin",
+                  "value": "*"
+                },
+                {
+                  "key": "Vary",
+                  "value": "Origin"
+                },
+                {
+                  "key": "Access-Control-Allow-Credentials",
+                  "value": "true"
+                },
+                {
+                  "key": "content-type",
+                  "value": "application/json; charset=utf-8"
+                },
+                {
+                  "key": "content-length",
+                  "value": "15"
+                },
+                {
+                  "key": "etag",
+                  "value": "W/\"f-lWSD52foMX4qLT82tweJE091S9Q\""
+                },
+                {
+                  "key": "date",
+                  "value": "Thu, 26 Mar 2026 10:25:26 GMT"
+                },
+                {
+                  "key": "connection",
+                  "value": "close"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n    \"exists\": true\n}"
+            }
+          ]
+        },
+        {
+          "name": "Change Password",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"testXYZ@pu.edu.pk\",\n  \"password\": \"Okkake999$#@\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/change-password",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "change-password"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "Change Password",
+              "originalRequest": {
+                "method": "POST",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"email\": \"l233059@lhr.nu.edu.pk\",\n  \"password\": \"Okkake999$#@@\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/auth/change-password",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "auth",
+                    "change-password"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "Text",
+              "header": [
+                {
+                  "key": "x-powered-by",
+                  "value": "Express"
+                },
+                {
+                  "key": "access-control-allow-origin",
+                  "value": "*"
+                },
+                {
+                  "key": "Vary",
+                  "value": "Origin"
+                },
+                {
+                  "key": "Access-Control-Allow-Credentials",
+                  "value": "true"
+                },
+                {
+                  "key": "content-type",
+                  "value": "application/json; charset=utf-8"
+                },
+                {
+                  "key": "content-length",
+                  "value": "43"
+                },
+                {
+                  "key": "etag",
+                  "value": "W/\"2b-1leFLxO9pvRJ4B0CZIygDRcnOKs\""
+                },
+                {
+                  "key": "date",
+                  "value": "Thu, 26 Mar 2026 10:27:27 GMT"
+                },
+                {
+                  "key": "connection",
+                  "value": "close"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n    \"message\": \"Password updated successfully\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Promote User",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"test@nu.edu.pk\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/promote",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "promote"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "Promote User",
+              "originalRequest": {
+                "method": "POST",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"email\": \"l233059@lhr.nu.edu.pk\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/auth/promote",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "auth",
+                    "promote"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": null,
+              "header": [
+                {
+                  "key": "x-powered-by",
+                  "value": "Express"
+                },
+                {
+                  "key": "access-control-allow-origin",
+                  "value": "*"
+                },
+                {
+                  "key": "Vary",
+                  "value": "Origin"
+                },
+                {
+                  "key": "Access-Control-Allow-Credentials",
+                  "value": "true"
+                },
+                {
+                  "key": "content-type",
+                  "value": "application/json; charset=utf-8"
+                },
+                {
+                  "key": "content-length",
+                  "value": "71"
+                },
+                {
+                  "key": "etag",
+                  "value": "W/\"47-u3ZhZ9tpW3nCIOekN7Ng309qLzk\""
+                },
+                {
+                  "key": "date",
+                  "value": "Thu, 26 Mar 2026 11:39:19 GMT"
+                },
+                {
+                  "key": "connection",
+                  "value": "close"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n    \"message\": \"User l233059@lhr.nu.edu.pk promoted to Admin successfully\"\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "2. User Service",
+      "item": [
+        {
+          "name": "Get My Profile",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/users/profile",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "users",
+                "profile"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "Get My Profile",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/users/profile",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "users",
+                    "profile"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": null,
+              "header": [
+                {
+                  "key": "x-powered-by",
+                  "value": "Express"
+                },
+                {
+                  "key": "access-control-allow-origin",
+                  "value": "*"
+                },
+                {
+                  "key": "Vary",
+                  "value": "Origin"
+                },
+                {
+                  "key": "Access-Control-Allow-Credentials",
+                  "value": "true"
+                },
+                {
+                  "key": "content-type",
+                  "value": "application/json; charset=utf-8"
+                },
+                {
+                  "key": "content-length",
+                  "value": "171"
+                },
+                {
+                  "key": "etag",
+                  "value": "W/\"ab-sWUGrT3/OoyUudFSRLAn7crfJRo\""
+                },
+                {
+                  "key": "date",
+                  "value": "Thu, 26 Mar 2026 10:56:10 GMT"
+                },
+                {
+                  "key": "connection",
+                  "value": "close"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n    \"email\": \"l233059@lhr.nu.edu.pk\",\n    \"name\": \"Muhammad Ahmad Butt\",\n    \"rollNo\": \"23L-3059\",\n    \"imageUrl\": null,\n    \"reputationScore\": 0,\n    \"isBan\": false,\n    \"createdAt\": \"2026-03-26T10:18:52.355Z\"\n}"
+            },
+            {
+              "name": "Get My Profile",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/users/profile",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "users",
+                    "profile"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": null,
+              "header": [
+                {
+                  "key": "x-powered-by",
+                  "value": "Express"
+                },
+                {
+                  "key": "access-control-allow-origin",
+                  "value": "*"
+                },
+                {
+                  "key": "Vary",
+                  "value": "Origin"
+                },
+                {
+                  "key": "Access-Control-Allow-Credentials",
+                  "value": "true"
+                },
+                {
+                  "key": "content-type",
+                  "value": "application/json; charset=utf-8"
+                },
+                {
+                  "key": "content-length",
+                  "value": "309"
+                },
+                {
+                  "key": "etag",
+                  "value": "W/\"135-RlnJrtSsE3uQyEP7xDviY+3Abh0\""
+                },
+                {
+                  "key": "date",
+                  "value": "Thu, 26 Mar 2026 11:20:31 GMT"
+                },
+                {
+                  "key": "connection",
+                  "value": "close"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n    \"email\": \"l233059@lhr.nu.edu.pk\",\n    \"name\": \"New Name\",\n    \"rollNo\": \"21L-1234\",\n    \"imageUrl\": \"https://fast-ex-images-3059.s3.ap-south-1.amazonaws.com/profile-images/1774524004907-765421761-WhatsApp%20Image%202026-03-23%20at%203.04.40%20PM.jpeg\",\n    \"reputationScore\": 110,\n    \"isBan\": false,\n    \"createdAt\": \"2026-03-26T10:18:52.355Z\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Update Profile",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"New Name\",\n  \"rollNo\": \"21L-1234\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/users/profile",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "users",
+                "profile"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "Update Profile",
+              "originalRequest": {
+                "method": "PUT",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"New Name\",\n  \"rollNo\": \"21L-1234\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/users/profile",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "users",
+                    "profile"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": null,
+              "header": [
+                {
+                  "key": "x-powered-by",
+                  "value": "Express"
+                },
+                {
+                  "key": "access-control-allow-origin",
+                  "value": "*"
+                },
+                {
+                  "key": "Vary",
+                  "value": "Origin"
+                },
+                {
+                  "key": "Access-Control-Allow-Credentials",
+                  "value": "true"
+                },
+                {
+                  "key": "content-type",
+                  "value": "application/json; charset=utf-8"
+                },
+                {
+                  "key": "content-length",
+                  "value": "162"
+                },
+                {
+                  "key": "etag",
+                  "value": "W/\"a2-GBNdcene1bFRXdpiySxZXMzX1L0\""
+                },
+                {
+                  "key": "date",
+                  "value": "Thu, 26 Mar 2026 10:57:26 GMT"
+                },
+                {
+                  "key": "connection",
+                  "value": "close"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n    \"email\": \"l233059@lhr.nu.edu.pk\",\n    \"name\": \"New Name\",\n    \"rollNo\": \"21L-1234\",\n    \"imageUrl\": null,\n    \"reputationScore\": 100,\n    \"isBan\": false,\n    \"createdAt\": \"2026-03-26T10:18:52.355Z\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Upload Profile Image",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "image",
+                  "type": "file",
+                  "value": null
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/users/profile/image",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "users",
+                "profile",
+                "image"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "Upload Profile Image",
+              "originalRequest": {
+                "method": "POST",
+                "header": [],
+                "body": {
+                  "mode": "formdata",
+                  "formdata": [
+                    {
+                      "key": "image",
+                      "type": "file",
+                      "src": "/C:/Users/ahmad/Downloads/WhatsApp Image 2026-03-23 at 3.04.40 PM.jpeg"
+                    }
+                  ]
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/users/profile/image",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "users",
+                    "profile",
+                    "image"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": null,
+              "header": [
+                {
+                  "key": "x-powered-by",
+                  "value": "Express"
+                },
+                {
+                  "key": "access-control-allow-origin",
+                  "value": "*"
+                },
+                {
+                  "key": "Vary",
+                  "value": "Origin"
+                },
+                {
+                  "key": "Access-Control-Allow-Credentials",
+                  "value": "true"
+                },
+                {
+                  "key": "content-type",
+                  "value": "application/json; charset=utf-8"
+                },
+                {
+                  "key": "content-length",
+                  "value": "348"
+                },
+                {
+                  "key": "etag",
+                  "value": "W/\"15c-3eTdTZEU0ZsSWH+THgw9dqrQaCM\""
+                },
+                {
+                  "key": "date",
+                  "value": "Thu, 26 Mar 2026 11:20:06 GMT"
+                },
+                {
+                  "key": "connection",
+                  "value": "close"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n    \"message\": \"Image uploaded\",\n    \"profile\": {\n        \"email\": \"l233059@lhr.nu.edu.pk\",\n        \"name\": \"New Name\",\n        \"rollNo\": \"21L-1234\",\n        \"imageUrl\": \"https://fast-ex-images-3059.s3.ap-south-1.amazonaws.com/profile-images/1774524004907-765421761-WhatsApp%20Image%202026-03-23%20at%203.04.40%20PM.jpeg\",\n        \"reputationScore\": 110,\n        \"isBan\": false,\n        \"createdAt\": \"2026-03-26T10:18:52.355Z\"\n    }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Get Public Profile",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/users/other@nu.edu.pk",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "users",
+                "other@nu.edu.pk"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "Get Public Profile",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/users/testXYZ@pu.edu.pk",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "users",
+                    "testXYZ@pu.edu.pk"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": null,
+              "header": [
+                {
+                  "key": "x-powered-by",
+                  "value": "Express"
+                },
+                {
+                  "key": "access-control-allow-origin",
+                  "value": "*"
+                },
+                {
+                  "key": "Vary",
+                  "value": "Origin"
+                },
+                {
+                  "key": "Access-Control-Allow-Credentials",
+                  "value": "true"
+                },
+                {
+                  "key": "content-type",
+                  "value": "application/json; charset=utf-8"
+                },
+                {
+                  "key": "content-length",
+                  "value": "153"
+                },
+                {
+                  "key": "etag",
+                  "value": "W/\"99-9cXVUCq77p08XHtrSwMJUoo4fpE\""
+                },
+                {
+                  "key": "date",
+                  "value": "Thu, 26 Mar 2026 10:58:44 GMT"
+                },
+                {
+                  "key": "connection",
+                  "value": "close"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n    \"email\": \"testXYZ@pu.edu.pk\",\n    \"name\": \"XYZ\",\n    \"rollNo\": \"23L-XYZ123\",\n    \"imageUrl\": null,\n    \"reputationScore\": 0,\n    \"isBan\": false,\n    \"createdAt\": \"2026-03-26T10:17:21.139Z\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Get Reputation",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/users/other@nu.edu.pk/reputation",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "users",
+                "other@nu.edu.pk",
+                "reputation"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "Get Reputation",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/users/l233059@lhr.nu.edu.pk/reputation",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "users",
+                    "l233059@lhr.nu.edu.pk",
+                    "reputation"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": null,
+              "header": [
+                {
+                  "key": "x-powered-by",
+                  "value": "Express"
+                },
+                {
+                  "key": "access-control-allow-origin",
+                  "value": "*"
+                },
+                {
+                  "key": "Vary",
+                  "value": "Origin"
+                },
+                {
+                  "key": "Access-Control-Allow-Credentials",
+                  "value": "true"
+                },
+                {
+                  "key": "content-type",
+                  "value": "application/json; charset=utf-8"
+                },
+                {
+                  "key": "content-length",
+                  "value": "23"
+                },
+                {
+                  "key": "etag",
+                  "value": "W/\"17-wjvKAzTAlFwiVpME1OcGnP47iQw\""
+                },
+                {
+                  "key": "date",
+                  "value": "Thu, 26 Mar 2026 10:59:05 GMT"
+                },
+                {
+                  "key": "connection",
+                  "value": "close"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n    \"reputationScore\": 100\n}"
+            }
+          ]
+        },
+        {
+          "name": "Add Reputation",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"score\": 10\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/users/other@nu.edu.pk/reputation/add",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "users",
+                "other@nu.edu.pk",
+                "reputation",
+                "add"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "Add Reputation",
+              "originalRequest": {
+                "method": "POST",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"score\": 10\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/users/l233059@lhr.nu.edu.pk/reputation/add",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "users",
+                    "l233059@lhr.nu.edu.pk",
+                    "reputation",
+                    "add"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": null,
+              "header": [
+                {
+                  "key": "x-powered-by",
+                  "value": "Express"
+                },
+                {
+                  "key": "access-control-allow-origin",
+                  "value": "*"
+                },
+                {
+                  "key": "Vary",
+                  "value": "Origin"
+                },
+                {
+                  "key": "Access-Control-Allow-Credentials",
+                  "value": "true"
+                },
+                {
+                  "key": "content-type",
+                  "value": "application/json; charset=utf-8"
+                },
+                {
+                  "key": "content-length",
+                  "value": "38"
+                },
+                {
+                  "key": "etag",
+                  "value": "W/\"26-t68oKaM0jHxlfdYlDEPKk4nqONQ\""
+                },
+                {
+                  "key": "date",
+                  "value": "Thu, 26 Mar 2026 11:16:41 GMT"
+                },
+                {
+                  "key": "connection",
+                  "value": "close"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n    \"message\": \"Reputation points added!\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Deduct Reputation",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"score\": 5\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/users/other@nu.edu.pk/reputation/deduct",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "users",
+                "other@nu.edu.pk",
+                "reputation",
+                "deduct"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "Deduct Reputation",
+              "originalRequest": {
+                "method": "POST",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"score\": 5\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/users/l233059@lhr.nu.edu.pk/reputation/deduct",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "users",
+                    "l233059@lhr.nu.edu.pk",
+                    "reputation",
+                    "deduct"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": null,
+              "header": [
+                {
+                  "key": "x-powered-by",
+                  "value": "Express"
+                },
+                {
+                  "key": "access-control-allow-origin",
+                  "value": "*"
+                },
+                {
+                  "key": "Vary",
+                  "value": "Origin"
+                },
+                {
+                  "key": "Access-Control-Allow-Credentials",
+                  "value": "true"
+                },
+                {
+                  "key": "content-type",
+                  "value": "application/json; charset=utf-8"
+                },
+                {
+                  "key": "content-length",
+                  "value": "41"
+                },
+                {
+                  "key": "etag",
+                  "value": "W/\"29-2yaSicQJz7mOb7GEt47352GLIlw\""
+                },
+                {
+                  "key": "date",
+                  "value": "Thu, 26 Mar 2026 11:16:47 GMT"
+                },
+                {
+                  "key": "connection",
+                  "value": "close"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n    \"message\": \"Reputation points deducted!\"\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "3. Listing Service",
+      "item": [
+        {
+          "name": "Create Sell Listing",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"SELL\",\n  \"title\": \"Calculus Book\",\n  \"description\": \"Good condition, 2nd edition.\",\n  \"price\": \"1250\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/listings",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "listings"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create Rent Listing",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"RENT\",\n  \"title\": \"Scientific Calculator\",\n  \"description\": \"Casio fx-991EX.\",\n  \"pricePerHour\": \"200\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/listings",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "listings"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create Exchange Listing",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"EXCHANGE\",\n  \"title\": \"Data Structures Notes\",\n  \"description\": \"I want to exchange these for Physics notes.\",\n  \"withTitle\": \"Physics Notes\",\n  \"withDescription\": \"Must cover mechanics.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/listings",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "listings"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get All Listings",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/listings?type=SELL&search=book",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "listings"
+              ],
+              "query": [
+                {
+                  "key": "type",
+                  "value": "SELL"
+                },
+                {
+                  "key": "search",
+                  "value": "book"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get My Listings",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/listings/my",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "listings",
+                "my"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Listing by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/listings/LISTING_ID_HERE",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "listings",
+                "LISTING_ID_HERE"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Listing",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/listings/LISTING_ID_HERE",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "listings",
+                "LISTING_ID_HERE"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Post Comment",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"content\": \"Is this still available?\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/listings/LISTING_ID_HERE/comments",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "listings",
+                "LISTING_ID_HERE",
+                "comments"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Comment",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/listings/LISTING_ID_HERE/comments/COMMENT_ID_HERE",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "listings",
+                "LISTING_ID_HERE",
+                "comments",
+                "COMMENT_ID_HERE"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Verify Listing Status",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"isVerified\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/listings/LISTING_ID_HERE/verify",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "listings",
+                "LISTING_ID_HERE",
+                "verify"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Submit Bargain",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"price\": \"1000\",\n  \"type\": \"BUY\",\n  \"sellListingId\": \"LISTING_ID_HERE\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/listings/LISTING_ID_HERE/bargain",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "listings",
+                "LISTING_ID_HERE",
+                "bargain"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Respond Bargain",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"ACCEPTED\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/listings/bargain/BARGAIN_ID_HERE",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "listings",
+                "bargain",
+                "BARGAIN_ID_HERE"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Request Listing",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/listings/LISTING_ID_HERE/request",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "listings",
+                "LISTING_ID_HERE",
+                "request"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "4. Messaging Service",
+      "item": [
+        {
+          "name": "Get All Chats",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/messages/chats",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "messages",
+                "chats"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create / Fetch Chat",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"otherUserEmail\": \"target@nu.edu.pk\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/messages/chats",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "messages",
+                "chats"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Chat by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/messages/chats/CHAT_ID_HERE",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "messages",
+                "chats",
+                "CHAT_ID_HERE"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Send Message",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"content\": \"Hey, I saw your listing!\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/messages/chats/CHAT_ID_HERE",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "messages",
+                "chats",
+                "CHAT_ID_HERE"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "5. Notification Service",
+      "item": [
+        {
+          "name": "Get My Notifications",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/notifications",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "notifications"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Mark All as Read",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/notifications/read-all",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "notifications",
+                "read-all"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "6. Admin Service",
+      "item": [
+        {
+          "name": "Toggle Ban User",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"isBan\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/users/test@nu.edu.pk/toggle-ban",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "users",
+                "test@nu.edu.pk",
+                "toggle-ban"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Verify Listing",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/listings/69c51886aa3f8b11864c4f58/verify",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "listings",
+                "69c51886aa3f8b11864c4f58",
+                "verify"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Listing",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/listings/69c51886aa3f8b11864c4f58",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "listings",
+                "69c51886aa3f8b11864c4f58"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Comment",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/listings/LISTING_ID_HERE/comments/COMMENT_ID_HERE",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "listings",
+                "LISTING_ID_HERE",
+                "comments",
+                "COMMENT_ID_HERE"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "if (pm.environment.get('token')) {",
+          "    pm.request.headers.add({key: 'Authorization', value: 'Bearer ' + pm.environment.get('token')});",
+          "}"
+        ]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:5000"
+    },
+    {
+      "key": "token",
+      "value": "PASTE_YOUR_CLERK_TOKEN_HERE"
+    }
+  ]
+}
