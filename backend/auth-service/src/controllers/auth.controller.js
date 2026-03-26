@@ -142,7 +142,7 @@ const login = async (req, res) => {
         token: sessionToken,
         user: {
           ...safeUser,
-          imageUrl: clerkUser?.imageUrl || null
+          imageUrl: safeUser.imageUrl || null
         }
       });
     } catch (tokenErr) {
@@ -280,4 +280,4 @@ const getToken = async (req, res) => {
   }
 };
 
-module.exports = { register, verifyOTP, login, checkEmail, changePassword, promote, toggleBan, getToken };
+module.exports = { register, verifyOTP, login, checkEmail, changePassword, promote, getToken };

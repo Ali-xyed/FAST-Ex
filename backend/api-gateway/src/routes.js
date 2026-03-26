@@ -15,6 +15,7 @@ const proxyOptions = (serviceUrl) => ({
     proxyReqOpts.headers['x-user-role'] = srcReq.headers['x-user-role'] || '';
     return proxyReqOpts;
   },
+  parseReqBody: false
 });
 
 router.use('/api/auth', proxy(process.env.AUTH_SERVICE_URL, proxyOptions(process.env.AUTH_SERVICE_URL)));

@@ -11,6 +11,7 @@ router.post('/profile/image', verifyAuth, upload.single('image'), userController
 
 router.get('/:email', verifyAuth, userController.getPublicProfile);
 router.get('/:email/reputation', verifyAuth, userController.getReputation);
-router.patch('/:email/ban', verifyAuth, userController.toggleBan);
+router.post('/:email/reputation/add', verifyAuth, userController.addReputation);
+router.post('/:email/reputation/deduct', verifyAuth, userController.deductReputation);
 
 module.exports = router;

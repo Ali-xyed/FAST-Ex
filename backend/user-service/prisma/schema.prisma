@@ -12,7 +12,7 @@ model UserProfile {
   name             String
   rollNo           String
   imageUrl         String?
-  reputationScore  Int      @default(0)
+  reputationScore  Int      @default(100)
   isBan            Boolean  @default(false)
   createdAt        DateTime @default(now())
 }

@@ -107,31 +107,36 @@ const getReputation = async (req, res) => {
   }
 };
 
-const toggleBan = async (req, res) => {
+const addReputation = async (req, res) => {
   try {
     const { email } = req.params;
-    const { isBan } = req.body;
-    let newStatus = isBan;
+    const { score } = req.body;
+    if (score === undefined) return res.status(400).json({ message: 'Score is required' });
 
-    const user = await userRepo.findByEmail(email);
-    if (!user) {
-      console.error(`[User Service] User profile not found for email: ${email}`);
-      return res.status(404).json({ message: 'User profile not found' });
-    }
-
-    if (newStatus === undefined) {
-      newStatus = !user.isBan;
-    }
-
-    const profile = await userRepo.updateUser(email, { isBan: newStatus });
-
+    const profile = await userRepo.updateReputation(email, parseInt(score));
     await delCache(`user:profile:${email}`, `user:public:${email}`, `user:rep:${email}`);
-
-    res.status(200).json(profile);
+    res.status(200).json({ message: "Reputation points added!" });
   } catch (error) {
-    console.error(`[User Service] Toggle ban error for ${req.params.email}:`, error.message);
-    res.status(500).json({ message: 'Server error', error: error.message });
+    if (error.code === 'P2025') return res.status(404).json({ message: 'User not found' });
+    console.error(error);
+    res.status(500).json({ message: 'Server error' });
   }
 };
 
-module.exports = { getProfile, updateProfile, uploadImage, getPublicProfile, getReputation, toggleBan };
+const deductReputation = async (req, res) => {
+  try {
+    const { email } = req.params;
+    const { score } = req.body;
+    if (score === undefined) return res.status(400).json({ message: 'Score is required' });
+
+    const profile = await userRepo.updateReputation(email, -parseInt(score));
+    await delCache(`user:profile:${email}`, `user:public:${email}`, `user:rep:${email}`);
+    res.status(200).json({ message: "Reputation points deducted!" });
+  } catch (error) {
+    if (error.code === 'P2025') return res.status(404).json({ message: 'User not found' });
+    console.error(error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+module.exports = { getProfile, updateProfile, uploadImage, getPublicProfile, getReputation, addReputation, deductReputation };
