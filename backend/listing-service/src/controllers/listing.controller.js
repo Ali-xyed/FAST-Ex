@@ -1,6 +1,33 @@
 const listingRepo = require('../repositories/listing.repository');
 const { sendEvent } = require('../config/kafka');
 const { getIo } = require('../socket');
+const { publishMessage } = require('../config/rabbitmq');
+const redis = require('../config/redis');
+
+const CACHE_TTL_ALL = 120;
+const CACHE_TTL_ONE = 300;
+
+const getFromCache = async (key) => {
+  try {
+    const data = await redis.get(key);
+    return data ? JSON.parse(data) : null;
+  } catch { return null; }
+};
+
+const setCache = async (key, value, ttl) => {
+  try { await redis.setex(key, ttl, JSON.stringify(value)); } catch { }
+};
+
+const delCache = async (...keys) => {
+  try { if (keys.length) await redis.del(...keys); } catch { }
+};
+
+const delCachePattern = async (pattern) => {
+  try {
+    const keys = await redis.keys(pattern);
+    if (keys.length) await redis.del(...keys);
+  } catch { }
+};
 
 const createListing = async (req, res) => {
   try {
@@ -19,6 +46,9 @@ const createListing = async (req, res) => {
       await listingRepo.createExchangeListing({ listingId: listing.id, withTitle: withTitle || '', withDescription: withDescription || '' });
     }
 
+    await delCachePattern('listings:all:*');
+    await delCache(`listings:my:${email}`);
+
     res.status(201).json(listing);
   } catch (err) {
     console.error(err);
@@ -29,8 +59,12 @@ const createListing = async (req, res) => {
 const getListings = async (req, res) => {
   try {
     const { type, search } = req.query;
-    const where = {};
+    const cacheKey = `listings:all:${type || ''}:${search || ''}`;
 
+    const cached = await getFromCache(cacheKey);
+    if (cached) return res.status(200).json(cached);
+
+    const where = {};
     if (type) where.type = type;
     if (search) where.title = { contains: search, mode: 'insensitive' };
 
@@ -39,6 +73,8 @@ const getListings = async (req, res) => {
       include: { sellListing: true, rentListing: true, exchangeListing: true },
       orderBy: { createdAt: 'desc' }
     });
+
+    await setCache(cacheKey, listings, CACHE_TTL_ALL);
     res.status(200).json(listings);
   } catch (err) {
     console.error(err);
@@ -49,11 +85,18 @@ const getListings = async (req, res) => {
 const getMyListings = async (req, res) => {
   try {
     const email = req.headers['x-user-email'];
+    const cacheKey = `listings:my:${email}`;
+
+    const cached = await getFromCache(cacheKey);
+    if (cached) return res.status(200).json(cached);
+
     const listings = await listingRepo.findAllListings({
       where: { email },
       include: { sellListing: true, rentListing: true, exchangeListing: true },
       orderBy: { createdAt: 'desc' }
     });
+
+    await setCache(cacheKey, listings, CACHE_TTL_ALL);
     res.status(200).json(listings);
   } catch (err) {
     console.error(err);
@@ -64,8 +107,15 @@ const getMyListings = async (req, res) => {
 const getListingById = async (req, res) => {
   try {
     const { id } = req.params;
+    const cacheKey = `listing:${id}`;
+
+    const cached = await getFromCache(cacheKey);
+    if (cached) return res.status(200).json(cached);
+
     const listing = await listingRepo.findListingById(id);
     if (!listing) return res.status(404).json({ message: 'Listing not found' });
+
+    await setCache(cacheKey, listing, CACHE_TTL_ONE);
     res.status(200).json(listing);
   } catch (err) {
     console.error(err);
@@ -82,8 +132,9 @@ const postComment = async (req, res) => {
     const comment = await listingRepo.createComment({ listingId: id, fromEmail: email, content });
 
     try { getIo().to(id).emit('new_comment', comment); } catch (e) { }
-
     await sendEvent('comment.posted', { listingId: id, fromEmail: email, content });
+
+    await delCache(`listing:${id}`);
 
     res.status(201).json(comment);
   } catch (err) {
@@ -94,8 +145,11 @@ const postComment = async (req, res) => {
 
 const deleteComment = async (req, res) => {
   try {
-    const { commentId } = req.params;
+    const { id, commentId } = req.params;
     await listingRepo.deleteComment(commentId);
+
+    await delCache(`listing:${id}`);
+
     res.status(200).json({ message: 'Comment deleted' });
   } catch (err) {
     console.error(err);
@@ -122,6 +176,8 @@ const submitBargain = async (req, res) => {
     });
 
     await sendEvent('bargain.submitted', { bargainId: bargain.id, fromEmail: email, toEmail: listing.email, price });
+
+    await delCache(`listing:${id}`);
 
     res.status(201).json(bargain);
   } catch (err) {
@@ -153,7 +209,15 @@ const respondBargain = async (req, res) => {
 const deleteListing = async (req, res) => {
   try {
     const { id } = req.params;
+
+    const listing = await listingRepo.findListingById(id);
+
     await listingRepo.deleteListing(id);
+
+    await delCache(`listing:${id}`);
+    await delCachePattern('listings:all:*');
+    if (listing) await delCache(`listings:my:${listing.email}`);
+
     res.status(200).json({ message: 'Listing deleted' });
   } catch (err) {
     console.error(err);
@@ -166,14 +230,16 @@ const verifyListingStatus = async (req, res) => {
     const { id } = req.params;
     const { isVerified } = req.body;
     const listing = await listingRepo.updateListing(id, { isVerified });
+
+    await delCache(`listing:${id}`);
+    await delCachePattern('listings:all:*');
+
     res.status(200).json(listing);
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: 'Error verifying listing' });
   }
 };
-
-const { publishMessage } = require('../config/rabbitmq');
 
 const requestListing = async (req, res) => {
   try {
