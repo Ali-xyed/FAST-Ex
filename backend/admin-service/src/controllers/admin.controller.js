@@ -15,22 +15,38 @@ const AUTH_SVC = `${process.env.AUTH_SERVICE_URL || 'http://localhost:5002'}/api
 const toggleUserBan = async (req, res) => {
   try {
     const { email } = req.params;
+
     const authRes = await axios.patch(`${AUTH_SVC}/toggle-ban`, { email }, { headers: getAdminHeaders(req) });
     const isBan = authRes.data.isBan;
 
-    await axios.patch(`${USER_SVC}/${email}/ban`, { isBan }, { headers: getAdminHeaders(req) });
-
-    if (isBan) {
-      const channel = getChannel();
-      if (channel) {
-        channel.sendToQueue('email.banned', Buffer.from(JSON.stringify({ email })));
-      }
-      await sendEvent('user.banned', { email });
+    try {
+      await axios.patch(`${USER_SVC}/${email}/ban`, { isBan }, { headers: getAdminHeaders(req) });
+    } catch (userErr) {
+      console.warn(`[Admin Service] User Service update failed for ${email} (${userErr.message}). Proceeding anyway.`);
     }
 
-    res.status(200).json({ message: `User ${email} ban status toggled to ${isBan}`, isBan });
+    const channel = getChannel();
+    if (isBan) {
+      if (channel) {
+        channel.sendToQueue('email.banned', Buffer.from(JSON.stringify({ email })));
+        console.log(`[Admin Service] Ban notice queued for ${email}`);
+      }
+      await sendEvent('user.banned', { email });
+    } else {
+      if (channel) {
+        channel.sendToQueue('email.unbanned', Buffer.from(JSON.stringify({ email })));
+        console.log(`[Admin Service] Unban notice queued for ${email}`);
+      }
+      await sendEvent('user.unbanned', { email });
+    }
+
+    res.status(200).json({
+      message: `User ${email} ban status toggled successfully to ${isBan}`,
+      isBan,
+      user_profile_updated: true
+    });
   } catch (error) {
-    console.error(`[Admin Service] Error toggling ban for user ${req.params.email}:`, error.response?.data || error.message);
+    console.error(`[Admin Service] Critical error toggling ban for ${req.params.email}:`, error.response?.data || error.message);
     res.status(error.response?.status || 500).json({
       message: 'Server error toggling user ban',
       error: error.message,

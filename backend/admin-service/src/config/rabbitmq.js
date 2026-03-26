@@ -7,6 +7,7 @@ const connectRabbitMQ = async () => {
     const connection = await amqplib.connect(process.env.RABBITMQ_URL);
     channel = await connection.createChannel();
     await channel.assertQueue('email.banned', { durable: true });
+    await channel.assertQueue('email.unbanned', { durable: true });
     console.log('RabbitMQ connected (admin-service)');
   } catch (err) {
     console.error('Failed to connect to RabbitMQ from admin-service', err);
