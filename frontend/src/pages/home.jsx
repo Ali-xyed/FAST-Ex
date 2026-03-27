@@ -51,18 +51,31 @@ function HomePage() {
 
       const response = await listingAPI.getAll(params);
       
-      // Console log to check if imageUrl is in the response
-      console.log('📦 Listings Response:', response.data);
+      // Detailed console logs to check backend response
+      console.log('=== LISTINGS API RESPONSE ===');
+      console.log('📦 Full Response:', response);
+      console.log('📦 Response Data:', response.data);
+      console.log('📊 Total Listings:', response.data?.length || 0);
+      
       if (response.data && response.data.length > 0) {
-        console.log('📸 First listing sample:', response.data[0]);
-        console.log('🖼️ ImageUrl field exists?', 'imageUrl' in response.data[0]);
-        console.log('🖼️ ImageUrl value:', response.data[0].imageUrl);
+        console.log('📸 First Listing (Full Object):', response.data[0]);
+        console.log('🔑 Keys in First Listing:', Object.keys(response.data[0]));
+        console.log('🖼️ imageUrl exists?', 'imageUrl' in response.data[0]);
+        console.log('🖼️ imageUrl value:', response.data[0].imageUrl);
+        console.log('📧 email:', response.data[0].email);
+        console.log('📝 title:', response.data[0].title);
+        console.log('💰 sellListing:', response.data[0].sellListing);
+        console.log('🏠 rentListing:', response.data[0].rentListing);
+        console.log('🔄 exchangeListing:', response.data[0].exchangeListing);
+      } else {
+        console.log('⚠️ No listings in response');
       }
+      console.log('=== END RESPONSE ===');
       
       setListings(response.data || []);
     } catch (error) {
-      console.error('Error fetching listings:', error);
-      console.error('Error details:', error.response?.data);
+      console.error('❌ Error fetching listings:', error);
+      console.error('❌ Error details:', error.response?.data);
       toast.error(error.response?.data?.message || 'Failed to load listings');
       setListings([]);
     } finally {

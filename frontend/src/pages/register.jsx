@@ -33,13 +33,51 @@ function RegisterPage() {
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
-        setFormData(prev => ({ ...prev, [name]: value }));
+        
+        // If email is being changed, auto-extract roll number
+        if (name === 'email') {
+            setFormData(prev => ({ 
+                ...prev, 
+                [name]: value,
+                rollNo: extractRollNo(value)
+            }));
+        } else {
+            setFormData(prev => ({ ...prev, [name]: value }));
+        }
+    };
+
+    // Extract roll number from email (l233067@lhr.nu.edu.pk → 23L-3067)
+    const extractRollNo = (email) => {
+        const match = email.match(/^l(\d{2})(\d{4})@/);
+        if (match) {
+            const year = match[1];
+            const number = match[2];
+            return `${year}L-${number}`;
+        }
+        return '';
     };
 
     const handleNext = (e) => {
         e.preventDefault();
         if (step === 1 && !formData.name) return;
-        if (step === 2 && (!formData.email || !formData.rollNo)) return;
+        
+        if (step === 2) {
+            // Validate email domain
+            if (!formData.email.endsWith('@lhr.nu.edu.pk')) {
+                toast.error('Only @lhr.nu.edu.pk emails are allowed');
+                return;
+            }
+            // Validate email format (must start with 'l' followed by 6 digits)
+            if (!/^l\d{6}@lhr\.nu\.edu\.pk$/.test(formData.email)) {
+                toast.error('Email must be in format: lYYXXXX@lhr.nu.edu.pk (e.g., l233067@lhr.nu.edu.pk)');
+                return;
+            }
+            if (!formData.rollNo) {
+                toast.error('Roll number could not be extracted from email');
+                return;
+            }
+        }
+        
         setStep(prev => prev + 1);
     };
 
@@ -187,17 +225,19 @@ function RegisterPage() {
                                             type="email" name="email" value={formData.email}
                                             onChange={handleInputChange}
                                             className="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-lg focus:outline-none focus:border-black focus:ring-1 focus:ring-black text-sm placeholder-gray-300"
-                                            placeholder="l23XXX@lhr.nu.edu.pk" required
+                                            placeholder="l233067@lhr.nu.edu.pk" required
                                         />
+                                        <p className="text-[10px] text-gray-400 mt-1">Only @lhr.nu.edu.pk emails accepted</p>
                                     </div>
                                     <div>
-                                        <label className="block text-[12px] font-bold text-gray-800 mb-2">Roll Number</label>
+                                        <label className="block text-[12px] font-bold text-gray-800 mb-2">Roll Number (Auto-extracted)</label>
                                         <input
                                             type="text" name="rollNo" value={formData.rollNo}
-                                            onChange={handleInputChange}
-                                            className="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-lg focus:outline-none focus:border-black focus:ring-1 focus:ring-black text-sm placeholder-gray-300"
-                                            placeholder="23L-3059" required
+                                            readOnly
+                                            className="w-full px-4 py-2.5 bg-gray-100 border border-gray-200 rounded-lg text-sm text-gray-600 cursor-not-allowed"
+                                            placeholder="Will be auto-filled from email"
                                         />
+                                        <p className="text-[10px] text-gray-400 mt-1">Automatically extracted from your email</p>
                                     </div>
                                 </div>
                             )}

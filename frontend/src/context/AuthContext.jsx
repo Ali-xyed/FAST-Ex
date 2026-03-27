@@ -40,11 +40,21 @@ export const AuthProvider = ({ children }) => {
     initAuth();
   }, []);
 
-  const login = (token, userData) => {
+  const login = async (token, userData) => {
     localStorage.setItem('token', token);
-    localStorage.setItem('user', JSON.stringify(userData));
-    setUser(userData);
     setIsAuthenticated(true);
+    
+    // Fetch fresh profile data from server instead of using login response
+    try {
+      const response = await userAPI.getProfile();
+      setUser(response.data);
+      localStorage.setItem('user', JSON.stringify(response.data));
+    } catch (error) {
+      console.error('Error fetching profile after login:', error);
+      // Fallback to userData from login if profile fetch fails
+      setUser(userData);
+      localStorage.setItem('user', JSON.stringify(userData));
+    }
   };
 
   const logout = () => {
