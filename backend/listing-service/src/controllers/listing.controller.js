@@ -31,16 +31,12 @@ const delCachePattern = async (pattern) => {
 
 const createListing = async (req, res) => {
   try {
-    console.log('Creating listing - Headers:', req.headers);
-    console.log('Creating listing - Body:', req.body);
-    console.log('Creating listing - File:', req.file);
-
     const email = req.headers['x-user-email'];
     if (!email) {
       return res.status(401).json({ message: 'User email not found in headers' });
     }
 
-    const { type, title, description, price, pricePerHour, withTitle, withDescription, isBargaining } = req.body;
+    const { type, title, description, price, pricePerHour } = req.body;
     
     if (!type || !title || !description) {
       return res.status(400).json({ message: 'Missing required fields: type, title, description' });
@@ -48,35 +44,30 @@ const createListing = async (req, res) => {
 
     const imageUrl = req.file ? req.file.location : null;
 
-    console.log('Creating listing with data:', { email, type, title, description, imageUrl });
-
     const listing = await listingRepo.createListing({ email, type, title, description, imageUrl });
-
-    console.log('Listing created:', listing.id);
 
     if (type === 'SELL' && price) {
       await listingRepo.createSellListing({ 
         listingId: listing.id, 
-        price: parseFloat(price),
-        isBargaining: isBargaining === 'true' || isBargaining === true
+        price: parseFloat(price)
       });
     }
     if (type === 'RENT' && pricePerHour) {
       await listingRepo.createRentListing({ 
         listingId: listing.id, 
-        pricePerHour: parseFloat(pricePerHour),
-        isBargaining: isBargaining === 'true' || isBargaining === true
+        pricePerHour: parseFloat(pricePerHour)
       });
     }
     if (type === 'EXCHANGE') {
-      await listingRepo.createExchangeListing({ listingId: listing.id, withTitle: withTitle || '', withDescription: withDescription || '' });
+      await listingRepo.createExchangeListing({ 
+        listingId: listing.id
+      });
     }
 
     await delCachePattern('listings:all:*');
     await delCache(`listings:my:${email}`);
 
-    console.log('Listing creation complete');
-    res.status(201).json(listing);
+    res.status(201).json({message: "Item has been posted!"});
   } catch (err) {
     console.error('Error creating listing:', err);
     res.status(500).json({ message: 'Server error creating listing', error: err.message });
@@ -101,8 +92,28 @@ const getListings = async (req, res) => {
       orderBy: { createdAt: 'desc' }
     });
 
-    await setCache(cacheKey, listings, CACHE_TTL_ALL);
-    res.status(200).json(listings);
+    const axios = require('axios');
+    const listingsWithProfiles = await Promise.all(
+      listings.map(async (listing) => {
+        try {
+          const profileResponse = await axios.get(`${process.env.USER_SERVICE_URL}/api/users/public/${listing.email}`);
+          return { 
+            ...listing, 
+            userProfile: profileResponse.data,
+            profileImageUrl: profileResponse.data?.imageUrl || null
+          };
+        } catch (err) {
+          return { 
+            ...listing, 
+            userProfile: null,
+            profileImageUrl: null
+          };
+        }
+      })
+    );
+
+    await setCache(cacheKey, listingsWithProfiles, CACHE_TTL_ALL);
+    res.status(200).json(listingsWithProfiles);
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: 'Error fetching listings' });
@@ -156,10 +167,13 @@ const postComment = async (req, res) => {
     const { id } = req.params;
     const { content } = req.body;
 
+    const listing = await listingRepo.findListingById(id);
+    if (!listing) return res.status(404).json({ message: 'Listing not found' });
+
     const comment = await listingRepo.createComment({ listingId: id, fromEmail: email, content });
 
     try { getIo().to(id).emit('new_comment', comment); } catch (e) { }
-    await sendEvent('comment.posted', { listingId: id, fromEmail: email, content });
+    await sendEvent('comment.posted', { listingId: id, fromEmail: email, ownerEmail: listing.email, content });
 
     await delCache(`listing:${id}`);
 
@@ -188,58 +202,41 @@ const submitBargain = async (req, res) => {
   try {
     const email = req.headers['x-user-email'];
     const { id } = req.params;
-    const { price, type, sellListingId, rentListingId } = req.body;
+    const { price } = req.body;
+
+    if (!price) {
+      return res.status(400).json({ message: 'Price is required' });
+    }
 
     const listing = await listingRepo.findListingById(id);
     if (!listing) return res.status(404).json({ message: 'Listing not found' });
 
-    const bargain = await listingRepo.createBargain({
-      fromEmail: email,
-      toEmail: listing.email,
+    if (listing.type !== 'SELL' && listing.type !== 'RENT') {
+      return res.status(400).json({ message: 'Bargaining is only available for SELL and RENT listings' });
+    }
+
+    // Send Kafka notification
+    await sendEvent('bargain.received', { 
+      fromEmail: email, 
+      toEmail: listing.email, 
       price: parseFloat(price),
-      type,
-      sellListingId: sellListingId || null,
-      rentListingId: rentListingId || null
+      listingTitle: listing.title,
+      listingType: listing.type
     });
 
-    await sendEvent('bargain.submitted', { bargainId: bargain.id, fromEmail: email, toEmail: listing.email, price });
+    // Send RabbitMQ email
+    publishMessage('bargain.requested', {
+      ownerEmail: listing.email,
+      requesterEmail: email,
+      listingTitle: listing.title,
+      price: parseFloat(price),
+      listingType: listing.type
+    });
 
-    await delCache(`listing:${id}`);
-
-    res.status(201).json(bargain);
+    res.status(200).json({ message: 'Bargain request sent successfully' });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: 'Error submitting bargain' });
-  }
-};
-
-const respondBargain = async (req, res) => {
-  try {
-    const { bargainId } = req.params;
-    const { status, message } = req.body;
-
-    if (!['ACCEPTED', 'DECLINED'].includes(status)) {
-      return res.status(400).json({ message: 'Invalid status' });
-    }
-
-    const bargain = await listingRepo.updateBargainStatus(bargainId, status);
-    const topic = status === 'ACCEPTED' ? 'bargain.accepted' : 'bargain.declined';
-    await sendEvent(topic, { bargainId: bargain.id, fromEmail: bargain.fromEmail, toEmail: bargain.toEmail });
-
-    if (status === 'ACCEPTED') {
-      const listing = bargain.sellListing?.listing || bargain.rentListing?.listing;
-      publishMessage('email.approve', {
-        requesterEmail: bargain.fromEmail,
-        ownerEmail: bargain.toEmail,
-        listingTitle: listing?.title || 'Your requested item',
-        message: message || ''
-      });
-    }
-
-    res.status(200).json(bargain);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: 'Error responding to bargain' });
   }
 };
 
@@ -293,7 +290,7 @@ const requestListing = async (req, res) => {
       requesterEmail
     });
 
-    publishMessage('email.request', {
+    publishMessage('listing.request', {
       ownerEmail: listing.email,
       requesterEmail,
       listingTitle: listing.title
@@ -306,6 +303,91 @@ const requestListing = async (req, res) => {
   }
 };
 
+const editListing = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const email = req.headers['x-user-email'];
+    const { title, description, price, pricePerHour } = req.body;
+
+    const listing = await listingRepo.findListingById(id);
+    if (!listing) return res.status(404).json({ message: 'Listing not found' });
+    if (listing.email !== email) return res.status(403).json({ message: 'Unauthorized' });
+
+    const updateData = {};
+    if (title) updateData.title = title;
+    if (description) updateData.description = description;
+    if (req.file) updateData.imageUrl = req.file.location;
+
+    const updatedListing = await listingRepo.updateListing(id, updateData);
+
+    if (listing.type === 'SELL' && listing.sellListing && price !== undefined) {
+      await listingRepo.updateSellListing(listing.sellListing.id, { 
+        price: parseFloat(price)
+      });
+    }
+    if (listing.type === 'RENT' && listing.rentListing && pricePerHour !== undefined) {
+      await listingRepo.updateRentListing(listing.rentListing.id, { 
+        pricePerHour: parseFloat(pricePerHour)
+      });
+    }
+
+    await delCache(`listing:${id}`);
+    await delCachePattern('listings:all:*');
+    await delCache(`listings:my:${email}`);
+
+    res.status(200).json({ message: 'Listing updated successfully' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Error updating listing' });
+  }
+};
+
+const submitExchange = async (req, res) => {
+  try {
+    const fromEmail = req.headers['x-user-email'];
+    const { id } = req.params;
+    const { title, description } = req.body;
+
+    if (!title || !description) {
+      return res.status(400).json({ message: 'Missing required fields: title, description' });
+    }
+
+    const listing = await listingRepo.findListingById(id);
+    if (!listing) return res.status(404).json({ message: 'Listing not found' });
+
+    if (listing.type !== 'EXCHANGE') {
+      return res.status(400).json({ message: 'Exchange requests are only available for EXCHANGE listings' });
+    }
+
+    const imageUrl = req.file ? req.file.location : null;
+
+    // Send Kafka notification
+    await sendEvent('exchange.received', { 
+      fromEmail, 
+      toEmail: listing.email, 
+      listingTitle: listing.title,
+      offerTitle: title,
+      offerDescription: description,
+      offerImageUrl: imageUrl
+    });
+
+    // Send RabbitMQ email
+    publishMessage('exchange.requested', {
+      ownerEmail: listing.email,
+      requesterEmail: fromEmail,
+      listingTitle: listing.title,
+      offerTitle: title,
+      offerDescription: description,
+      offerImageUrl: imageUrl
+    });
+
+    res.status(200).json({ message: 'Exchange request sent successfully' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Error submitting exchange request' });
+  }
+};
+
 module.exports = {
   createListing,
   getListings,
@@ -314,8 +396,9 @@ module.exports = {
   postComment,
   deleteComment,
   submitBargain,
-  respondBargain,
   deleteListing,
   verifyListingStatus,
-  requestListing
+  requestListing,
+  editListing,
+  submitExchange
 };

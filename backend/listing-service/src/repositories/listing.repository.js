@@ -60,23 +60,12 @@ class ListingRepository {
     return prisma.comment.delete({ where: { id } });
   }
 
-  async createBargain(data) {
-    return prisma.bargaining.create({ data });
+  async updateSellListing(id, data) {
+    return prisma.sellListing.update({ where: { id }, data });
   }
 
-  async updateBargainStatus(id, status) {
-    return prisma.bargaining.update({
-      where: { id },
-      data: { status },
-      include: {
-        sellListing: { include: { listing: true } },
-        rentListing: { include: { listing: true } }
-      }
-    });
-  }
-
-  async findBargainById(id) {
-    return prisma.bargaining.findUnique({ where: { id } });
+  async updateRentListing(id, data) {
+    return prisma.rentListing.update({ where: { id }, data });
   }
 }
 

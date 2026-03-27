@@ -5,6 +5,8 @@ const { rateLimiter } = require('./middleware/rateLimiter.middleware');
 
 const router = express.Router();
 
+router.get('/health', (req, res) => res.json({ status: 'ok', service: 'api-gateway' }));
+
 router.use(clerkAuth);
 router.use(rateLimiter);
 
@@ -21,6 +23,9 @@ const proxyOptions = (serviceUrl) => ({
 router.use('/api/auth', proxy(process.env.AUTH_SERVICE_URL, proxyOptions(process.env.AUTH_SERVICE_URL)));
 
 router.use('/api/users', requireAuth, proxy(process.env.USER_SERVICE_URL, proxyOptions(process.env.USER_SERVICE_URL)));
+
+router.get('/api/listings', proxy(process.env.LISTING_SERVICE_URL, proxyOptions(process.env.LISTING_SERVICE_URL)));
+router.get('/api/listings/:id', proxy(process.env.LISTING_SERVICE_URL, proxyOptions(process.env.LISTING_SERVICE_URL)));
 
 router.use('/api/listings', requireAuth, proxy(process.env.LISTING_SERVICE_URL, proxyOptions(process.env.LISTING_SERVICE_URL)));
 

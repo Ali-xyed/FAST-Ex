@@ -40,14 +40,16 @@ app.listen(PORT, async () => {
   connectKafka();
   connectRabbitMQ();
 
+  // Cleanup expired OTPs every 10 minutes
   setInterval(async () => {
     try {
       const result = await authRepo.deleteExpiredOTPs();
-      if (result.count > 0) console.log(`Cleaned ${result.count} expired OTPs`);
+      if (result.count > 0) console.log(`[OTP Cleanup] Removed ${result.count} expired OTPs`);
     } catch (err) {
-      console.error('OTP cleanup error:', err.message);
+      console.error('[OTP Cleanup] Error:', err.message);
     }
-  }, 60 * 60 * 1000);
+  }, 10 * 60 * 1000); // 10 minutes
 
   console.log(`Auth service running on port ${PORT}`);
+  console.log(`OTP cleanup scheduled every 10 minutes`);
 });

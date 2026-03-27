@@ -7,6 +7,29 @@ const kafka = new Kafka({
 });
 
 const consumer = kafka.consumer({ groupId: 'user-service-group' });
+const producer = kafka.producer();
+
+let producerConnected = false;
+
+const connectProducer = async () => {
+  if (!producerConnected) {
+    await producer.connect();
+    producerConnected = true;
+    console.log('Kafka Producer connected (user-service)');
+  }
+};
+
+const sendEvent = async (topic, data) => {
+  try {
+    await connectProducer();
+    await producer.send({
+      topic,
+      messages: [{ value: JSON.stringify(data) }]
+    });
+  } catch (error) {
+    console.error('Kafka send error:', error);
+  }
+};
 
 const connectKafkaConsumer = async () => {
   try {
@@ -34,4 +57,4 @@ const connectKafkaConsumer = async () => {
   }
 };
 
-module.exports = { connectKafkaConsumer };
+module.exports = { connectKafkaConsumer, sendEvent };

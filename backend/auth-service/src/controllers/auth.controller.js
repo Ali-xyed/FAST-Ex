@@ -16,6 +16,25 @@ const CLERK_FAPI_URL = getClerkFapiUrl(process.env.CLERK_PUBLISHABLE_KEY);
 
 const generateOTP = () => Math.floor(100000 + Math.random() * 900000).toString();
 
+const sendOTP = async (req, res) => {
+  try {
+    const { email } = req.body;
+    if (!email) return res.status(400).json({ message: 'Email is required' });
+
+    const user = await authRepo.findUserByEmail(email);
+    if (!user) return res.status(404).json({ message: 'User not found' });
+
+    const otp = generateOTP();
+    await authRepo.createOTP({ email, code: otp });
+    publishMessage('email.otp', { email, otp });
+
+    res.status(200).json({ message: 'OTP sent to email' });
+  } catch (error) {
+    console.error('Send OTP error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
 const register = async (req, res) => {
   try {
     const { email, name, rollNo, password } = req.body;
@@ -175,6 +194,11 @@ const changePassword = async (req, res) => {
       return res.status(400).json({ message: 'Email and new password are required' });
     }
 
+    // Validate password strength (Clerk requires at least 8 characters)
+    if (password.length < 8) {
+      return res.status(400).json({ message: 'Password must be at least 8 characters long' });
+    }
+
     const user = await authRepo.findUserByEmail(email);
     if (!user) return res.status(404).json({ message: 'User not found' });
 
@@ -185,10 +209,28 @@ const changePassword = async (req, res) => {
       const users = await clerk.users.getUserList({ emailAddress: [email] });
       const clerkUser = users.data?.[0];
       if (clerkUser) {
-        await clerk.users.updateUser(clerkUser.id, { password });
+        await clerk.users.updateUser(clerkUser.id, { 
+          password: password
+        });
+        console.log(`[AUTH] Clerk password updated for ${email}`);
+      } else {
+        console.log(`[AUTH] User not found in Clerk, creating with new password: ${email}`);
+        await clerk.users.createUser({
+          emailAddress: [email],
+          password: password,
+          firstName: user.name.split(' ')[0] || 'User',
+          publicMetadata: { rollNo: user.rollNo, role: user.role || 'STUDENT' }
+        });
+        console.log(`[AUTH] Clerk user created for ${email}`);
       }
     } catch (err) {
-      console.error('Clerk password sync error:', err.message);
+      console.error('Clerk password sync error:', err.errors || err.message);
+      if (err.errors) {
+        console.error('Clerk error details:', JSON.stringify(err.errors, null, 2));
+      }
+      if (err.clerkError) {
+        console.error('Clerk API error:', err);
+      }
     }
 
     res.status(200).json({ message: 'Password updated successfully' });
@@ -298,4 +340,4 @@ const toggleBan = async (req, res) => {
   }
 };
 
-module.exports = { register, verifyOTP, login, checkEmail, changePassword, promote, getToken, toggleBan };
+module.exports = { register, verifyOTP, sendOTP, login, checkEmail, changePassword, promote, getToken, toggleBan };

@@ -1,5 +1,6 @@
 const userRepo = require('../repositories/user.repository');
 const redis = require('../config/redis');
+const { sendEvent } = require('../config/kafka');
 
 const CACHE_TTL = 300;
 
@@ -45,7 +46,7 @@ const updateProfile = async (req, res) => {
 
     await delCache(`user:profile:${email}`, `user:public:${email}`);
 
-    res.status(200).json(profile);
+    res.status(200).json({message:"Profile has been updated!"});
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Server error' });
@@ -114,6 +115,9 @@ const addReputation = async (req, res) => {
     if (score === undefined) return res.status(400).json({ message: 'Score is required' });
 
     const profile = await userRepo.updateReputation(email, parseInt(score));
+    
+    await sendEvent('reputation.updated', { email, change: parseInt(score) });
+
     await delCache(`user:profile:${email}`, `user:public:${email}`, `user:rep:${email}`);
     res.status(200).json({ message: "Reputation points added!" });
   } catch (error) {
@@ -130,6 +134,9 @@ const deductReputation = async (req, res) => {
     if (score === undefined) return res.status(400).json({ message: 'Score is required' });
 
     const profile = await userRepo.updateReputation(email, -parseInt(score));
+    
+    await sendEvent('reputation.updated', { email, change: -parseInt(score) });
+
     await delCache(`user:profile:${email}`, `user:public:${email}`, `user:rep:${email}`);
     res.status(200).json({ message: "Reputation points deducted!" });
   } catch (error) {

@@ -19,10 +19,15 @@ const connectKafkaConsumer = async () => {
   console.log('Notification Service connected to Kafka');
 
   const topics = [
-    'bargain.submitted',
     'bargain.accepted',
     'bargain.declined',
-    'listing.requested'
+    'bargain.received',
+    'listing.requested',
+    'reputation.updated',
+    'comment.posted',
+    'exchange.received',
+    'exchange.accepted',
+    'exchange.declined'
   ];
 
   for (const topic of topics) {
@@ -35,14 +40,24 @@ const connectKafkaConsumer = async () => {
       console.log(`[Kafka] Received event: ${topic}`, data);
       let notifData = null;
 
-      if (topic === 'bargain.submitted') {
-        notifData = { to: data.toEmail, from: data.fromEmail, content: `New bargain of ${data.price} received` };
+      if (topic === 'bargain.received') {
+        notifData = { to: data.toEmail, from: data.fromEmail, content: `New bargain of ${data.price} received`, type: 'bargain_received' };
       } else if (topic === 'bargain.accepted') {
-        notifData = { to: data.fromEmail, from: data.toEmail, content: 'Your bargain was accepted!' };
+        notifData = { to: data.fromEmail, from: data.toEmail, content: 'Your bargain was accepted!', type: 'bargain_accepted' };
       } else if (topic === 'bargain.declined') {
-        notifData = { to: data.fromEmail, from: data.toEmail, content: 'Your bargain was declined' };
+        notifData = { to: data.fromEmail, from: data.toEmail, content: 'Your bargain was declined', type: 'bargain_declined' };
       } else if (topic === 'listing.requested') {
-        notifData = { to: data.ownerEmail, from: data.requesterEmail, content: `Someone requested your listing "${data.listingTitle}"` };
+        notifData = { to: data.ownerEmail, from: data.requesterEmail, content: `Someone requested your listing "${data.listingTitle}"`, type: 'listing_requested' };
+      } else if (topic === 'reputation.updated') {
+        notifData = { to: data.email, from: 'system', content: `Your reputation was updated by ${data.change > 0 ? '+' : ''}${data.change} points`, type: 'reputation_updated' };
+      } else if (topic === 'comment.posted') {
+        notifData = { to: data.ownerEmail, from: data.fromEmail, content: `New comment on your listing: "${data.content}"`, type: 'comment_posted' };
+      } else if (topic === 'exchange.received') {
+        notifData = { to: data.toEmail, from: data.fromEmail, content: `New exchange request for "${data.listingTitle}"`, type: 'exchange_received' };
+      } else if (topic === 'exchange.accepted') {
+        notifData = { to: data.fromEmail, from: data.toEmail, content: 'Your exchange request was accepted!', type: 'exchange_accepted' };
+      } else if (topic === 'exchange.declined') {
+        notifData = { to: data.fromEmail, from: data.toEmail, content: 'Your exchange request was declined', type: 'exchange_declined' };
       }
 
       if (notifData) {

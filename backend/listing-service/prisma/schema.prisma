@@ -25,44 +25,23 @@ model Listing {
 }
 
 model SellListing {
-  id            String       @id @default(auto()) @map("_id") @db.ObjectId
-  listingId     String       @unique @db.ObjectId
-  listing       Listing      @relation(fields: [listingId], references: [id])
-  price         Float
-  isBargaining  Boolean      @default(false)
-  bargainings   Bargaining[] @relation("SellBargainings")
+  id       String  @id @default(auto()) @map("_id") @db.ObjectId
+  listingId String @unique @db.ObjectId
+  listing  Listing @relation(fields: [listingId], references: [id])
+  price    Float
 }
 
 model RentListing {
-  id            String       @id @default(auto()) @map("_id") @db.ObjectId
-  listingId     String       @unique @db.ObjectId
-  listing       Listing      @relation(fields: [listingId], references: [id])
-  pricePerHour  Float
-  isBargaining  Boolean      @default(false)
-  bargainings   Bargaining[] @relation("RentBargainings")
+  id           String  @id @default(auto()) @map("_id") @db.ObjectId
+  listingId    String  @unique @db.ObjectId
+  listing      Listing @relation(fields: [listingId], references: [id])
+  pricePerHour Float
 }
 
 model ExchangeListing {
-  id              String   @id @default(auto()) @map("_id") @db.ObjectId
-  listingId       String   @unique @db.ObjectId
-  listing         Listing  @relation(fields: [listingId], references: [id])
-  withListNo      String?  @db.ObjectId
-  withTitle       String
-  withDescription String
-  withImageUrl    String?
-}
-
-model Bargaining {
-  id              String          @id @default(auto()) @map("_id") @db.ObjectId
-  fromEmail       String
-  toEmail         String
-  price           Float
-  status          BargainStatus   @default(PENDING)
-  type            BargainType
-  sellListingId   String?         @db.ObjectId
-  rentListingId   String?         @db.ObjectId
-  sellListing     SellListing?    @relation("SellBargainings", fields: [sellListingId], references: [id])
-  rentListing     RentListing?    @relation("RentBargainings", fields: [rentListingId], references: [id])
+  id        String  @id @default(auto()) @map("_id") @db.ObjectId
+  listingId String  @unique @db.ObjectId
+  listing   Listing @relation(fields: [listingId], references: [id])
 }
 
 model Comment {
@@ -86,15 +65,4 @@ enum MarkedStatus {
   SOLD
   RENTED
   EXCHANGED
-}
-
-enum BargainType {
-  SELL
-  RENT
-}
-
-enum BargainStatus {
-  PENDING
-  ACCEPTED
-  DECLINED
 }

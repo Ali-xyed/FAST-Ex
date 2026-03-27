@@ -3,8 +3,11 @@ if (!process.env.DATABASE_URL) process.env.DATABASE_URL = process.env.USER_DATAB
 
 const express = require('express');
 const cors = require('cors');
+const cron = require('node-cron');
 const userRoutes = require('./routes/user.routes');
-const { connectKafkaConsumer } = require('./config/kafka');
+const { connectKafkaConsumer, sendEvent } = require('./config/kafka');
+const userRepo = require('./repositories/user.repository');
+const prisma = require('./config/prisma');
 
 const app = express();
 
@@ -34,7 +37,37 @@ app.use('/api/users', userRoutes);
 
 const PORT = process.env.USER_PORT || 5003;
 
+// Daily reputation bonus
+cron.schedule('0 0 * * *', async () => {
+  try {
+    console.log('[CRON] Running daily reputation bonus...');
+    
+    // Get all users
+    const users = await prisma.userProfile.findMany({
+      where: { isBan: false }
+    });
+    
+    let successCount = 0;
+    for (const user of users) {
+      try {
+        await userRepo.updateReputation(user.email, 5);
+        await sendEvent('reputation.updated', { email: user.email, change: 5 });
+        successCount++;
+      } catch (err) {
+        console.error(`[CRON] Failed to give daily bonus to ${user.email}:`, err.message);
+      }
+    }
+    
+    console.log(`[CRON] Daily reputation bonus completed: ${successCount}/${users.length} users received +5 points`);
+  } catch (error) {
+    console.error('[CRON] Daily reputation bonus error:', error);
+  }
+}, {
+  timezone: 'Asia/Karachi'
+});
+
 app.listen(PORT, async () => {
   connectKafkaConsumer();
   console.log(`User service running on port ${PORT}`);
+  console.log('[CRON] Daily reputation bonus scheduled (runs at midnight PKT - Asia/Karachi)');
 });

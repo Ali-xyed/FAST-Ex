@@ -6,8 +6,11 @@ const connectRabbitMQ = async () => {
   try {
     const connection = await amqplib.connect(process.env.RABBITMQ_URL || 'amqp://localhost');
     channel = await connection.createChannel();
-    await channel.assertQueue('email.request', { durable: true });
-    await channel.assertQueue('email.approve', { durable: true });
+    await channel.assertQueue('listing.request', { durable: true });
+    await channel.assertQueue('bargain.accepted', { durable: true });
+    await channel.assertQueue('bargain.requested', { durable: true });
+    await channel.assertQueue('exchange.requested', { durable: true });
+    await channel.assertQueue('exchange.accepted', { durable: true });
     console.log('Listing service connected to RabbitMQ');
   } catch (err) {
     console.error('Failed to connect RabbitMQ (listing-service)', err);

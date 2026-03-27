@@ -34,9 +34,11 @@ const connectRabbitMQConsumer = async () => {
     const channel = await connection.createChannel();
 
     await channel.assertQueue('email.otp', { durable: true });
-    await channel.assertQueue('email.banned', { durable: true });
-    await channel.assertQueue('email.unbanned', { durable: true });
-    await channel.assertQueue('email.request', { durable: true });
+    await channel.assertQueue('listing.request', { durable: true });
+    await channel.assertQueue('bargain.accepted', { durable: true });
+    await channel.assertQueue('bargain.requested', { durable: true });
+    await channel.assertQueue('exchange.requested', { durable: true });
+    await channel.assertQueue('exchange.accepted', { durable: true });
 
     console.log('RabbitMQ Consumer connected (notification-service)');
 
@@ -65,52 +67,7 @@ const connectRabbitMQConsumer = async () => {
       }
     });
 
-    channel.consume('email.banned', async (msg) => {
-      if (msg !== null) {
-        const { email } = JSON.parse(msg.content.toString());
-        try {
-          await transporter.sendMail({
-            from: `"FAST-Ex Admin" <${process.env.EMAIL_USER}>`,
-            to: email,
-            subject: 'Account Notification',
-            html: createEmailTemplate('Account Status Update', `
-              <p>We are writing to inform you that your FAST-Ex account has been suspended.</p>
-              <p>Access to the platform is currently restricted due to a violation of our terms of service or established usage policies.</p>
-              <p>If you believe this is an error, please contact the administration department.</p>
-            `)
-          });
-          console.log(`Banned Email sent to ${email}`);
-          channel.ack(msg);
-        } catch (err) {
-          console.error(`Failed to send banned email to ${email}`, err);
-          channel.ack(msg);
-        }
-      }
-    });
-
-    channel.consume('email.unbanned', async (msg) => {
-      if (msg !== null) {
-        const { email } = JSON.parse(msg.content.toString());
-        try {
-          await transporter.sendMail({
-            from: `"FAST-Ex Admin" <${process.env.EMAIL_USER}>`,
-            to: email,
-            subject: 'Account Notification',
-            html: createEmailTemplate('Account Status Update', `
-              <p>Your FAST-Ex account has been reactivated by the administration.</p>
-              <p>You may now log in to the platform and proceed with your normal activities.</p>
-            `)
-          });
-          console.log(`Unbanned Email sent to ${email}`);
-          channel.ack(msg);
-        } catch (err) {
-          console.error(`Failed to send unbanned email to ${email}`, err);
-          channel.ack(msg);
-        }
-      }
-    });
-
-    channel.consume('email.request', async (msg) => {
+    channel.consume('listing.request', async (msg) => {
       if (msg !== null) {
         const { ownerEmail, requesterEmail, listingTitle } = JSON.parse(msg.content.toString());
         try {
@@ -136,8 +93,7 @@ const connectRabbitMQConsumer = async () => {
       }
     });
 
-    await channel.assertQueue('email.approve', { durable: true });
-    channel.consume('email.approve', async (msg) => {
+    channel.consume('bargain.accepted', async (msg) => {
       if (msg !== null) {
         const { requesterEmail, ownerEmail, listingTitle, message } = JSON.parse(msg.content.toString());
         try {
@@ -160,6 +116,93 @@ const connectRabbitMQConsumer = async () => {
           channel.ack(msg);
         } catch (err) {
           console.error(`Failed to send approval email to ${requesterEmail}`, err);
+          channel.ack(msg);
+        }
+      }
+    });
+
+    channel.consume('bargain.requested', async (msg) => {
+      if (msg !== null) {
+        const { ownerEmail, requesterEmail, listingTitle, price, listingType } = JSON.parse(msg.content.toString());
+        try {
+          await transporter.sendMail({
+            from: `"FAST-Ex" <${process.env.EMAIL_USER}>`,
+            to: ownerEmail,
+            subject: 'New Bargain Request',
+            html: createEmailTemplate('Bargain Offer Received', `
+              <p>Someone has made a bargain offer on your listing.</p>
+              <div style="border-left: 4px solid #334155; padding-left: 16px; margin: 20px 0;">
+                <p style="margin: 0; font-weight: 600; color: #0f172a;">Item: ${listingTitle}</p>
+                <p style="margin: 4px 0 0 0; color: #64748b;">Requester: ${requesterEmail}</p>
+                <p style="margin: 4px 0 0 0; color: #0f172a; font-weight: 600;">Offered Price: ${price} ${listingType === 'RENT' ? '/hour' : ''}</p>
+              </div>
+              <p>Please log in to your dashboard to review and respond to this offer.</p>
+            `)
+          });
+          console.log(`Bargain Email sent to ${ownerEmail}`);
+          channel.ack(msg);
+        } catch (err) {
+          console.error(`Failed to send bargain email to ${ownerEmail}`, err);
+          channel.ack(msg);
+        }
+      }
+    });
+
+    channel.consume('exchange.requested', async (msg) => {
+      if (msg !== null) {
+        const { ownerEmail, requesterEmail, listingTitle, offerTitle, offerDescription, offerImageUrl } = JSON.parse(msg.content.toString());
+        try {
+          await transporter.sendMail({
+            from: `"FAST-Ex" <${process.env.EMAIL_USER}>`,
+            to: ownerEmail,
+            subject: 'New Exchange Request',
+            html: createEmailTemplate('Exchange Offer Received', `
+              <p>Someone wants to exchange an item for your listing.</p>
+              <div style="border-left: 4px solid #334155; padding-left: 16px; margin: 20px 0;">
+                <p style="margin: 0; font-weight: 600; color: #0f172a;">Your Item: ${listingTitle}</p>
+                <p style="margin: 8px 0 0 0; color: #64748b;">Requester: ${requesterEmail}</p>
+              </div>
+              <div style="background-color: #f1f5f9; padding: 20px; border-radius: 6px; margin: 20px 0;">
+                <p style="margin: 0; font-weight: 600; color: #0f172a;">They're Offering:</p>
+                <p style="margin: 8px 0 0 0; font-weight: 600;">${offerTitle}</p>
+                <p style="margin: 4px 0 0 0; color: #475569;">${offerDescription}</p>
+                ${offerImageUrl ? `<p style="margin: 8px 0 0 0;"><a href="${offerImageUrl}" style="color: #334155;">View Image</a></p>` : ''}
+              </div>
+              <p>Please log in to your dashboard to review and respond to this exchange offer.</p>
+            `)
+          });
+          console.log(`Exchange Email sent to ${ownerEmail}`);
+          channel.ack(msg);
+        } catch (err) {
+          console.error(`Failed to send exchange email to ${ownerEmail}`, err);
+          channel.ack(msg);
+        }
+      }
+    });
+
+    channel.consume('exchange.accepted', async (msg) => {
+      if (msg !== null) {
+        const { requesterEmail, ownerEmail, listingTitle, message } = JSON.parse(msg.content.toString());
+        try {
+          await transporter.sendMail({
+            from: `"FAST-Ex" <${process.env.EMAIL_USER}>`,
+            to: requesterEmail,
+            subject: 'Exchange Approved!',
+            html: createEmailTemplate('Status Update: Exchange Approved', `
+              <p>Great news! Your exchange offer has been approved by the owner.</p>
+              <div style="background-color: #f1f5f9; padding: 20px; border-radius: 6px; margin: 24px 0; border-left: 4px solid #10b981;">
+                <p style="margin: 0; font-weight: 700; color: #0f172a;">Item: ${listingTitle}</p>
+                <p style="margin: 8px 0 0 0; color: #1e293b;">Owner Contact: <span style="font-weight: 600;">${ownerEmail}</span></p>
+                ${message ? `<p style="margin: 12px 0 0 0; font-style: italic; color: #475569;">" ${message} "</p>` : ''}
+              </div>
+              <p>You can now directly contact the lister using the email address above to coordinate the exchange.</p>
+              <p>Happy trading!</p>
+            `)
+          });
+          console.log(`Exchange Approval Email sent to ${requesterEmail}`);
+          channel.ack(msg);
+        } catch (err) {
+          console.error(`Failed to send exchange approval email to ${requesterEmail}`, err);
           channel.ack(msg);
         }
       }

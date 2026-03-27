@@ -72,7 +72,7 @@ const verifyListing = async (req, res) => {
 
     await sendEvent('reputation.updated', { email: listingEmail, change: 1 });
 
-    res.status(200).json({ message: `Listing ${id} successfully verified, +1 rep awarded to ${listingEmail}` });
+    res.status(200).json({ message: `Listing item successfully verified` });
   } catch (error) {
     if (error.response) {
       console.error(`[Admin Service] Listing service error [${error.response.status}]:`, error.response.data);
