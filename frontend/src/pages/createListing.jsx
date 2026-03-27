@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar/Navbar';
 import { listingAPI } from '../utils/api';
-import { LISTING_TYPES, CATEGORIES } from '../utils/constants';
+import { LISTING_TYPES } from '../utils/constants';
 import toast from 'react-hot-toast';
 
 function CreateListingPage() {
@@ -12,12 +12,14 @@ function CreateListingPage() {
     title: '',
     description: '',
     type: 'SELL',
-    category: '',
     price: '',
-    bargaining: false,
+    pricePerHour: '',
+    withTitle: '',
+    withDescription: '',
+    isBargaining: false,
   });
-  const [images, setImages] = useState([]);
-  const [imagePreviews, setImagePreviews] = useState([]);
+  const [image, setImage] = useState(null);
+  const [imagePreview, setImagePreview] = useState(null);
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -28,26 +30,21 @@ function CreateListingPage() {
   };
 
   const handleImageChange = (e) => {
-    const files = Array.from(e.target.files);
-    if (files.length + images.length > 5) {
-      toast.error('Maximum 5 images allowed');
-      return;
-    }
+    const file = e.target.files[0];
+    if (!file) return;
 
-    setImages(prev => [...prev, ...files]);
+    setImage(file);
     
-    files.forEach(file => {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setImagePreviews(prev => [...prev, reader.result]);
-      };
-      reader.readAsDataURL(file);
-    });
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setImagePreview(reader.result);
+    };
+    reader.readAsDataURL(file);
   };
 
-  const removeImage = (index) => {
-    setImages(prev => prev.filter((_, i) => i !== index));
-    setImagePreviews(prev => prev.filter((_, i) => i !== index));
+  const removeImage = () => {
+    setImage(null);
+    setImagePreview(null);
   };
 
   const handleSubmit = async (e) => {
@@ -55,23 +52,36 @@ function CreateListingPage() {
     setIsLoading(true);
 
     try {
-      // Create listing
-      const listingData = {
-        ...formData,
-        price: formData.price ? parseFloat(formData.price) : null,
-      };
+      // Create FormData for multipart/form-data request
+      const formDataToSend = new FormData();
       
-      const response = await listingAPI.create(listingData);
-      const listingId = response.data.id;
+      formDataToSend.append('type', formData.type);
+      formDataToSend.append('title', formData.title);
+      formDataToSend.append('description', formData.description);
+      formDataToSend.append('isBargaining', formData.isBargaining.toString());
 
-      // Upload images if any
-      if (images.length > 0) {
-        const imageFormData = new FormData();
-        images.forEach(image => {
-          imageFormData.append('images', image);
-        });
-        await listingAPI.uploadImages(listingId, imageFormData);
+      // Add type-specific fields
+      if (formData.type === 'SELL') {
+        if (formData.price) formDataToSend.append('price', formData.price);
+      } else if (formData.type === 'RENT') {
+        if (formData.pricePerHour) formDataToSend.append('pricePerHour', formData.pricePerHour);
+      } else if (formData.type === 'EXCHANGE') {
+        if (!formData.withTitle || !formData.withDescription) {
+          toast.error('Please fill in exchange details');
+          setIsLoading(false);
+          return;
+        }
+        formDataToSend.append('withTitle', formData.withTitle);
+        formDataToSend.append('withDescription', formData.withDescription);
       }
+
+      // Add image file if provided (backend expects 'imageUrl' field with File)
+      if (image) {
+        formDataToSend.append('imageUrl', image);
+      }
+      
+      const response = await listingAPI.create(formDataToSend);
+      const listingId = response.data.id;
 
       toast.success('Listing created successfully!');
       navigate(`/listing/${listingId}`);
@@ -155,45 +165,78 @@ function CreateListingPage() {
                   </select>
                 </div>
 
-                <div>
-                  <label className="block text-[12px] font-black text-gray-400 uppercase tracking-widest mb-2">
-                    Category
-                  </label>
-                  <select
-                    name="category"
-                    value={formData.category}
-                    onChange={handleInputChange}
-                    className="w-full bg-gray-50 border-none rounded-xl py-3 px-4 text-sm font-bold focus:ring-2 focus:ring-black/5 outline-none"
-                    required
-                  >
-                    <option value="">Select category</option>
-                    {CATEGORIES.map(category => (
-                      <option key={category} value={category}>{category}</option>
-                    ))}
-                  </select>
-                </div>
+                {formData.type === 'SELL' && (
+                  <div>
+                    <label className="block text-[12px] font-black text-gray-400 uppercase tracking-widest mb-2">
+                      Price (Rs) - Optional
+                    </label>
+                    <input
+                      type="number"
+                      name="price"
+                      value={formData.price}
+                      onChange={handleInputChange}
+                      placeholder="e.g. 1250"
+                      className="w-full bg-gray-50 border-none rounded-xl py-3 px-4 text-sm font-bold focus:ring-2 focus:ring-black/5 outline-none"
+                    />
+                  </div>
+                )}
+
+                {formData.type === 'RENT' && (
+                  <div>
+                    <label className="block text-[12px] font-black text-gray-400 uppercase tracking-widest mb-2">
+                      Price Per Hour (Rs) - Optional
+                    </label>
+                    <input
+                      type="number"
+                      name="pricePerHour"
+                      value={formData.pricePerHour}
+                      onChange={handleInputChange}
+                      placeholder="e.g. 200"
+                      className="w-full bg-gray-50 border-none rounded-xl py-3 px-4 text-sm font-bold focus:ring-2 focus:ring-black/5 outline-none"
+                    />
+                  </div>
+                )}
               </div>
 
-              <div>
-                <label className="block text-[12px] font-black text-gray-400 uppercase tracking-widest mb-2">
-                  Price (Rs) - Optional
-                </label>
-                <input
-                  type="number"
-                  name="price"
-                  value={formData.price}
-                  onChange={handleInputChange}
-                  placeholder="Leave empty for negotiable"
-                  className="w-full bg-gray-50 border-none rounded-xl py-3 px-4 text-sm font-bold focus:ring-2 focus:ring-black/5 outline-none"
-                />
-              </div>
+              {formData.type === 'EXCHANGE' && (
+                <div className="space-y-5 pt-2">
+                  <div>
+                    <label className="block text-[12px] font-black text-gray-400 uppercase tracking-widest mb-2">
+                      What do you want in exchange?
+                    </label>
+                    <input
+                      type="text"
+                      name="withTitle"
+                      value={formData.withTitle}
+                      onChange={handleInputChange}
+                      placeholder="e.g. Physics Notes"
+                      className="w-full bg-gray-50 border-none rounded-xl py-3 px-4 text-sm font-bold focus:ring-2 focus:ring-black/5 outline-none"
+                      required={formData.type === 'EXCHANGE'}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[12px] font-black text-gray-400 uppercase tracking-widest mb-2">
+                      Exchange Description
+                    </label>
+                    <textarea
+                      name="withDescription"
+                      value={formData.withDescription}
+                      onChange={handleInputChange}
+                      placeholder="Describe what you're looking for..."
+                      rows="3"
+                      className="w-full bg-gray-50 border-none rounded-xl py-3 px-4 text-sm font-bold focus:ring-2 focus:ring-black/5 outline-none resize-none"
+                      required={formData.type === 'EXCHANGE'}
+                    />
+                  </div>
+                </div>
+              )}
 
               <div>
                 <label className="flex items-center gap-3 cursor-pointer group">
                   <input
                     type="checkbox"
-                    name="bargaining"
-                    checked={formData.bargaining}
+                    name="isBargaining"
+                    checked={formData.isBargaining}
                     onChange={handleInputChange}
                     className="w-4 h-4 text-black focus:ring-black rounded"
                   />
@@ -206,32 +249,30 @@ function CreateListingPage() {
           </div>
 
           <div className="bg-white border border-gray-100 rounded-2xl p-8">
-            <h2 className="text-lg font-black uppercase tracking-wider mb-6">Images (Max 5)</h2>
+            <h2 className="text-lg font-black uppercase tracking-wider mb-6">Image (Optional)</h2>
             
-            <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-4">
-              {imagePreviews.map((preview, index) => (
-                <div key={index} className="relative aspect-square rounded-xl overflow-hidden border-2 border-gray-100 group">
-                  <img src={preview} alt={`Preview ${index + 1}`} className="w-full h-full object-cover" />
+            <div className="space-y-4">
+              {imagePreview ? (
+                <div className="relative w-full max-w-md aspect-video rounded-xl overflow-hidden border-2 border-gray-100 group">
+                  <img src={imagePreview} alt="Preview" className="w-full h-full object-cover" />
                   <button
                     type="button"
-                    onClick={() => removeImage(index)}
-                    className="absolute top-2 right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                    onClick={removeImage}
+                    className="absolute top-4 right-4 w-8 h-8 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity font-bold"
                   >
                     ×
                   </button>
                 </div>
-              ))}
-              
-              {images.length < 5 && (
-                <label className="aspect-square rounded-xl border-2 border-dashed border-gray-200 flex flex-col items-center justify-center cursor-pointer hover:border-black transition-colors">
-                  <svg className="w-8 h-8 text-gray-300 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              ) : (
+                <label className="w-full max-w-md aspect-video rounded-xl border-2 border-dashed border-gray-200 flex flex-col items-center justify-center cursor-pointer hover:border-black transition-colors">
+                  <svg className="w-12 h-12 text-gray-300 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
                   </svg>
-                  <span className="text-[10px] font-bold text-gray-400 uppercase">Add Image</span>
+                  <span className="text-sm font-bold text-gray-400 uppercase">Upload Image</span>
+                  <span className="text-xs text-gray-300 mt-1">Click to select</span>
                   <input
                     type="file"
                     accept="image/*"
-                    multiple
                     onChange={handleImageChange}
                     className="hidden"
                   />

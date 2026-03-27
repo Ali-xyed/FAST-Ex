@@ -14,7 +14,7 @@ const ListingCard = ({ listing }) => {
 
   const handleSellerClick = (e) => {
     e.stopPropagation();
-    navigate(`/profile/${listing.seller.email}`);
+    navigate(`/profile/${listing.email}`);
   };
 
   return (
@@ -23,9 +23,9 @@ const ListingCard = ({ listing }) => {
       className="relative bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 group cursor-pointer"
     >
       <div className="relative aspect-[4/3] bg-gray-50 overflow-hidden">
-        {listing.images && listing.images.length > 0 ? (
+        {listing.imageUrl ? (
           <img
-            src={listing.images[0]}
+            src={listing.imageUrl}
             alt={listing.title}
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
           />
@@ -43,7 +43,7 @@ const ListingCard = ({ listing }) => {
           </div>
         </div>
 
-        {listing.status === 'SOLD' && (
+        {listing.marked === 'SOLD' && (
           <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
             <span className="text-white text-2xl font-black uppercase tracking-wider">SOLD</span>
           </div>
@@ -55,7 +55,6 @@ const ListingCard = ({ listing }) => {
           <h3 className="text-lg font-black tracking-tight text-gray-900 group-hover:text-black line-clamp-1 uppercase">
             {listing.title}
           </h3>
-          <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-1">{listing.category}</p>
         </div>
 
         <p className="text-sm text-gray-600 line-clamp-2 mb-4 font-medium leading-relaxed">
@@ -66,7 +65,9 @@ const ListingCard = ({ listing }) => {
           <div>
             <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-1">Price</p>
             <p className="text-xl font-black text-black">
-              {listing.price ? `Rs ${listing.price}` : 'Negotiable'}
+              {listing.sellListing?.price ? `Rs ${listing.sellListing.price}` : 
+               listing.rentListing?.pricePerHour ? `Rs ${listing.rentListing.pricePerHour}/hr` : 
+               'Negotiable'}
             </p>
           </div>
           
@@ -75,15 +76,7 @@ const ListingCard = ({ listing }) => {
             className="flex items-center gap-2 hover:opacity-70 transition-opacity"
           >
             <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center overflow-hidden">
-              {listing.seller?.imageUrl ? (
-                <img src={listing.seller.imageUrl} alt={listing.seller.name} className="w-full h-full object-cover" />
-              ) : (
-                <span className="text-[10px] font-bold">{listing.seller?.name?.charAt(0)}</span>
-              )}
-            </div>
-            <div className="flex items-center gap-1 bg-gray-50 px-2 py-1 rounded-full">
-              <span className="text-black font-black text-[11px]">★</span>
-              <span className="text-[10px] font-bold">{listing.seller?.reputationScore || 0}</span>
+              <span className="text-[10px] font-bold">{listing.email?.charAt(0).toUpperCase()}</span>
             </div>
           </div>
         </div>

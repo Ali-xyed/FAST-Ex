@@ -6,7 +6,7 @@ import NotificationDropdown from '../NotificationDropdown/NotificationDropdown';
 const Navbar = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { profile, logout } = useAuth();
+  const { user, logout } = useAuth();
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
 
@@ -44,7 +44,7 @@ const Navbar = () => {
             >
               Profile
             </button>
-            {profile?.role === 'ADMIN' && (
+            {user?.role === 'ADMIN' && (
               <button
                 onClick={() => navigate('/admin')}
                 className={`px-6 py-2 rounded-lg text-[11px] font-black uppercase tracking-widest transition-all ${isActive('/admin') ? 'bg-white shadow-sm text-black' : 'text-gray-400 hover:text-gray-600'}`}
@@ -81,21 +81,21 @@ const Navbar = () => {
               onClick={() => setShowProfileMenu(!showProfileMenu)}
               className="w-11 h-11 rounded-full bg-black flex items-center justify-center border-2 border-white shadow-lg overflow-hidden"
             >
-              {profile?.imageUrl ? (
-                <img src={profile.imageUrl} className="w-full h-full object-cover" alt="profile" />
+              {user?.imageUrl ? (
+                <img src={user.imageUrl} className="w-full h-full object-cover" alt="profile" />
               ) : (
-                <span className="text-white text-xs font-black">{(profile?.name || 'U').charAt(0)}</span>
+                <span className="text-white text-xs font-black">{(user?.name || 'U').charAt(0)}</span>
               )}
             </button>
 
             {showProfileMenu && (
               <div className="absolute right-0 top-14 w-56 bg-white border border-gray-100 rounded-2xl shadow-xl overflow-hidden">
                 <div className="p-4 border-b border-gray-50">
-                  <p className="text-sm font-black">{profile?.name}</p>
-                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">{profile?.rollNo}</p>
+                  <p className="text-sm font-black">{user?.name}</p>
+                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">{user?.rollNo}</p>
                   <div className="mt-2 flex items-center gap-2">
                     <span className="text-[10px] font-bold text-gray-500">Reputation:</span>
-                    <span className="text-[11px] font-black text-black">{profile?.reputationScore || 0}</span>
+                    <span className="text-[11px] font-black text-black">{user?.reputationScore || 0}</span>
                   </div>
                 </div>
                 <button

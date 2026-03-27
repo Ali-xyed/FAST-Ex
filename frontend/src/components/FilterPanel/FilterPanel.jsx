@@ -1,4 +1,4 @@
-import { LISTING_TYPES, CATEGORIES } from '../../utils/constants';
+import { LISTING_TYPES } from '../../utils/constants';
 
 const FilterPanel = ({ filters, onFilterChange }) => {
   return (
@@ -37,23 +37,6 @@ const FilterPanel = ({ filters, onFilterChange }) => {
               </label>
             ))}
           </div>
-        </div>
-
-        {/* Category Filter */}
-        <div>
-          <label className="block text-[11px] font-black text-gray-400 uppercase tracking-widest mb-3">
-            Category
-          </label>
-          <select
-            value={filters.category || ''}
-            onChange={(e) => onFilterChange('category', e.target.value)}
-            className="w-full bg-gray-50 border-none rounded-xl py-3 px-4 text-sm font-bold focus:ring-2 focus:ring-black/5 outline-none"
-          >
-            <option value="">All Categories</option>
-            {CATEGORIES.map((category) => (
-              <option key={category} value={category}>{category}</option>
-            ))}
-          </select>
         </div>
 
         {/* Price Range */}

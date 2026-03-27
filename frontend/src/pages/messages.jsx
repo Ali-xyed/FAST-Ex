@@ -7,7 +7,7 @@ import toast from 'react-hot-toast';
 
 function MessagesPage() {
   const [searchParams] = useSearchParams();
-  const { profile } = useAuth();
+  const { user } = useAuth();
   const [conversations, setConversations] = useState([]);
   const [selectedConversation, setSelectedConversation] = useState(null);
   const [messages, setMessages] = useState([]);
@@ -16,39 +16,66 @@ function MessagesPage() {
 
   useEffect(() => {
     fetchConversations();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
     const userEmail = searchParams.get('user');
-    if (userEmail && conversations.length > 0) {
+    if (userEmail && !loading && conversations) {
+      // Check if conversation exists
       const conv = conversations.find(c => 
-        c.participants.some(p => p.email === userEmail)
+        c.participants && c.participants.some(p => p && p.email === userEmail)
       );
+      
       if (conv) {
+        // Existing conversation found
         setSelectedConversation(conv);
         fetchMessages(conv.id);
+      } else {
+        // No conversation exists, create one
+        createNewConversation(userEmail);
       }
     }
-  }, [searchParams, conversations]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams, conversations, loading]);
 
   const fetchConversations = async () => {
     try {
-      const response = await messageAPI.getConversations();
+      const response = await messageAPI.getAllChats();
       setConversations(response.data);
     } catch (error) {
       console.error('Error fetching conversations:', error);
+      toast.error('Failed to load conversations');
     } finally {
       setLoading(false);
     }
   };
 
-  const fetchMessages = async (conversationId) => {
+  const createNewConversation = async (otherUserEmail) => {
     try {
-      const response = await messageAPI.getMessages(conversationId);
-      setMessages(response.data);
-      await messageAPI.markAsRead(conversationId);
+      const response = await messageAPI.createOrFetchChat({
+        otherUserEmail: otherUserEmail,
+      });
+      
+      // Add to conversations list
+      const newConv = response.data;
+      setConversations(prev => [newConv, ...prev]);
+      setSelectedConversation(newConv);
+      setMessages([]);
+      toast.success('Chat opened! Start messaging.');
+    } catch (error) {
+      console.error('Error creating conversation:', error);
+      toast.error('Failed to open chat');
+    }
+  };
+
+  const fetchMessages = async (chatId) => {
+    try {
+      const response = await messageAPI.getChatById(chatId);
+      setMessages(response.data.messages || []);
     } catch (error) {
       console.error('Error fetching messages:', error);
+      toast.error('Failed to load messages');
     }
   };
 
@@ -57,12 +84,11 @@ function MessagesPage() {
     if (!newMessage.trim() || !selectedConversation) return;
 
     try {
-      const response = await messageAPI.send({
-        conversationId: selectedConversation.id,
+      await messageAPI.sendMessage(selectedConversation.id, {
         content: newMessage,
       });
-      setMessages([...messages, response.data]);
       setNewMessage('');
+      fetchMessages(selectedConversation.id); // Refresh messages
     } catch (error) {
       toast.error('Failed to send message');
     }
@@ -74,7 +100,7 @@ function MessagesPage() {
   };
 
   const getOtherParticipant = (conversation) => {
-    return conversation.participants.find(p => p.email !== profile?.email);
+    return conversation.participants?.find(p => p.email !== user?.email);
   };
 
   return (
@@ -149,7 +175,7 @@ function MessagesPage() {
                   {/* Messages */}
                   <div className="flex-1 overflow-y-auto p-6 space-y-4">
                     {messages.map((message) => {
-                      const isOwn = message.sender?.email === profile?.email;
+                      const isOwn = message.fromEmail === user?.email;
                       return (
                         <div key={message.id} className={`flex ${isOwn ? 'justify-end' : 'justify-start'}`}>
                           <div className={`max-w-md px-4 py-3 rounded-2xl ${isOwn ? 'bg-black text-white' : 'bg-gray-100 text-black'}`}>

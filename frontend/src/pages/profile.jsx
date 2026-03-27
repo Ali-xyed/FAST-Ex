@@ -8,7 +8,7 @@ import toast from 'react-hot-toast';
 
 function ProfilePage() {
   const navigate = useNavigate();
-  const { profile, refreshProfile } = useAuth();
+  const { user, refreshProfile } = useAuth();
   const [myListings, setMyListings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(false);
@@ -18,21 +18,22 @@ function ProfilePage() {
   });
 
   useEffect(() => {
-    if (profile) {
+    if (user) {
       setFormData({
-        name: profile.name || '',
-        rollNo: profile.rollNo || '',
+        name: user.name || '',
+        rollNo: user.rollNo || '',
       });
       fetchMyListings();
     }
-  }, [profile]);
+  }, [user]);
 
   const fetchMyListings = async () => {
     try {
-      const response = await listingAPI.getAll({ seller: profile.email });
+      const response = await listingAPI.getMy();
       setMyListings(response.data);
     } catch (error) {
       console.error('Error fetching listings:', error);
+      toast.error('Failed to load your listings');
     } finally {
       setLoading(false);
     }
@@ -66,7 +67,7 @@ function ProfilePage() {
     }
   };
 
-  if (!profile) return null;
+  if (!user) return null;
 
   return (
     <div className="min-h-screen bg-gray-50 text-black font-sans selection:bg-black selection:text-white">
@@ -78,10 +79,10 @@ function ProfilePage() {
             <div className="flex flex-col items-center">
               <div className="relative">
                 <div className="w-32 h-32 rounded-full bg-black flex items-center justify-center overflow-hidden border-4 border-white shadow-xl">
-                  {profile.imageUrl ? (
-                    <img src={profile.imageUrl} className="w-full h-full object-cover" alt="profile" />
+                  {user.imageUrl ? (
+                    <img src={user.imageUrl} className="w-full h-full object-cover" alt="profile" />
                   ) : (
-                    <span className="text-white text-4xl font-black">{profile.name?.charAt(0)}</span>
+                    <span className="text-white text-4xl font-black">{user.name?.charAt(0)}</span>
                   )}
                 </div>
                 <label className="absolute bottom-0 right-0 w-10 h-10 bg-black text-white rounded-full flex items-center justify-center cursor-pointer hover:bg-gray-800 transition-all shadow-lg">
@@ -95,7 +96,7 @@ function ProfilePage() {
               <div className="mt-4 text-center">
                 <div className="inline-flex items-center gap-2 bg-gray-50 px-4 py-2 rounded-full">
                   <span className="text-black font-black text-lg">★</span>
-                  <span className="text-sm font-bold">{profile.reputationScore || 0}</span>
+                  <span className="text-sm font-bold">{user.reputationScore || 0}</span>
                 </div>
                 <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-2">Reputation</p>
               </div>
@@ -141,9 +142,9 @@ function ProfilePage() {
               ) : (
                 <>
                   <div className="mb-6">
-                    <h1 className="text-3xl font-black tracking-tight mb-2">{profile.name}</h1>
-                    <p className="text-sm font-bold text-gray-400 uppercase tracking-wider">{profile.rollNo}</p>
-                    <p className="text-sm text-gray-500 font-medium mt-1">{profile.email}</p>
+                    <h1 className="text-3xl font-black tracking-tight mb-2">{user.name}</h1>
+                    <p className="text-sm font-bold text-gray-400 uppercase tracking-wider">{user.rollNo}</p>
+                    <p className="text-sm text-gray-500 font-medium mt-1">{user.email}</p>
                   </div>
                   <button
                     onClick={() => setEditing(true)}

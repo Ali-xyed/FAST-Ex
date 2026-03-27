@@ -12,62 +12,64 @@ export const useAuth = () => {
 };
 
 export const AuthProvider = ({ children }) => {
-  const [profile, setProfile] = useState(null);
+  const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   useEffect(() => {
-    const fetchProfile = async () => {
+    const initAuth = async () => {
       const token = localStorage.getItem('token');
       if (token) {
         try {
           const response = await userAPI.getProfile();
-          setProfile(response.data);
+          setUser(response.data);
           setIsAuthenticated(true);
         } catch (error) {
           console.error('Error fetching profile:', error);
+          // Token is invalid, clear it
           localStorage.removeItem('token');
+          localStorage.removeItem('user');
           setIsAuthenticated(false);
-        } finally {
-          setLoading(false);
         }
       } else {
-        setLoading(false);
         setIsAuthenticated(false);
       }
+      setLoading(false);
     };
 
-    fetchProfile();
+    initAuth();
   }, []);
-
-  const refreshProfile = async () => {
-    try {
-      const response = await userAPI.getProfile();
-      setProfile(response.data);
-    } catch (error) {
-      console.error('Error refreshing profile:', error);
-    }
-  };
 
   const login = (token, userData) => {
     localStorage.setItem('token', token);
-    setProfile(userData);
+    localStorage.setItem('user', JSON.stringify(userData));
+    setUser(userData);
     setIsAuthenticated(true);
   };
 
   const logout = () => {
     localStorage.removeItem('token');
-    setProfile(null);
+    localStorage.removeItem('user');
+    setUser(null);
     setIsAuthenticated(false);
   };
 
+  const refreshProfile = async () => {
+    try {
+      const response = await userAPI.getProfile();
+      setUser(response.data);
+    } catch (error) {
+      console.error('Error refreshing profile:', error);
+    }
+  };
+
   const value = {
-    profile,
+    user,
     isAuthenticated,
     loading,
-    refreshProfile,
     login,
     logout,
+    refreshProfile,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

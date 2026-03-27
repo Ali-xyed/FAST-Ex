@@ -30,17 +30,29 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      // Unauthorized - redirect to login
+      // Unauthorized - clear token and redirect to login
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
       window.location.href = '/login';
     }
     return Promise.reject(error);
   }
 );
 
+// Auth API
+export const authAPI = {
+  register: (data) => api.post('/api/auth/register', data),
+  verifyOTP: (data) => api.post('/api/auth/verify-otp', data),
+  login: (data) => api.post('/api/auth/login', data),
+  getToken: (data) => api.post('/api/auth/token', data),
+  checkEmail: (data) => api.post('/api/auth/check-email', data),
+  changePassword: (data) => api.post('/api/auth/change-password', data),
+};
+
 // User API
 export const userAPI = {
   getProfile: () => api.get('/api/users/profile'),
-  getUserByEmail: (email) => api.get(`/api/users/${email}`),
+  getPublicProfile: (email) => api.get(`/api/users/${email}`),
   updateProfile: (data) => api.put('/api/users/profile', data),
   uploadProfileImage: (formData) => api.post('/api/users/profile/image', formData, {
     headers: { 'Content-Type': 'multipart/form-data' },
@@ -50,54 +62,44 @@ export const userAPI = {
 // Listing API
 export const listingAPI = {
   getAll: (params) => api.get('/api/listings', { params }),
+  getMy: () => api.get('/api/listings/my'),
   getById: (id) => api.get(`/api/listings/${id}`),
-  getUserListings: (email) => api.get(`/api/listings/user/${email}`),
-  create: (data) => api.post('/api/listings', data),
-  update: (id, data) => api.put(`/api/listings/${id}`, data),
+  create: (data) => {
+    // Handle FormData for image upload
+    const config = data instanceof FormData 
+      ? { headers: { 'Content-Type': 'multipart/form-data' } }
+      : {};
+    return api.post('/api/listings', data, config);
+  },
   delete: (id) => api.delete(`/api/listings/${id}`),
-  uploadImages: (id, formData) => api.post(`/api/listings/${id}/images`, formData, {
-    headers: { 'Content-Type': 'multipart/form-data' },
-  }),
-  markAsSold: (id) => api.patch(`/api/listings/${id}/sold`),
-  enableBargaining: (id, enabled) => api.patch(`/api/listings/${id}/bargaining`, { enabled }),
-};
-
-// Comment API
-export const commentAPI = {
-  getByListing: (listingId) => api.get(`/api/comments/listing/${listingId}`),
-  create: (data) => api.post('/api/comments', data),
-  delete: (id) => api.delete(`/api/comments/${id}`),
-};
-
-// Review API
-export const reviewAPI = {
-  getUserReviews: (email) => api.get(`/api/reviews/user/${email}`),
-  createReview: (data) => api.post('/api/reviews', data),
+  postComment: (id, data) => api.post(`/api/listings/${id}/comments`, data),
+  deleteComment: (id, commentId) => api.delete(`/api/listings/${id}/comments/${commentId}`),
+  submitBargain: (id, data) => api.post(`/api/listings/${id}/bargain`, data),
+  respondBargain: (bargainId, data) => api.patch(`/api/listings/bargain/${bargainId}`, data),
+  requestListing: (id) => api.post(`/api/listings/${id}/request`),
+  verifyListing: (id, data) => api.patch(`/api/listings/${id}/verify`, data),
 };
 
 // Message API
 export const messageAPI = {
-  getConversations: () => api.get('/api/messages/conversations'),
-  getMessages: (conversationId) => api.get(`/api/messages/conversation/${conversationId}`),
-  send: (data) => api.post('/api/messages', data),
-  markAsRead: (conversationId) => api.patch(`/api/messages/conversation/${conversationId}/read`),
+  getAllChats: () => api.get('/api/messages/chats'),
+  createOrFetchChat: (data) => api.post('/api/messages/chats', data),
+  getChatById: (chatId) => api.get(`/api/messages/chats/${chatId}`),
+  sendMessage: (chatId, data) => api.post(`/api/messages/chats/${chatId}`, data),
 };
 
 // Notification API
 export const notificationAPI = {
   getAll: () => api.get('/api/notifications'),
-  markAsRead: (id) => api.patch(`/api/notifications/${id}/read`),
   markAllAsRead: () => api.patch('/api/notifications/read-all'),
 };
 
 // Admin API
 export const adminAPI = {
-  getAllUsers: () => api.get('/api/admin/users'),
-  banUser: (email) => api.post('/api/admin/ban', { email }),
-  unbanUser: (email) => api.post('/api/admin/unban', { email }),
-  getAllListings: () => api.get('/api/admin/listings'),
-  deleteListing: (id) => api.delete(`/api/admin/listings/${id}`),
+  toggleBanUser: (email, data) => api.patch(`/api/admin/users/${email}/toggle-ban`, data),
   verifyListing: (id) => api.patch(`/api/admin/listings/${id}/verify`),
+  deleteListing: (id) => api.delete(`/api/admin/listings/${id}`),
+  deleteComment: (listingId, commentId) => api.delete(`/api/admin/listings/${listingId}/comments/${commentId}`),
 };
 
 export default api;

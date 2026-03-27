@@ -1,9 +1,8 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
+import { useAuth } from "../context/AuthContext";
 import toast from "react-hot-toast";
-
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+import { authAPI } from "../utils/api";
 
 function LoginPage() {
     const [showPassword, setShowPassword] = useState(false);
@@ -11,14 +10,13 @@ function LoginPage() {
     const [formData, setFormData] = useState({ email: "", password: "" });
 
     const navigate = useNavigate();
+    const { login, isAuthenticated } = useAuth();
 
     useEffect(() => {
-        // Check if already logged in
-        const token = localStorage.getItem("authToken");
-        if (token) {
+        if (isAuthenticated) {
             navigate("/home");
         }
-    }, [navigate]);
+    }, [isAuthenticated, navigate]);
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
@@ -30,17 +28,13 @@ function LoginPage() {
         setIsLoading(true);
 
         try {
-            // Call YOUR backend API directly
-            const response = await axios.post(`${API_BASE_URL}/api/auth/login`, {
+            const response = await authAPI.login({
                 email: formData.email,
                 password: formData.password,
             });
 
             if (response.data.token && response.data.user) {
-                // Store token and user data
-                localStorage.setItem("authToken", response.data.token);
-                localStorage.setItem("user", JSON.stringify(response.data.user));
-                
+                login(response.data.token, response.data.user);
                 toast.success("Login successful!");
                 navigate("/home");
             }

@@ -1,14 +1,11 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
 import toast from "react-hot-toast";
-
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+import { authAPI } from "../utils/api";
 
 function ForgotPasswordPage() {
     const [step, setStep] = useState(1);
     const [email, setEmail] = useState("");
-    const [otpCode, setOtpCode] = useState(["", "", "", "", "", ""]);
     const [newPassword, setNewPassword] = useState("");
     const [confirmPassword, setConfirmPassword] = useState("");
     const [showPassword, setShowPassword] = useState(false);
@@ -22,36 +19,16 @@ function ForgotPasswordPage() {
         setIsLoading(true);
 
         try {
-            const response = await axios.post(`${API_BASE_URL}/api/auth/check-email`, { email });
+            const response = await authAPI.checkEmail({ email });
             
             if (response.data.exists) {
-                toast.success("Email verified! OTP sent.");
+                toast.success("Email verified! You can now reset your password.");
                 setStep(2);
             } else {
                 toast.error("Email not found.");
             }
         } catch (err) {
             toast.error(err.response?.data?.message || "Error checking email.");
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
-    const handleVerifyOtp = async (e) => {
-        e.preventDefault();
-        const code = otpCode.join("");
-        if (code.length < 6) {
-            toast.error("Please enter the complete 6-digit code.");
-            return;
-        }
-
-        setIsLoading(true);
-        try {
-            await axios.post(`${API_BASE_URL}/api/auth/verify-otp`, { email, code });
-            toast.success("OTP verified!");
-            setStep(3);
-        } catch (err) {
-            toast.error(err.response?.data?.message || "Invalid code.");
         } finally {
             setIsLoading(false);
         }
@@ -72,7 +49,7 @@ function ForgotPasswordPage() {
 
         setIsLoading(true);
         try {
-            await axios.post(`${API_BASE_URL}/api/auth/change-password`, {
+            await authAPI.changePassword({
                 email,
                 password: newPassword,
             });
@@ -83,13 +60,6 @@ function ForgotPasswordPage() {
         } finally {
             setIsLoading(false);
         }
-    };
-
-    const handleOtpChange = (element, index) => {
-        if (isNaN(element.value)) return;
-        const newOtp = [...otpCode.map((d, idx) => (idx === index ? element.value : d))];
-        setOtpCode(newOtp);
-        if (element.value && element.nextSibling) element.nextSibling.focus();
     };
 
     return (
@@ -104,12 +74,10 @@ function ForgotPasswordPage() {
 
                     <div className="mb-6">
                         <h2 className="text-2xl font-bold tracking-tight mb-1">
-                            {step === 1 ? "Forgot Password?" : step === 2 ? "Verify your email" : "Set new password"}
+                            {step === 1 ? "Forgot Password?" : "Set new password"}
                         </h2>
                         <p className="text-sm text-gray-400 leading-relaxed font-medium">
-                            {step === 1 ? "Enter your email to receive a verification code" :
-                                step === 2 ? `We sent a 6-digit code to ${email}` :
-                                    "Create a new strong password"}
+                            {step === 1 ? "Enter your email to reset your password" : "Create a new strong password"}
                         </p>
                     </div>
 
@@ -137,31 +105,6 @@ function ForgotPasswordPage() {
                     )}
 
                     {step === 2 && (
-                        <form onSubmit={handleVerifyOtp} className="space-y-6">
-                            <div className="flex justify-between gap-2">
-                                {otpCode.map((data, index) => (
-                                    <input
-                                        key={index}
-                                        type="text"
-                                        maxLength="1"
-                                        value={data}
-                                        onChange={(e) => handleOtpChange(e.target, index)}
-                                        onFocus={(e) => e.target.select()}
-                                        className="w-11 h-11 text-center bg-white border border-gray-200 rounded-lg focus:outline-none focus:border-black focus:ring-1 focus:ring-black transition-all text-lg font-black"
-                                    />
-                                ))}
-                            </div>
-                            <button
-                                type="submit"
-                                disabled={isLoading}
-                                className={`w-full bg-black text-white py-2.5 rounded-lg text-sm font-black uppercase tracking-widest transition-all hover:bg-gray-900 ${isLoading ? "opacity-50" : ""}`}
-                            >
-                                {isLoading ? "..." : "Verify Code"}
-                            </button>
-                        </form>
-                    )}
-
-                    {step === 3 && (
                         <form onSubmit={handleChangePassword} className="space-y-5">
                             <div>
                                 <label className="block text-[12px] font-bold text-gray-800 mb-2">New Password</label>

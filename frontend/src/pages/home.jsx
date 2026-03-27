@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import Navbar from '../components/Navbar/Navbar';
@@ -10,56 +10,83 @@ import toast from 'react-hot-toast';
 
 function HomePage() {
   const navigate = useNavigate();
-  const { isSignedIn, isLoaded } = useAuth();
+  const { isAuthenticated, loading: authLoading } = useAuth();
   const [listings, setListings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState({
     type: '',
-    category: '',
     minPrice: '',
     maxPrice: '',
     bargaining: false,
     search: '',
   });
 
-  useEffect(() => {
-    if (isLoaded && !isSignedIn) {
-      navigate('/login');
+  // Memoize filtered listings to avoid recalculating on every render
+  const filteredListings = useMemo(() => {
+    let result = listings;
+    
+    if (filters.minPrice || filters.maxPrice) {
+      result = result.filter(listing => {
+        if (filters.minPrice && listing.sellListing) {
+          if (listing.sellListing.price < parseFloat(filters.minPrice)) return false;
+        }
+        if (filters.maxPrice && listing.sellListing) {
+          if (listing.sellListing.price > parseFloat(filters.maxPrice)) return false;
+        }
+        return true;
+      });
     }
-  }, [isLoaded, isSignedIn, navigate]);
-
-  useEffect(() => {
-    if (isSignedIn) {
-      fetchListings();
-    }
-  }, [isSignedIn, filters]);
+    
+    return result;
+  }, [listings, filters.minPrice, filters.maxPrice]);
 
   const fetchListings = async () => {
     try {
       setLoading(true);
       const params = {};
+      // Backend only supports 'type' and 'search' parameters
       if (filters.type) params.type = filters.type;
-      if (filters.category) params.category = filters.category;
-      if (filters.minPrice) params.minPrice = filters.minPrice;
-      if (filters.maxPrice) params.maxPrice = filters.maxPrice;
-      if (filters.bargaining) params.bargaining = true;
-      if (filters.search) params.search = filters.search;
+      // Only add search if it has a value to avoid backend issues
+      if (filters.search && filters.search.trim()) params.search = filters.search.trim();
 
       const response = await listingAPI.getAll(params);
-      setListings(response.data);
+      
+      // Console log to check if imageUrl is in the response
+      console.log('📦 Listings Response:', response.data);
+      if (response.data && response.data.length > 0) {
+        console.log('📸 First listing sample:', response.data[0]);
+        console.log('🖼️ ImageUrl field exists?', 'imageUrl' in response.data[0]);
+        console.log('🖼️ ImageUrl value:', response.data[0].imageUrl);
+      }
+      
+      setListings(response.data || []);
     } catch (error) {
       console.error('Error fetching listings:', error);
-      toast.error('Failed to load listings');
+      console.error('Error details:', error.response?.data);
+      toast.error(error.response?.data?.message || 'Failed to load listings');
+      setListings([]);
     } finally {
       setLoading(false);
     }
   };
 
+  useEffect(() => {
+    if (!authLoading && !isAuthenticated) {
+      navigate('/login');
+    }
+  }, [authLoading, isAuthenticated, navigate]);
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      fetchListings();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAuthenticated, filters.type, filters.search]);
+
   const handleFilterChange = (key, value) => {
     if (key === 'clear') {
       setFilters({
         type: '',
-        category: '',
         minPrice: '',
         maxPrice: '',
         bargaining: false,
@@ -74,7 +101,7 @@ function HomePage() {
     setFilters(prev => ({ ...prev, search: query }));
   };
 
-  if (!isLoaded || !isSignedIn) return null;
+  if (authLoading || !isAuthenticated) return null;
 
   return (
     <div className="min-h-screen bg-gray-50 text-black font-sans selection:bg-black selection:text-white">
@@ -110,7 +137,7 @@ function HomePage() {
                   </div>
                 ))}
               </div>
-            ) : listings.length === 0 ? (
+            ) : filteredListings.length === 0 ? (
               <div className="text-center py-20">
                 <svg className="w-20 h-20 text-gray-200 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
@@ -126,7 +153,7 @@ function HomePage() {
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {listings.map((listing) => (
+                {filteredListings.map((listing) => (
                   <ListingCard key={listing.id} listing={listing} />
                 ))}
               </div>

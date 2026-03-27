@@ -1,9 +1,8 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
 import toast from "react-hot-toast";
-
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+import { authAPI } from "../utils/api";
+import { useAuth } from "../context/AuthContext";
 
 function RegisterPage() {
     const [showPassword, setShowPassword] = useState(false);
@@ -22,15 +21,15 @@ function RegisterPage() {
     });
 
     const navigate = useNavigate();
+    const { isAuthenticated } = useAuth();
     const TOTAL_STEPS = 3;
     const stepLabels = ["Personal Info", "Email & Roll No", "Password"];
 
     useEffect(() => {
-        const token = localStorage.getItem("authToken");
-        if (token) {
+        if (isAuthenticated) {
             navigate("/home");
         }
-    }, [navigate]);
+    }, [isAuthenticated, navigate]);
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
@@ -54,14 +53,21 @@ function RegisterPage() {
             return;
         }
 
-        if (formData.password.length < 8) {
-            toast.error("Password must be at least 8 characters.");
+        if (formData.password.length < 10) {
+            toast.error("Password must be at least 10 characters.");
+            return;
+        }
+
+        // Password validation
+        const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]).{10,}$/;
+        if (!passwordRegex.test(formData.password)) {
+            toast.error("Password must contain at least 1 uppercase, 1 lowercase, 1 digit, and 1 special character.");
             return;
         }
 
         setIsLoading(true);
         try {
-            const response = await axios.post(`${API_BASE_URL}/api/auth/register`, {
+            const response = await authAPI.register({
                 email: formData.email,
                 name: formData.name,
                 rollNo: formData.rollNo,
@@ -90,7 +96,7 @@ function RegisterPage() {
 
         setIsLoading(true);
         try {
-            const response = await axios.post(`${API_BASE_URL}/api/auth/verify-otp`, {
+            const response = await authAPI.verifyOTP({
                 email: formData.email,
                 code: code,
             });
@@ -154,7 +160,7 @@ function RegisterPage() {
                         <p className="text-sm text-gray-400 leading-relaxed font-medium">
                             {step === 1 ? "Enter your full name" :
                                 step === 2 ? "Use your FAST university email and roll number" :
-                                    step === 3 ? "Make it strong and secure" :
+                                    step === 3 ? "Must include uppercase, lowercase, digit & special character" :
                                         `We sent a 6-digit code to ${formData.email}`}
                         </p>
                     </div>
@@ -212,6 +218,23 @@ function RegisterPage() {
                                                 className="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] font-extrabold uppercase text-gray-400">
                                                 {showPassword ? "Hide" : "Show"}
                                             </button>
+                                        </div>
+                                        <div className="mt-2 space-y-1">
+                                            <p className={`text-[10px] font-medium ${formData.password.length >= 10 ? 'text-green-600' : 'text-gray-400'}`}>
+                                                ✓ At least 10 characters
+                                            </p>
+                                            <p className={`text-[10px] font-medium ${/[A-Z]/.test(formData.password) ? 'text-green-600' : 'text-gray-400'}`}>
+                                                ✓ One uppercase letter
+                                            </p>
+                                            <p className={`text-[10px] font-medium ${/[a-z]/.test(formData.password) ? 'text-green-600' : 'text-gray-400'}`}>
+                                                ✓ One lowercase letter
+                                            </p>
+                                            <p className={`text-[10px] font-medium ${/\d/.test(formData.password) ? 'text-green-600' : 'text-gray-400'}`}>
+                                                ✓ One digit
+                                            </p>
+                                            <p className={`text-[10px] font-medium ${/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(formData.password) ? 'text-green-600' : 'text-gray-400'}`}>
+                                                ✓ One special character (!@#$%^&*)
+                                            </p>
                                         </div>
                                     </div>
                                     <div>

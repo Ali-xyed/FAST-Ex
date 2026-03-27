@@ -7,62 +7,36 @@ import toast from 'react-hot-toast';
 
 function AdminPage() {
   const navigate = useNavigate();
-  const { profile } = useAuth();
-  const [activeTab, setActiveTab] = useState('users');
-  const [users, setUsers] = useState([]);
+  const { user } = useAuth();
+  const [activeTab, setActiveTab] = useState('listings');
   const [listings, setListings] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     // Check if user is admin
-    if (profile && profile.role !== 'ADMIN') {
+    if (user && user.role !== 'admin') {
       toast.error('Access denied. Admin only.');
       navigate('/home');
       return;
     }
 
-    if (profile) {
+    if (user) {
       fetchData();
     }
-  }, [profile, activeTab]);
+  }, [user]);
 
   const fetchData = async () => {
     setLoading(true);
     try {
-      if (activeTab === 'users') {
-        const response = await adminAPI.getAllUsers();
-        setUsers(response.data);
-      } else {
-        const response = await adminAPI.getAllListings();
-        setListings(response.data);
-      }
+      // Backend doesn't have admin-specific endpoints, use regular listing endpoint
+      const { listingAPI } = await import('../utils/api');
+      const response = await listingAPI.getAll({});
+      setListings(response.data);
     } catch (error) {
       console.error('Error fetching data:', error);
       toast.error('Failed to load data');
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handleBanUser = async (email) => {
-    if (!confirm('Are you sure you want to ban this user?')) return;
-    
-    try {
-      await adminAPI.banUser(email);
-      toast.success('User banned successfully');
-      fetchData();
-    } catch (error) {
-      toast.error('Failed to ban user');
-    }
-  };
-
-  const handleUnbanUser = async (email) => {
-    try {
-      await adminAPI.unbanUser(email);
-      toast.success('User unbanned successfully');
-      fetchData();
-    } catch (error) {
-      toast.error('Failed to unban user');
     }
   };
 
@@ -88,7 +62,7 @@ function AdminPage() {
     }
   };
 
-  if (!profile || profile.role !== 'ADMIN') return null;
+  if (!user || user.role !== 'admin') return null;
 
   return (
     <div className="min-h-screen bg-gray-50 text-black font-sans selection:bg-black selection:text-white">
@@ -101,74 +75,11 @@ function AdminPage() {
         </div>
 
         <div className="bg-white border border-gray-100 rounded-2xl overflow-hidden">
-          <div className="flex border-b border-gray-100">
-            <button
-              onClick={() => setActiveTab('users')}
-              className={`flex-1 px-6 py-4 text-sm font-black uppercase tracking-widest transition-all ${activeTab === 'users' ? 'bg-black text-white' : 'text-gray-400 hover:text-black'}`}
-            >
-              Users
-            </button>
-            <button
-              onClick={() => setActiveTab('listings')}
-              className={`flex-1 px-6 py-4 text-sm font-black uppercase tracking-widest transition-all ${activeTab === 'listings' ? 'bg-black text-white' : 'text-gray-400 hover:text-black'}`}
-            >
-              Listings
-            </button>
-          </div>
-
           <div className="p-6">
+            <h2 className="text-xl font-black tracking-tight mb-6">All Listings</h2>
             {loading ? (
               <div className="text-center py-12">
                 <p className="text-gray-400 font-medium">Loading...</p>
-              </div>
-            ) : activeTab === 'users' ? (
-              <div className="space-y-4">
-                {users.length === 0 ? (
-                  <p className="text-center text-gray-400 py-8">No users found</p>
-                ) : (
-                  users.map((user) => (
-                    <div key={user.email} className="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
-                      <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden">
-                          {user.imageUrl ? (
-                            <img src={user.imageUrl} className="w-full h-full object-cover" alt={user.name} />
-                          ) : (
-                            <span className="text-sm font-bold">{user.name?.charAt(0)}</span>
-                          )}
-                        </div>
-                        <div>
-                          <p className="text-sm font-black">{user.name}</p>
-                          <p className="text-xs text-gray-400">{user.email}</p>
-                          <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mt-1">
-                            {user.rollNo} • Reputation: {user.reputationScore || 0}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        {user.isBan ? (
-                          <>
-                            <span className="text-[10px] font-black text-red-600 uppercase tracking-widest bg-red-50 px-3 py-1 rounded-full">
-                              Banned
-                            </span>
-                            <button
-                              onClick={() => handleUnbanUser(user.email)}
-                              className="bg-green-600 text-white px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest hover:bg-green-700 transition-all"
-                            >
-                              Unban
-                            </button>
-                          </>
-                        ) : (
-                          <button
-                            onClick={() => handleBanUser(user.email)}
-                            className="bg-red-600 text-white px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest hover:bg-red-700 transition-all"
-                          >
-                            Ban User
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                  ))
-                )}
               </div>
             ) : (
               <div className="space-y-4">
@@ -179,8 +90,8 @@ function AdminPage() {
                     <div key={listing.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
                       <div className="flex items-center gap-4">
                         <div className="w-16 h-16 rounded-lg bg-gray-200 overflow-hidden flex-shrink-0">
-                          {listing.images && listing.images[0] ? (
-                            <img src={listing.images[0]} className="w-full h-full object-cover" alt={listing.title} />
+                          {listing.imageUrl ? (
+                            <img src={listing.imageUrl} className="w-full h-full object-cover" alt={listing.title} />
                           ) : (
                             <div className="w-full h-full flex items-center justify-center">
                               <svg className="w-6 h-6 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -191,9 +102,9 @@ function AdminPage() {
                         </div>
                         <div>
                           <p className="text-sm font-black">{listing.title}</p>
-                          <p className="text-xs text-gray-400">{listing.category} • {listing.type}</p>
+                          <p className="text-xs text-gray-400">{listing.type}</p>
                           <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mt-1">
-                            By: {listing.seller?.name}
+                            By: {listing.email}
                           </p>
                         </div>
                       </div>

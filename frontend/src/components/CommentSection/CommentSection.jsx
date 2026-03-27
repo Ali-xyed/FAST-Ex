@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react';
-import { commentAPI } from '../../utils/api';
+import { listingAPI } from '../../utils/api';
 import { useAuth } from '../../context/AuthContext';
 import toast from 'react-hot-toast';
 
 const CommentSection = ({ listingId }) => {
-  const { profile } = useAuth();
+  const { user } = useAuth();
   const [comments, setComments] = useState([]);
   const [newComment, setNewComment] = useState('');
   const [loading, setLoading] = useState(true);
@@ -12,12 +12,13 @@ const CommentSection = ({ listingId }) => {
 
   useEffect(() => {
     fetchComments();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [listingId]);
 
   const fetchComments = async () => {
     try {
-      const response = await commentAPI.getByListing(listingId);
-      setComments(response.data);
+      const response = await listingAPI.getById(listingId);
+      setComments(response.data.comments || []);
     } catch (error) {
       console.error('Error fetching comments:', error);
     } finally {
@@ -31,13 +32,12 @@ const CommentSection = ({ listingId }) => {
 
     setSubmitting(true);
     try {
-      const response = await commentAPI.create({
-        listingId,
+      await listingAPI.postComment(listingId, {
         content: newComment,
       });
-      setComments([response.data, ...comments]);
       setNewComment('');
       toast.success('Comment posted!');
+      fetchComments(); // Refresh comments
     } catch (error) {
       toast.error('Failed to post comment');
     } finally {
@@ -47,7 +47,7 @@ const CommentSection = ({ listingId }) => {
 
   const handleDelete = async (commentId) => {
     try {
-      await commentAPI.delete(commentId);
+      await listingAPI.deleteComment(listingId, commentId);
       setComments(comments.filter(c => c.id !== commentId));
       toast.success('Comment deleted');
     } catch (error) {
@@ -64,10 +64,10 @@ const CommentSection = ({ listingId }) => {
       <form onSubmit={handleSubmit} className="mb-8">
         <div className="flex gap-3">
           <div className="w-10 h-10 rounded-full bg-black flex items-center justify-center overflow-hidden flex-shrink-0">
-            {profile?.imageUrl ? (
-              <img src={profile.imageUrl} className="w-full h-full object-cover" alt="You" />
+            {user?.imageUrl ? (
+              <img src={user.imageUrl} className="w-full h-full object-cover" alt="You" />
             ) : (
-              <span className="text-white text-xs font-black">{(profile?.name || 'U').charAt(0)}</span>
+              <span className="text-white text-xs font-black">{(user?.name || 'U').charAt(0)}</span>
             )}
           </div>
           <div className="flex-1">
@@ -98,21 +98,17 @@ const CommentSection = ({ listingId }) => {
           comments.map((comment) => (
             <div key={comment.id} className="flex gap-3 p-4 bg-gray-50 rounded-xl">
               <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden flex-shrink-0">
-                {comment.user?.imageUrl ? (
-                  <img src={comment.user.imageUrl} className="w-full h-full object-cover" alt={comment.user.name} />
-                ) : (
-                  <span className="text-xs font-bold">{comment.user?.name?.charAt(0)}</span>
-                )}
+                <span className="text-xs font-bold">{comment.fromEmail?.charAt(0).toUpperCase()}</span>
               </div>
               <div className="flex-1">
                 <div className="flex items-center justify-between mb-1">
-                  <p className="text-sm font-black">{comment.user?.name}</p>
+                  <p className="text-sm font-black">{comment.fromEmail}</p>
                   <p className="text-[10px] font-medium text-gray-400 uppercase tracking-wider">
                     {new Date(comment.createdAt).toLocaleDateString()}
                   </p>
                 </div>
                 <p className="text-sm text-gray-700 font-medium">{comment.content}</p>
-                {comment.user?.email === profile?.email && (
+                {comment.fromEmail === user?.email && (
                   <button
                     onClick={() => handleDelete(comment.id)}
                     className="mt-2 text-[10px] font-bold text-red-500 hover:text-red-700 uppercase tracking-widest"
