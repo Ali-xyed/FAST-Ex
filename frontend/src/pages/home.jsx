@@ -1,0 +1,141 @@
+import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
+import Navbar from '../components/Navbar/Navbar';
+import SearchBar from '../components/SearchBar/SearchBar';
+import FilterPanel from '../components/FilterPanel/FilterPanel';
+import ListingCard from '../components/ListingCard/ListingCard';
+import { listingAPI } from '../utils/api';
+import toast from 'react-hot-toast';
+
+function HomePage() {
+  const navigate = useNavigate();
+  const { isSignedIn, isLoaded } = useAuth();
+  const [listings, setListings] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [filters, setFilters] = useState({
+    type: '',
+    category: '',
+    minPrice: '',
+    maxPrice: '',
+    bargaining: false,
+    search: '',
+  });
+
+  useEffect(() => {
+    if (isLoaded && !isSignedIn) {
+      navigate('/login');
+    }
+  }, [isLoaded, isSignedIn, navigate]);
+
+  useEffect(() => {
+    if (isSignedIn) {
+      fetchListings();
+    }
+  }, [isSignedIn, filters]);
+
+  const fetchListings = async () => {
+    try {
+      setLoading(true);
+      const params = {};
+      if (filters.type) params.type = filters.type;
+      if (filters.category) params.category = filters.category;
+      if (filters.minPrice) params.minPrice = filters.minPrice;
+      if (filters.maxPrice) params.maxPrice = filters.maxPrice;
+      if (filters.bargaining) params.bargaining = true;
+      if (filters.search) params.search = filters.search;
+
+      const response = await listingAPI.getAll(params);
+      setListings(response.data);
+    } catch (error) {
+      console.error('Error fetching listings:', error);
+      toast.error('Failed to load listings');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleFilterChange = (key, value) => {
+    if (key === 'clear') {
+      setFilters({
+        type: '',
+        category: '',
+        minPrice: '',
+        maxPrice: '',
+        bargaining: false,
+        search: '',
+      });
+    } else {
+      setFilters(prev => ({ ...prev, [key]: value }));
+    }
+  };
+
+  const handleSearch = (query) => {
+    setFilters(prev => ({ ...prev, search: query }));
+  };
+
+  if (!isLoaded || !isSignedIn) return null;
+
+  return (
+    <div className="min-h-screen bg-gray-50 text-black font-sans selection:bg-black selection:text-white">
+      <Navbar />
+
+      <main className="px-8 lg:px-20 py-8 max-w-7xl mx-auto">
+        <div className="mb-8">
+          <h1 className="text-4xl font-black tracking-tight mb-2">Browse Listings</h1>
+          <p className="text-gray-400 font-medium">Discover items from your campus community</p>
+        </div>
+
+        <div className="mb-8">
+          <SearchBar onSearch={handleSearch} />
+        </div>
+
+        <div className="flex gap-8">
+          <aside className="hidden lg:block w-72 flex-shrink-0">
+            <FilterPanel filters={filters} onFilterChange={handleFilterChange} />
+          </aside>
+
+          <div className="flex-1">
+            {loading ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {[...Array(6)].map((_, i) => (
+                  <div key={i} className="bg-white border border-gray-100 rounded-2xl overflow-hidden animate-pulse">
+                    <div className="aspect-[4/3] bg-gray-200"></div>
+                    <div className="p-5 space-y-3">
+                      <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+                      <div className="h-3 bg-gray-200 rounded w-1/2"></div>
+                      <div className="h-3 bg-gray-200 rounded"></div>
+                      <div className="h-3 bg-gray-200 rounded w-5/6"></div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : listings.length === 0 ? (
+              <div className="text-center py-20">
+                <svg className="w-20 h-20 text-gray-200 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+                </svg>
+                <h3 className="text-2xl font-black mb-2">No listings found</h3>
+                <p className="text-gray-400 font-medium mb-6">Try adjusting your filters or search query</p>
+                <button
+                  onClick={() => navigate('/create-listing')}
+                  className="bg-black text-white px-8 py-3 rounded-xl text-sm font-black uppercase tracking-widest hover:bg-gray-800 transition-all"
+                >
+                  Create First Listing
+                </button>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {listings.map((listing) => (
+                  <ListingCard key={listing.id} listing={listing} />
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      </main>
+    </div>
+  );
+}
+
+export default HomePage;
