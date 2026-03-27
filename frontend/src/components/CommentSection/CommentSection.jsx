@@ -56,62 +56,40 @@ const CommentSection = ({ listingId }) => {
   };
 
   return (
-    <div className="bg-white border border-gray-100 rounded-2xl p-8">
-      <h3 className="text-lg font-black uppercase tracking-wider mb-6">
-        Comments ({comments.length})
-      </h3>
-
-      <form onSubmit={handleSubmit} className="mb-8">
-        <div className="flex gap-3">
-          <div className="w-10 h-10 rounded-full bg-black flex items-center justify-center overflow-hidden flex-shrink-0">
-            {user?.imageUrl ? (
-              <img src={user.imageUrl} className="w-full h-full object-cover" alt="You" />
-            ) : (
-              <span className="text-white text-xs font-black">{(user?.name || 'U').charAt(0)}</span>
-            )}
-          </div>
-          <div className="flex-1">
-            <textarea
-              value={newComment}
-              onChange={(e) => setNewComment(e.target.value)}
-              placeholder="Add a comment..."
-              rows="3"
-              className="w-full bg-gray-50 border-none rounded-xl py-3 px-4 text-sm font-medium focus:ring-2 focus:ring-black/5 outline-none resize-none"
-            />
-            <button
-              type="submit"
-              disabled={submitting || !newComment.trim()}
-              className={`mt-3 bg-black text-white px-6 py-2 rounded-lg text-[11px] font-black uppercase tracking-widest hover:bg-gray-800 transition-all ${submitting || !newComment.trim() ? 'opacity-50' : ''}`}
-            >
-              {submitting ? 'Posting...' : 'Post Comment'}
-            </button>
-          </div>
-        </div>
-      </form>
-
-      <div className="space-y-4">
+    <div className="flex flex-col h-full">
+      {/* Comments List */}
+      <div className="flex-1 space-y-3 mb-4">
         {loading ? (
-          <p className="text-center text-gray-400 py-8">Loading comments...</p>
+          <div className="h-full flex items-center justify-center">
+            <p className="text-center text-gray-400 text-xs">Loading comments...</p>
+          </div>
         ) : comments.length === 0 ? (
-          <p className="text-center text-gray-400 py-8">No comments yet. Be the first to comment!</p>
+          <div className="h-full flex flex-col items-center justify-center">
+            <svg className="w-16 h-16 text-gray-300 mb-4" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H6l-2 2V4h16v12z"/>
+              <path d="M7 9h2v2H7zm4 0h2v2h-2zm4 0h2v2h-2z"/>
+            </svg>
+            <p className="text-center text-gray-400 text-lg font-medium mb-1">No comments yet</p>
+            <p className="text-center text-gray-400 text-sm">Be the first to comment!</p>
+          </div>
         ) : (
           comments.map((comment) => (
-            <div key={comment.id} className="flex gap-3 p-4 bg-gray-50 rounded-xl">
-              <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden flex-shrink-0">
-                <span className="text-xs font-bold">{comment.fromEmail?.charAt(0).toUpperCase()}</span>
+            <div key={comment.id} className="flex gap-2 p-3 bg-gray-50 rounded-xl">
+              <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden flex-shrink-0">
+                <span className="text-[10px] font-bold">{comment.fromEmail?.charAt(0).toUpperCase()}</span>
               </div>
               <div className="flex-1">
                 <div className="flex items-center justify-between mb-1">
-                  <p className="text-sm font-black">{comment.fromEmail}</p>
-                  <p className="text-[10px] font-medium text-gray-400 uppercase tracking-wider">
+                  <p className="text-xs font-black">{comment.fromEmail}</p>
+                  <p className="text-[9px] font-medium text-gray-400 uppercase tracking-wider">
                     {new Date(comment.createdAt).toLocaleDateString()}
                   </p>
                 </div>
-                <p className="text-sm text-gray-700 font-medium">{comment.content}</p>
+                <p className="text-xs text-gray-700 font-medium">{comment.content}</p>
                 {comment.fromEmail === user?.email && (
                   <button
                     onClick={() => handleDelete(comment.id)}
-                    className="mt-2 text-[10px] font-bold text-red-500 hover:text-red-700 uppercase tracking-widest"
+                    className="mt-1.5 text-[9px] font-bold text-red-500 hover:text-red-700 uppercase tracking-widest"
                   >
                     Delete
                   </button>
@@ -121,6 +99,37 @@ const CommentSection = ({ listingId }) => {
           ))
         )}
       </div>
+
+      {/* Comment Input at Bottom */}
+      <form onSubmit={handleSubmit} className="mt-auto border-t border-gray-200 pt-3">
+        <div className="flex gap-2 items-center">
+          <div className="w-8 h-8 rounded-full bg-black flex items-center justify-center overflow-hidden flex-shrink-0">
+            {user?.imageUrl ? (
+              <img src={user.imageUrl} className="w-full h-full object-cover" alt="You" />
+            ) : (
+              <span className="text-white text-[10px] font-black">{(user?.name || 'U').charAt(0)}</span>
+            )}
+          </div>
+          <input
+            type="text"
+            value={newComment}
+            onChange={(e) => setNewComment(e.target.value)}
+            placeholder="Add a comment..."
+            className="flex-1 bg-gray-50 border-none rounded-full py-2 px-4 text-xs font-medium focus:ring-2 focus:ring-black/5 outline-none"
+          />
+          <button
+            type="submit"
+            disabled={submitting || !newComment.trim()}
+            className={`w-10 h-10 rounded-full bg-black text-white flex items-center justify-center hover:bg-gray-800 transition-all ${
+              submitting || !newComment.trim() ? 'opacity-50 cursor-not-allowed' : ''
+            }`}
+          >
+            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" />
+            </svg>
+          </button>
+        </div>
+      </form>
     </div>
   );
 };

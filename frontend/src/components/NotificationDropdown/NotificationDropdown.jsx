@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { notificationAPI } from '../../utils/api';
 import toast from 'react-hot-toast';
 
 const NotificationDropdown = ({ onClose }) => {
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
 
   useEffect(() => {
     fetchNotifications();
@@ -22,13 +24,34 @@ const NotificationDropdown = ({ onClose }) => {
     }
   };
 
-  const handleMarkAsRead = async (id) => {
-    try {
-      await notificationAPI.markAsRead(id);
-      setNotifications(notifications.map(n => n.id === id ? { ...n, isRead: true } : n));
-    } catch (error) {
-      toast.error('Failed to mark as read');
+  const getTimeAgo = (dateString) => {
+    const now = new Date();
+    const past = new Date(dateString);
+    const diffInSeconds = Math.floor((now - past) / 1000);
+    
+    if (diffInSeconds < 60) {
+      return '0 min ago';
+    } else if (diffInSeconds < 3600) {
+      const minutes = Math.floor(diffInSeconds / 60);
+      return `${minutes} min ago`;
+    } else if (diffInSeconds < 86400) {
+      const hours = Math.floor(diffInSeconds / 3600);
+      return `${hours} hour${hours > 1 ? 's' : ''} ago`;
+    } else {
+      const days = Math.floor(diffInSeconds / 86400);
+      return `${days} day${days > 1 ? 's' : ''} ago`;
     }
+  };
+
+  const handleNotificationClick = (notification) => {
+    // Mark as read
+    if (!notification.isRead) {
+      notificationAPI.markAllAsRead().catch(() => {});
+    }
+    
+    // Navigate to messages with the sender
+    navigate(`/messages?user=${notification.from}`);
+    onClose();
   };
 
   const handleMarkAllAsRead = async () => {
@@ -42,8 +65,8 @@ const NotificationDropdown = ({ onClose }) => {
   };
 
   return (
-    <div className="absolute right-0 top-14 w-96 bg-white border border-gray-100 rounded-2xl shadow-2xl overflow-hidden">
-      <div className="p-4 border-b border-gray-50 flex items-center justify-between">
+    <div className="absolute right-0 top-14 w-[420px] bg-white border-2 border-gray-200 rounded-2xl shadow-2xl overflow-hidden z-50">
+      <div className="p-4 border-b-2 border-gray-200 flex items-center justify-between">
         <h3 className="text-sm font-black uppercase tracking-wider">Notifications</h3>
         {notifications.some(n => !n.isRead) && (
           <button
@@ -55,7 +78,7 @@ const NotificationDropdown = ({ onClose }) => {
         )}
       </div>
 
-      <div className="max-h-96 overflow-y-auto">
+      <div className="max-h-[500px] overflow-y-auto">
         {loading ? (
           <div className="p-8 text-center">
             <p className="text-sm font-medium text-gray-400">Loading...</p>
@@ -71,16 +94,24 @@ const NotificationDropdown = ({ onClose }) => {
           notifications.map((notification) => (
             <div
               key={notification.id}
-              onClick={() => !notification.isRead && handleMarkAsRead(notification.id)}
-              className={`p-4 border-b border-gray-50 hover:bg-gray-50 transition-colors cursor-pointer ${!notification.isRead ? 'bg-blue-50/30' : ''}`}
+              onClick={() => handleNotificationClick(notification)}
+              className={`p-4 border-b border-gray-100 hover:bg-gray-50 transition-colors cursor-pointer ${!notification.isRead ? 'bg-blue-50/50' : ''}`}
             >
               <div className="flex items-start gap-3">
-                <div className={`w-2 h-2 rounded-full mt-2 ${!notification.isRead ? 'bg-blue-500' : 'bg-gray-200'}`}></div>
-                <div className="flex-1">
-                  <p className="text-sm font-bold text-gray-900">{notification.message}</p>
-                  <p className="text-[10px] font-medium text-gray-400 mt-1 uppercase tracking-wider">
-                    {new Date(notification.createdAt).toLocaleDateString()}
+                <div className={`w-2 h-2 rounded-full mt-2 flex-shrink-0 ${!notification.isRead ? 'bg-blue-500' : 'bg-gray-300'}`}></div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between mb-1">
+                    <p className="text-xs font-black text-gray-900 truncate">{notification.from}</p>
+                    <p className="text-[9px] font-medium text-gray-400 uppercase tracking-wider flex-shrink-0 ml-2">
+                      {getTimeAgo(notification.createdAt)}
+                    </p>
+                  </div>
+                  <p className="text-xs text-gray-700 font-medium mb-2">
+                    {notification.content}
                   </p>
+                  <button className="text-[10px] font-bold text-blue-600 hover:text-blue-700 uppercase tracking-widest">
+                    Message them →
+                  </button>
                 </div>
               </div>
             </div>
