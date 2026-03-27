@@ -5,7 +5,14 @@ const upload = require('../config/s3');
 
 const router = express.Router();
 
-router.post('/', verifyAuth, upload.single('image'), listingController.createListing);
+router.get('/health', (req, res) => res.json({ status: 'ok', service: 'listing' }));
+
+router.post('/', verifyAuth, (req, res, next) => {
+  upload.single('imageUrl')(req, res, (err) => {
+    if (err) return res.status(400).json({ message: 'File upload error', error: err.message });
+    next();
+  });
+}, listingController.createListing);
 router.get('/', listingController.getListings);
 router.get('/my', verifyAuth, listingController.getMyListings);
 router.get('/:id', listingController.getListingById);

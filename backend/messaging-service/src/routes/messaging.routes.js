@@ -4,6 +4,8 @@ const { verifyAuth } = require('../middleware/auth.middleware');
 
 const router = express.Router();
 
+router.get('/health', (req, res) => res.json({ status: 'ok', service: 'messaging' }));
+
 router.get('/chats', verifyAuth, messagingController.getChats);
 router.post('/chats', verifyAuth, messagingController.createOrGetChat);
 

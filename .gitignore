@@ -9,7 +9,8 @@ stop-dockers.ps1
 open-aws-ports.js
 domains.txt
 dockers.ps1
-
+redeploy-all-services.ps1
+test-ssh.ps1
 
 # Dependencies
 node_modules/

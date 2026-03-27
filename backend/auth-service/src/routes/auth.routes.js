@@ -3,6 +3,8 @@ const authController = require('../controllers/auth.controller');
 
 const router = express.Router();
 
+router.get('/health', (req, res) => res.json({ status: 'ok', service: 'auth' }));
+
 router.post('/register', authController.register);
 router.post('/verify-otp', authController.verifyOTP);
 router.post('/login', authController.login);

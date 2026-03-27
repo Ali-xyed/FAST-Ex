@@ -5,6 +5,8 @@ const upload = require('../config/s3');
 
 const router = express.Router();
 
+router.get('/health', (req, res) => res.json({ status: 'ok', service: 'user' }));
+
 router.get('/profile', verifyAuth, userController.getProfile);
 router.put('/profile', verifyAuth, userController.updateProfile);
 router.post('/profile/image', verifyAuth, upload.single('image'), userController.uploadImage);

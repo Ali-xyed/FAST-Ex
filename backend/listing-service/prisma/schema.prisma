@@ -29,6 +29,7 @@ model SellListing {
   listingId     String       @unique @db.ObjectId
   listing       Listing      @relation(fields: [listingId], references: [id])
   price         Float
+  isBargaining  Boolean      @default(false)
   bargainings   Bargaining[] @relation("SellBargainings")
 }
 
@@ -37,6 +38,7 @@ model RentListing {
   listingId     String       @unique @db.ObjectId
   listing       Listing      @relation(fields: [listingId], references: [id])
   pricePerHour  Float
+  isBargaining  Boolean      @default(false)
   bargainings   Bargaining[] @relation("RentBargainings")
 }
 

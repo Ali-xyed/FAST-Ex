@@ -31,17 +31,42 @@ const delCachePattern = async (pattern) => {
 
 const createListing = async (req, res) => {
   try {
+    console.log('Creating listing - Headers:', req.headers);
+    console.log('Creating listing - Body:', req.body);
+    console.log('Creating listing - File:', req.file);
+
     const email = req.headers['x-user-email'];
-    const { type, title, description, price, pricePerHour, withTitle, withDescription } = req.body;
+    if (!email) {
+      return res.status(401).json({ message: 'User email not found in headers' });
+    }
+
+    const { type, title, description, price, pricePerHour, withTitle, withDescription, isBargaining } = req.body;
+    
+    if (!type || !title || !description) {
+      return res.status(400).json({ message: 'Missing required fields: type, title, description' });
+    }
+
     const imageUrl = req.file ? req.file.location : null;
+
+    console.log('Creating listing with data:', { email, type, title, description, imageUrl });
 
     const listing = await listingRepo.createListing({ email, type, title, description, imageUrl });
 
+    console.log('Listing created:', listing.id);
+
     if (type === 'SELL' && price) {
-      await listingRepo.createSellListing({ listingId: listing.id, price: parseFloat(price) });
+      await listingRepo.createSellListing({ 
+        listingId: listing.id, 
+        price: parseFloat(price),
+        isBargaining: isBargaining === 'true' || isBargaining === true
+      });
     }
     if (type === 'RENT' && pricePerHour) {
-      await listingRepo.createRentListing({ listingId: listing.id, pricePerHour: parseFloat(pricePerHour) });
+      await listingRepo.createRentListing({ 
+        listingId: listing.id, 
+        pricePerHour: parseFloat(pricePerHour),
+        isBargaining: isBargaining === 'true' || isBargaining === true
+      });
     }
     if (type === 'EXCHANGE') {
       await listingRepo.createExchangeListing({ listingId: listing.id, withTitle: withTitle || '', withDescription: withDescription || '' });
@@ -50,10 +75,11 @@ const createListing = async (req, res) => {
     await delCachePattern('listings:all:*');
     await delCache(`listings:my:${email}`);
 
+    console.log('Listing creation complete');
     res.status(201).json(listing);
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: 'Server error creating listing' });
+    console.error('Error creating listing:', err);
+    res.status(500).json({ message: 'Server error creating listing', error: err.message });
   }
 };
 
