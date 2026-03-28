@@ -24,6 +24,13 @@ function ListingDetailsPage() {
   const fetchListing = async () => {
     try {
       const response = await listingAPI.getById(id);
+      console.log('Listing data:', response.data);
+      console.log('isBargaining check:', {
+        sellListing: response.data.sellListing,
+        rentListing: response.data.rentListing,
+        sellIsBargaining: response.data.sellListing?.isBargaining,
+        rentIsBargaining: response.data.rentListing?.isBargaining,
+      });
       setListing(response.data);
     } catch (error) {
       console.error('Error fetching listing:', error);

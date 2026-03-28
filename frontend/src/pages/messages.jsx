@@ -147,7 +147,7 @@ function MessagesPage() {
       await messageAPI.sendMessage(selectedConversation.id, {
         content: messageContent,
       });
-      // Message will be added via WebSocket event, no need to manually add
+      // Message will be added via WebSocket event
     } catch (error) {
       toast.error('Failed to send message');
       setNewMessage(messageContent); // Restore message on error
@@ -163,26 +163,6 @@ function MessagesPage() {
     joinChat(conversation.id);
   };
 
-  // Poll for new messages when a chat is selected
-  useEffect(() => {
-    if (!selectedConversation) return;
-
-    // Initial fetch
-    fetchMessages(selectedConversation.id);
-
-    // Poll every 2 seconds for new messages
-    const pollInterval = setInterval(() => {
-      if (currentChatIdRef.current) {
-        fetchMessages(currentChatIdRef.current);
-      }
-    }, 2000);
-
-    return () => {
-      clearInterval(pollInterval);
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedConversation]);
-
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -195,26 +175,29 @@ function MessagesPage() {
   };
 
   const getOtherParticipant = (conversation) => {
-    // Backend provides otherUserEmail and profileImageUrl directly
+    // Backend now provides otherUserName directly
     return {
       email: conversation.otherUserEmail,
+      name: conversation.otherUserName,
       imageUrl: conversation.profileImageUrl,
-      // Name and rollNo are not provided in the chat list response
-      // We'll need to fetch them separately or display email only
     };
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 text-black font-sans selection:bg-black selection:text-white">
+    <div className="h-screen bg-gray-50 text-black font-sans selection:bg-black selection:text-white flex flex-col overflow-hidden">
       <Navbar />
 
-      <main className="px-8 lg:px-20 py-8 max-w-7xl mx-auto">
-        <h1 className="text-4xl font-black tracking-tight mb-8">Messages</h1>
-
-        <div className="bg-white border border-gray-100 rounded-2xl overflow-hidden" style={{ height: 'calc(100vh - 250px)' }}>
-          <div className="flex h-full">
+      <main className="flex-1 flex overflow-hidden">
+        <div className="bg-white flex-1 flex overflow-hidden">
+          <div className="flex h-full w-full">
             {/* Conversations List */}
-            <div className="w-80 border-r border-gray-100 overflow-y-auto">
+            <div 
+              className="w-80 border-r border-gray-100 overflow-y-auto flex-shrink-0"
+              style={{ 
+                scrollbarWidth: 'thin',
+                scrollbarColor: '#9CA3AF #F3F4F6'
+              }}
+            >
               {loading ? (
                 <div className="p-8 text-center">
                   <p className="text-gray-400 font-medium">Loading...</p>
@@ -237,13 +220,13 @@ function MessagesPage() {
                     >
                       <div className="w-12 h-12 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden flex-shrink-0">
                         {other?.imageUrl ? (
-                          <img src={other.imageUrl} alt={other.email} className="w-full h-full object-cover" />
+                          <img src={other.imageUrl} alt={other.name || other.email} className="w-full h-full object-cover" />
                         ) : (
-                          <span className="text-sm font-bold">{other?.email?.charAt(0).toUpperCase()}</span>
+                          <span className="text-sm font-bold">{(other?.name || other?.email)?.charAt(0).toUpperCase()}</span>
                         )}
                       </div>
                       <div className="flex-1 text-left">
-                        <p className="text-sm font-black">{other?.email}</p>
+                        <p className="text-sm font-black">{other?.name || other?.email}</p>
                         <p className="text-xs text-gray-400 truncate">{conversation.messages?.[conversation.messages.length - 1]?.content || 'No messages yet'}</p>
                       </div>
                     </button>
@@ -262,22 +245,31 @@ function MessagesPage() {
                       {getOtherParticipant(selectedConversation)?.imageUrl ? (
                         <img 
                           src={getOtherParticipant(selectedConversation).imageUrl} 
-                          alt={getOtherParticipant(selectedConversation).email} 
+                          alt={getOtherParticipant(selectedConversation).name || getOtherParticipant(selectedConversation).email} 
                           className="w-full h-full object-cover" 
                         />
                       ) : (
                         <span className="text-sm font-bold">
-                          {getOtherParticipant(selectedConversation)?.email?.charAt(0).toUpperCase()}
+                          {(getOtherParticipant(selectedConversation)?.name || getOtherParticipant(selectedConversation)?.email)?.charAt(0).toUpperCase()}
                         </span>
                       )}
                     </div>
                     <div>
-                      <p className="text-sm font-black">{getOtherParticipant(selectedConversation)?.email}</p>
+                      <p className="text-sm font-black">{getOtherParticipant(selectedConversation)?.name || getOtherParticipant(selectedConversation)?.email}</p>
+                      {getOtherParticipant(selectedConversation)?.name && (
+                        <p className="text-[10px] text-gray-400 font-medium">{getOtherParticipant(selectedConversation)?.email}</p>
+                      )}
                     </div>
                   </div>
 
                   {/* Messages */}
-                  <div className="flex-1 overflow-y-auto p-6 space-y-4">
+                  <div 
+                    className="flex-1 overflow-y-auto p-6 space-y-4"
+                    style={{ 
+                      scrollbarWidth: 'thin',
+                      scrollbarColor: '#9CA3AF #F3F4F6'
+                    }}
+                  >
                     {messages.map((message) => {
                       const currentUserEmail = getCurrentUserEmail();
                       const isOwn = message.sender === currentUserEmail;
@@ -297,7 +289,7 @@ function MessagesPage() {
 
                   {/* Input */}
                   <form onSubmit={handleSendMessage} className="p-4 border-t border-gray-100">
-                    <div className="flex gap-3">
+                    <div className="flex gap-3 items-center">
                       <input
                         type="text"
                         value={newMessage}
@@ -308,9 +300,13 @@ function MessagesPage() {
                       <button
                         type="submit"
                         disabled={!newMessage.trim()}
-                        className={`bg-black text-white px-6 py-3 rounded-xl text-sm font-black uppercase tracking-widest hover:bg-gray-800 transition-all ${!newMessage.trim() ? 'opacity-50' : ''}`}
+                        className={`w-12 h-12 rounded-full bg-black text-white flex items-center justify-center hover:bg-gray-800 transition-all ${
+                          !newMessage.trim() ? 'opacity-50 cursor-not-allowed' : ''
+                        }`}
                       >
-                        Send
+                        <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+                          <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" />
+                        </svg>
                       </button>
                     </div>
                   </form>

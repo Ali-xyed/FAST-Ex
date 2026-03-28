@@ -13,6 +13,8 @@ import EditListingPage from './pages/editListing';
 import ListingDetailsPage from './pages/listingDetails';
 import MessagesPage from './pages/messages';
 import AdminPage from './pages/admin';
+import BargainOffersPage from './pages/bargainOffers';
+import ExchangeRequestsPage from './pages/exchangeRequests';
 
 function App() {
   return (
