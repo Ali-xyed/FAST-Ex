@@ -231,20 +231,23 @@ function CreateListingPage() {
                 </div>
               )}
 
-              <div>
-                <label className="flex items-center gap-3 cursor-pointer group">
-                  <input
-                    type="checkbox"
-                    name="isBargaining"
-                    checked={formData.isBargaining}
-                    onChange={handleInputChange}
-                    className="w-4 h-4 text-black focus:ring-black rounded"
-                  />
-                  <span className="text-sm font-bold group-hover:text-black transition-colors">
-                    Allow bargaining
-                  </span>
-                </label>
-              </div>
+              {/* Only show bargaining option for SELL and RENT types */}
+              {(formData.type === 'SELL' || formData.type === 'RENT') && (
+                <div>
+                  <label className="flex items-center gap-3 cursor-pointer group">
+                    <input
+                      type="checkbox"
+                      name="isBargaining"
+                      checked={formData.isBargaining}
+                      onChange={handleInputChange}
+                      className="w-4 h-4 text-black focus:ring-black rounded"
+                    />
+                    <span className="text-sm font-bold group-hover:text-black transition-colors">
+                      Allow bargaining
+                    </span>
+                  </label>
+                </div>
+              )}
             </div>
           </div>
 
