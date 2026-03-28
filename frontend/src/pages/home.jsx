@@ -137,7 +137,7 @@ function HomePage() {
 
           <div className="flex-1">
             {loading ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {[...Array(6)].map((_, i) => (
                   <div key={i} className="bg-white border border-gray-100 rounded-2xl overflow-hidden animate-pulse">
                     <div className="aspect-[4/3] bg-gray-200"></div>
@@ -165,7 +165,7 @@ function HomePage() {
                 </button>
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {filteredListings.map((listing) => (
                   <ListingCard key={listing.id} listing={listing} />
                 ))}
