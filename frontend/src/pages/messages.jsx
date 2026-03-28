@@ -14,6 +14,16 @@ function MessagesPage() {
   const [newMessage, setNewMessage] = useState('');
   const [loading, setLoading] = useState(true);
 
+  // Debug: Log user object on mount and when it changes
+  useEffect(() => {
+    console.log('=== USER OBJECT DEBUG ===');
+    console.log('user from AuthContext:', user);
+    console.log('user?.email:', user?.email);
+    console.log('typeof user?.email:', typeof user?.email);
+    console.log('localStorage user:', localStorage.getItem('user'));
+    console.log('========================');
+  }, [user]);
+
   useEffect(() => {
     fetchConversations();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -21,10 +31,19 @@ function MessagesPage() {
 
   useEffect(() => {
     const userEmail = searchParams.get('user');
-    if (userEmail && !loading && conversations) {
+    const chatId = searchParams.get('chat');
+    
+    if (chatId && !loading && conversations) {
+      // Find conversation by chat ID
+      const conv = conversations.find(c => c.id === chatId);
+      if (conv) {
+        setSelectedConversation(conv);
+        fetchMessages(conv.id);
+      }
+    } else if (userEmail && !loading && conversations) {
       // Check if conversation exists
       const conv = conversations.find(c => 
-        c.participants && c.participants.some(p => p && p.email === userEmail)
+        c.user1 === userEmail || c.user2 === userEmail
       );
       
       if (conv) {
@@ -42,6 +61,8 @@ function MessagesPage() {
   const fetchConversations = async () => {
     try {
       const response = await messageAPI.getAllChats();
+      console.log('All chats response:', response.data);
+      console.log('Current user object from AuthContext:', user);
       setConversations(response.data);
     } catch (error) {
       console.error('Error fetching conversations:', error);
@@ -54,7 +75,7 @@ function MessagesPage() {
   const createNewConversation = async (otherUserEmail) => {
     try {
       const response = await messageAPI.createOrFetchChat({
-        otherUserEmail: otherUserEmail,
+        otherEmail: otherUserEmail,
       });
       
       // Add to conversations list
@@ -99,8 +120,16 @@ function MessagesPage() {
     fetchMessages(conversation.id);
   };
 
+  // Get current user's email from user object
+  const getCurrentUserEmail = () => {
+    // Try different possible field names
+    return user?.email || user?.clerkId || user?.userEmail || localStorage.getItem('userEmail');
+  };
+
   const getOtherParticipant = (conversation) => {
-    return conversation.participants?.find(p => p.email !== user?.email);
+    const currentUserEmail = getCurrentUserEmail();
+    const otherEmail = conversation.user1 === currentUserEmail ? conversation.user2 : conversation.user1;
+    return { email: otherEmail };
   };
 
   return (
@@ -135,15 +164,11 @@ function MessagesPage() {
                       className={`w-full p-4 flex items-center gap-3 hover:bg-gray-50 transition-colors border-b border-gray-50 ${selectedConversation?.id === conversation.id ? 'bg-gray-50' : ''}`}
                     >
                       <div className="w-12 h-12 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden flex-shrink-0">
-                        {other?.imageUrl ? (
-                          <img src={other.imageUrl} className="w-full h-full object-cover" alt={other.name} />
-                        ) : (
-                          <span className="text-sm font-bold">{other?.name?.charAt(0)}</span>
-                        )}
+                        <span className="text-sm font-bold">{other?.email?.charAt(0).toUpperCase()}</span>
                       </div>
                       <div className="flex-1 text-left">
-                        <p className="text-sm font-black">{other?.name}</p>
-                        <p className="text-xs text-gray-400 truncate">{conversation.lastMessage}</p>
+                        <p className="text-sm font-black">{other?.email}</p>
+                        <p className="text-xs text-gray-400 truncate">{conversation.messages?.[conversation.messages.length - 1]?.content || 'No messages yet'}</p>
                       </div>
                     </button>
                   );
@@ -158,24 +183,25 @@ function MessagesPage() {
                   {/* Header */}
                   <div className="p-4 border-b border-gray-100 flex items-center gap-3">
                     <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden">
-                      {getOtherParticipant(selectedConversation)?.imageUrl ? (
-                        <img src={getOtherParticipant(selectedConversation).imageUrl} className="w-full h-full object-cover" alt="" />
-                      ) : (
-                        <span className="text-sm font-bold">{getOtherParticipant(selectedConversation)?.name?.charAt(0)}</span>
-                      )}
+                      <span className="text-sm font-bold">{getOtherParticipant(selectedConversation)?.email?.charAt(0).toUpperCase()}</span>
                     </div>
                     <div>
-                      <p className="text-sm font-black">{getOtherParticipant(selectedConversation)?.name}</p>
-                      <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
-                        {getOtherParticipant(selectedConversation)?.rollNo}
-                      </p>
+                      <p className="text-sm font-black">{getOtherParticipant(selectedConversation)?.email}</p>
                     </div>
                   </div>
 
                   {/* Messages */}
                   <div className="flex-1 overflow-y-auto p-6 space-y-4">
                     {messages.map((message) => {
-                      const isOwn = message.fromEmail === user?.email;
+                      const currentUserEmail = getCurrentUserEmail();
+                      const isOwn = message.fromEmail === currentUserEmail;
+                      console.log('=== MESSAGE ALIGNMENT DEBUG ===');
+                      console.log('Message:', message);
+                      console.log('message.fromEmail:', message.fromEmail);
+                      console.log('currentUserEmail:', currentUserEmail);
+                      console.log('isOwn:', isOwn);
+                      console.log('user object:', user);
+                      console.log('==============================');
                       return (
                         <div key={message.id} className={`flex ${isOwn ? 'justify-end' : 'justify-start'}`}>
                           <div className={`max-w-md px-4 py-3 rounded-2xl ${isOwn ? 'bg-black text-white' : 'bg-gray-100 text-black'}`}>

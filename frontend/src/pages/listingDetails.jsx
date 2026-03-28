@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar/Navbar';
 import CommentSection from '../components/CommentSection/CommentSection';
-import { listingAPI } from '../utils/api';
+import { listingAPI, messageAPI } from '../utils/api';
 import { useAuth } from '../context/AuthContext';
 import toast from 'react-hot-toast';
 
@@ -50,10 +50,21 @@ function ListingDetailsPage() {
     try {
       await listingAPI.requestListing(id);
       toast.success('Request sent successfully!');
-      navigate(`/messages?user=${listing.email}`);
     } catch (error) {
       console.error('Error requesting listing:', error);
       toast.error(error.response?.data?.message || 'Failed to send request');
+    }
+  };
+
+  const handleMessageSeller = async () => {
+    try {
+      const response = await messageAPI.createOrFetchChat({ otherEmail: listing.email });
+      console.log('Create/fetch chat response:', response.data);
+      const chatId = response.data.id;
+      navigate(`/messages?chat=${chatId}`);
+    } catch (error) {
+      console.error('Error creating chat:', error);
+      toast.error('Failed to open chat');
     }
   };
 
@@ -170,7 +181,20 @@ function ListingDetailsPage() {
                 )}
                 <div>
                   <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Seller</p>
-                  <p className="text-sm font-bold text-gray-700">{listing.email}</p>
+                  <div className="flex items-center gap-2">
+                    <p className="text-sm font-bold text-gray-700">{listing.email}</p>
+                    {!isOwner && (
+                      <button
+                        onClick={handleMessageSeller}
+                        className="flex items-center gap-1 bg-white border border-black text-black px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest hover:bg-gray-50 transition-all"
+                      >
+                        <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 24 24">
+                          <path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H6l-2 2V4h16v12z"/>
+                        </svg>
+                        Message
+                      </button>
+                    )}
+                  </div>
                 </div>
               </div>
 
