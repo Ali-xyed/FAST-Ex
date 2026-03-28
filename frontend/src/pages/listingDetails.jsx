@@ -54,12 +54,18 @@ function ListingDetailsPage() {
   };
 
   const handleContactSeller = async () => {
-    try {
-      await listingAPI.requestListing(id);
-      toast.success('Request sent successfully!');
-    } catch (error) {
-      console.error('Error requesting listing:', error);
-      toast.error(error.response?.data?.message || 'Failed to send request');
+    if (listing.type === 'EXCHANGE') {
+      // Navigate to exchange request form
+      navigate(`/exchange-request/${id}`);
+    } else {
+      // For SELL/RENT, send request
+      try {
+        await listingAPI.requestListing(id);
+        toast.success('Request sent successfully!');
+      } catch (error) {
+        console.error('Error requesting listing:', error);
+        toast.error(error.response?.data?.message || 'Failed to send request');
+      }
     }
   };
 

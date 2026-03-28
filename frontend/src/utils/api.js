@@ -78,6 +78,13 @@ export const listingAPI = {
   respondBargain: (bargainId, data) => api.patch(`/api/listings/bargain/${bargainId}`, data),
   requestListing: (id) => api.post(`/api/listings/${id}/request`),
   verifyListing: (id, data) => api.patch(`/api/listings/${id}/verify`, data),
+  submitExchange: (id, data) => {
+    // Handle FormData for image upload
+    const config = data instanceof FormData 
+      ? { headers: { 'Content-Type': 'multipart/form-data' } }
+      : {};
+    return api.post(`/api/listings/${id}/exchange`, data, config);
+  },
 };
 
 // Message API

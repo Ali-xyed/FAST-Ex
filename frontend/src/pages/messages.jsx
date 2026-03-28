@@ -64,6 +64,12 @@ function MessagesPage() {
   useEffect(() => {
     const userEmail = searchParams.get('user');
     const chatId = searchParams.get('chat');
+    const prefilledMessage = searchParams.get('message');
+    
+    // Set prefilled message if provided
+    if (prefilledMessage) {
+      setNewMessage(decodeURIComponent(prefilledMessage));
+    }
     
     if (chatId && !loading && conversations) {
       // Find conversation by chat ID

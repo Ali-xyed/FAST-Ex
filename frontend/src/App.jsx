@@ -15,6 +15,7 @@ import MessagesPage from './pages/messages';
 import AdminPage from './pages/admin';
 import BargainOffersPage from './pages/bargainOffers';
 import ExchangeRequestsPage from './pages/exchangeRequests';
+import CreateExchangeRequestPage from './pages/createExchangeRequest';
 
 function App() {
   return (
@@ -37,6 +38,9 @@ function App() {
           <Route path="/listing/:id" element={<ListingDetailsPage />} />
           <Route path="/messages" element={<MessagesPage />} />
           <Route path="/admin" element={<AdminPage />} />
+          <Route path="/bargain-offers" element={<BargainOffersPage />} />
+          <Route path="/exchange-requests" element={<ExchangeRequestsPage />} />
+          <Route path="/exchange-request/:listingId" element={<CreateExchangeRequestPage />} />
 
           {/* Catch all */}
           <Route path="*" element={<Navigate to="/" replace />} />
