@@ -173,7 +173,20 @@ const postComment = async (req, res) => {
     const comment = await listingRepo.createComment({ listingId: id, fromEmail: email, content });
 
     try { getIo().to(id).emit('new_comment', comment); } catch (e) { }
-    await sendEvent('comment.posted', { listingId: id, fromEmail: email, ownerEmail: listing.email, content });
+    
+    const ownerEmail = listing.email;
+    if (ownerEmail) {
+      console.log(`Sending comment.posted event for listing ${id}, owner: ${ownerEmail}`);
+      await sendEvent('comment.posted', { 
+        listingId: id, 
+        fromEmail: email, 
+        ownerEmail, 
+        content,
+        listingTitle: listing.title 
+      });
+    } else {
+      console.error('Listing owner email is missing for listing:', id, 'Listing data:', JSON.stringify(listing));
+    }
 
     await delCache(`listing:${id}`);
 
@@ -215,13 +228,23 @@ const submitBargain = async (req, res) => {
       return res.status(400).json({ message: 'Bargaining is only available for SELL and RENT listings' });
     }
 
+    // Create bargain record
+    const bargain = await listingRepo.createBargain({
+      listingId: id,
+      fromEmail: email,
+      toEmail: listing.email,
+      price: parseFloat(price)
+    });
+
     // Send Kafka notification
     await sendEvent('bargain.received', { 
       fromEmail: email, 
       toEmail: listing.email, 
       price: parseFloat(price),
       listingTitle: listing.title,
-      listingType: listing.type
+      listingType: listing.type,
+      listingId: id,
+      bargainId: bargain.id
     });
 
     // Send RabbitMQ email
@@ -233,7 +256,7 @@ const submitBargain = async (req, res) => {
       listingType: listing.type
     });
 
-    res.status(200).json({ message: 'Bargain request sent successfully' });
+    res.status(200).json({ message: 'Bargain request sent successfully', bargainId: bargain.id });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: 'Error submitting bargain' });
@@ -313,7 +336,7 @@ const editListing = async (req, res) => {
     if (!listing) return res.status(404).json({ message: 'Listing not found' });
     if (listing.email !== email) return res.status(403).json({ message: 'Unauthorized' });
 
-    const updateData = {};
+    const updateData = { isVerified: false }; 
     if (title) updateData.title = title;
     if (description) updateData.description = description;
     if (req.file) updateData.imageUrl = req.file.location;
@@ -361,6 +384,16 @@ const submitExchange = async (req, res) => {
 
     const imageUrl = req.file ? req.file.location : null;
 
+    // Create exchange record
+    const exchange = await listingRepo.createExchange({
+      listingId: id,
+      fromEmail,
+      toEmail: listing.email,
+      offerTitle: title,
+      offerDescription: description,
+      offerImageUrl: imageUrl
+    });
+
     // Send Kafka notification
     await sendEvent('exchange.received', { 
       fromEmail, 
@@ -368,7 +401,9 @@ const submitExchange = async (req, res) => {
       listingTitle: listing.title,
       offerTitle: title,
       offerDescription: description,
-      offerImageUrl: imageUrl
+      offerImageUrl: imageUrl,
+      listingId: id,
+      exchangeId: exchange.id
     });
 
     // Send RabbitMQ email
@@ -381,10 +416,250 @@ const submitExchange = async (req, res) => {
       offerImageUrl: imageUrl
     });
 
-    res.status(200).json({ message: 'Exchange request sent successfully' });
+    res.status(200).json({ message: 'Exchange request sent successfully', exchangeId: exchange.id });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: 'Error submitting exchange request' });
+  }
+};
+
+const getBargainDetails = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { listingId } = req.query;
+
+    let bargains;
+    if (id) {
+      // Get by bargain ID
+      const bargain = await listingRepo.findBargainById(id);
+      if (!bargain) return res.status(404).json({ message: 'Bargain not found' });
+      bargains = [bargain];
+    } else if (listingId) {
+      // Get all bargains for a listing
+      bargains = await listingRepo.findBargainsByListingId(listingId);
+    } else {
+      return res.status(400).json({ message: 'Either bargain ID or listing ID is required' });
+    }
+
+    // Fetch listing details for each bargain
+    const axios = require('axios');
+    const bargainsWithDetails = await Promise.all(
+      bargains.map(async (bargain) => {
+        const listing = await listingRepo.findListingById(bargain.listingId);
+        
+        // Fetch requester's profile image and name
+        let requesterImageUrl = null;
+        let requesterName = null;
+        try {
+          const profileResponse = await axios.get(`${process.env.USER_SERVICE_URL || 'http://localhost:5003'}/api/users/public/${bargain.fromEmail}`);
+          requesterImageUrl = profileResponse.data.imageUrl;
+          requesterName = profileResponse.data.name;
+        } catch (err) {
+          console.error(`Failed to fetch profile for ${bargain.fromEmail}`, err.message);
+        }
+        
+        return {
+          ...bargain,
+          requesterImageUrl,
+          requesterName,
+          listing: listing ? {
+            id: listing.id,
+            title: listing.title,
+            description: listing.description,
+            imageUrl: listing.imageUrl,
+            type: listing.type
+          } : null
+        };
+      })
+    );
+
+    res.status(200).json(id ? bargainsWithDetails[0] : bargainsWithDetails);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Error fetching bargain details' });
+  }
+};
+
+const getExchangeDetails = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { listingId } = req.query;
+
+    let exchanges;
+    if (id) {
+      // Get by exchange ID
+      const exchange = await listingRepo.findExchangeById(id);
+      if (!exchange) return res.status(404).json({ message: 'Exchange not found' });
+      exchanges = [exchange];
+    } else if (listingId) {
+      // Get all exchanges for a listing
+      exchanges = await listingRepo.findExchangesByListingId(listingId);
+    } else {
+      return res.status(400).json({ message: 'Either exchange ID or listing ID is required' });
+    }
+
+    // Fetch listing details for each exchange
+    const axios = require('axios');
+    const exchangesWithDetails = await Promise.all(
+      exchanges.map(async (exchange) => {
+        const listing = await listingRepo.findListingById(exchange.listingId);
+        
+        // Fetch requester's profile image and name
+        let requesterImageUrl = null;
+        let requesterName = null;
+        try {
+          const profileResponse = await axios.get(`${process.env.USER_SERVICE_URL || 'http://localhost:5003'}/api/users/public/${exchange.fromEmail}`);
+          requesterImageUrl = profileResponse.data.imageUrl;
+          requesterName = profileResponse.data.name;
+        } catch (err) {
+          console.error(`Failed to fetch profile for ${exchange.fromEmail}`, err.message);
+        }
+        
+        return {
+          ...exchange,
+          requesterImageUrl,
+          requesterName,
+          listing: listing ? {
+            id: listing.id,
+            title: listing.title,
+            description: listing.description,
+            imageUrl: listing.imageUrl,
+            type: listing.type
+          } : null
+        };
+      })
+    );
+
+    res.status(200).json(id ? exchangesWithDetails[0] : exchangesWithDetails);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Error fetching exchange details' });
+  }
+};
+
+const respondBargain = async (req, res) => {
+  try {
+    const email = req.headers['x-user-email'];
+    const { bargainId } = req.params;
+    const { status } = req.body; // 'ACCEPTED' or 'DECLINED'
+
+    if (!['ACCEPTED', 'DECLINED'].includes(status)) {
+      return res.status(400).json({ message: 'Invalid status. Must be ACCEPTED or DECLINED' });
+    }
+
+    const bargain = await listingRepo.findBargainById(bargainId);
+    if (!bargain) return res.status(404).json({ message: 'Bargain not found' });
+
+    const listing = await listingRepo.findListingById(bargain.listingId);
+    if (!listing || listing.email !== email) {
+      return res.status(403).json({ message: 'Unauthorized' });
+    }
+
+    await listingRepo.updateBargainStatus(bargainId, status);
+
+    const eventTopic = status === 'ACCEPTED' ? 'bargain.accepted' : 'bargain.declined';
+    await sendEvent(eventTopic, {
+      bargainId,
+      listingId: bargain.listingId,
+      fromEmail: bargain.fromEmail,
+      toEmail: email,
+      listingTitle: listing.title
+    });
+
+    if (status === 'ACCEPTED') {
+      publishMessage('bargain.accepted', {
+        requesterEmail: bargain.fromEmail,
+        ownerEmail: email,
+        listingTitle: listing.title,
+        message: `Your bargain of ${bargain.price} has been accepted!`
+      });
+    }
+
+    res.json({ message: `Bargain ${status.toLowerCase()}` });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Error responding to bargain' });
+  }
+};
+
+const respondExchange = async (req, res) => {
+  try {
+    const email = req.headers['x-user-email'];
+    const { exchangeId } = req.params;
+    const { status } = req.body; // 'ACCEPTED' or 'DECLINED'
+
+    if (!['ACCEPTED', 'DECLINED'].includes(status)) {
+      return res.status(400).json({ message: 'Invalid status. Must be ACCEPTED or DECLINED' });
+    }
+
+    const exchange = await listingRepo.findExchangeById(exchangeId);
+    if (!exchange) return res.status(404).json({ message: 'Exchange not found' });
+
+    const listing = await listingRepo.findListingById(exchange.listingId);
+    if (!listing || listing.email !== email) {
+      return res.status(403).json({ message: 'Unauthorized' });
+    }
+
+    await listingRepo.updateExchangeStatus(exchangeId, status);
+
+    const eventTopic = status === 'ACCEPTED' ? 'exchange.accepted' : 'exchange.declined';
+    await sendEvent(eventTopic, {
+      exchangeId,
+      listingId: exchange.listingId,
+      fromEmail: exchange.fromEmail,
+      toEmail: email,
+      listingTitle: listing.title
+    });
+
+    if (status === 'ACCEPTED') {
+      publishMessage('exchange.accepted', {
+        requesterEmail: exchange.fromEmail,
+        ownerEmail: email,
+        listingTitle: listing.title,
+        message: `Your exchange request has been accepted!`
+      });
+    }
+
+    res.json({ message: `Exchange ${status.toLowerCase()}` });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Error responding to exchange' });
+  }
+};
+
+const updateMarkedStatus = async (req, res) => {
+  try {
+    const email = req.headers['x-user-email'];
+    const { id } = req.params;
+    const { marked } = req.body;
+
+    // Validate marked status
+    const validStatuses = ['PENDING', 'SOLD', 'RENTED', 'EXCHANGED'];
+    if (!marked || !validStatuses.includes(marked)) {
+      return res.status(400).json({ 
+        message: 'Invalid marked status. Must be one of: PENDING, SOLD, RENTED, EXCHANGED' 
+      });
+    }
+
+    const listing = await listingRepo.findListingById(id);
+    if (!listing) return res.status(404).json({ message: 'Listing not found' });
+
+    // Check if user owns the listing
+    if (listing.email !== email) {
+      return res.status(403).json({ message: 'Unauthorized: You can only update your own listings' });
+    }
+
+    // Update the marked status
+    await listingRepo.updateListing(id, { marked });
+
+    // Clear cache
+    await delCache(`listing:${id}`);
+    await delCachePattern('listings:*');
+
+    res.json({ message: 'Listing marked status updated successfully', marked });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Error updating marked status' });
   }
 };
 
@@ -400,5 +675,10 @@ module.exports = {
   verifyListingStatus,
   requestListing,
   editListing,
-  submitExchange
+  submitExchange,
+  getBargainDetails,
+  getExchangeDetails,
+  respondBargain,
+  respondExchange,
+  updateMarkedStatus
 };

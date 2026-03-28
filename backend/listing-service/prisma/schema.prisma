@@ -25,10 +25,11 @@ model Listing {
 }
 
 model SellListing {
-  id       String  @id @default(auto()) @map("_id") @db.ObjectId
-  listingId String @unique @db.ObjectId
-  listing  Listing @relation(fields: [listingId], references: [id])
-  price    Float
+  id           String  @id @default(auto()) @map("_id") @db.ObjectId
+  listingId    String  @unique @db.ObjectId
+  listing      Listing @relation(fields: [listingId], references: [id])
+  price        Float
+  isBargaining Boolean @default(true)
 }
 
 model RentListing {
@@ -36,6 +37,7 @@ model RentListing {
   listingId    String  @unique @db.ObjectId
   listing      Listing @relation(fields: [listingId], references: [id])
   pricePerHour Float
+  isBargaining Boolean @default(true)
 }
 
 model ExchangeListing {
@@ -54,6 +56,30 @@ model Comment {
   createdAt  DateTime @default(now())
 }
 
+model Bargain {
+  id        String        @id @default(auto()) @map("_id") @db.ObjectId
+  listingId String        @db.ObjectId
+  fromEmail String
+  toEmail   String
+  price     Float
+  status    BargainStatus @default(PENDING)
+  createdAt DateTime      @default(now())
+}
+
+model Exchange {
+  id               String         @id @default(auto()) @map("_id") @db.ObjectId
+  listingId        String         @db.ObjectId
+  fromEmail        String
+  toEmail          String
+  status           ExchangeStatus @default(PENDING)
+  createdAt        DateTime       @default(now())
+  
+  // Offer details (what the requester is offering)
+  offerTitle       String
+  offerDescription String
+  offerImageUrl    String?
+}
+
 enum ListingType {
   SELL
   RENT
@@ -65,4 +91,16 @@ enum MarkedStatus {
   SOLD
   RENTED
   EXCHANGED
+}
+
+enum BargainStatus {
+  PENDING
+  ACCEPTED
+  DECLINED
+}
+
+enum ExchangeStatus {
+  PENDING
+  ACCEPTED
+  DECLINED
 }

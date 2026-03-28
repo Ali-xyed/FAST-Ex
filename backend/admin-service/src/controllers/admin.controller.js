@@ -109,4 +109,17 @@ const deleteComment = async (req, res) => {
   }
 };
 
-module.exports = { toggleUserBan, verifyListing, deleteListing, deleteComment };
+const getAllUsers = async (req, res) => {
+  try {
+    const response = await axios.get(`${USER_SVC}/all`, { headers: getAdminHeaders(req) });
+    res.status(200).json(response.data);
+  } catch (error) {
+    console.error('[Admin Service] Error fetching all users:', error.message);
+    res.status(error.response?.status || 500).json({ 
+      message: 'Error fetching users', 
+      error: error.message 
+    });
+  }
+};
+
+module.exports = { toggleUserBan, verifyListing, deleteListing, deleteComment, getAllUsers };

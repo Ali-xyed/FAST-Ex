@@ -245,6 +245,8 @@ const promote = async (req, res) => {
     const { email } = req.body;
     if (!email) return res.status(400).json({ message: 'Email is required' });
 
+    await authRepo.updateUserRole(email, 'admin');
+
     const users = await clerk.users.getUserList({ emailAddress: [email] });
     const clerkUser = users.data?.[0];
 

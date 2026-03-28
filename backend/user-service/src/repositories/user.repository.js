@@ -23,6 +23,12 @@ class UserRepository {
       data: { reputationScore: { increment: change } }
     });
   }
+
+  async findAllUsers() {
+    return prisma.userProfile.findMany({
+      orderBy: { createdAt: 'desc' }
+    });
+  }
 }
 
 module.exports = new UserRepository();

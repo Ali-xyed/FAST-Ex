@@ -38,4 +38,12 @@ router.post('/:id/exchange', verifyAuth, (req, res, next) => {
   });
 }, listingController.submitExchange);
 
+router.get('/bargains/:id', verifyAuth, listingController.getBargainDetails);
+router.get('/exchanges/:id', verifyAuth, listingController.getExchangeDetails);
+
+router.patch('/bargains/:bargainId/respond', verifyAuth, listingController.respondBargain);
+router.patch('/exchanges/:exchangeId/respond', verifyAuth, listingController.respondExchange);
+
+router.patch('/:id/mark', verifyAuth, listingController.updateMarkedStatus);
+
 module.exports = router;

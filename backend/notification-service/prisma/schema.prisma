@@ -8,13 +8,19 @@ datasource db {
 }
 
 model Notification {
-  id        String           @id @default(auto()) @map("_id") @db.ObjectId
-  to        String
-  from      String
-  content   String
-  type      NotificationType
-  isRead    Boolean          @default(false)
-  createdAt DateTime         @default(now())
+  id          String           @id @default(auto()) @map("_id") @db.ObjectId
+  to          String
+  from        String
+  content     String
+  type        NotificationType
+  isRead      Boolean          @default(false)
+  createdAt   DateTime         @default(now())
+  listingId   String?          @db.ObjectId
+  bargainId   String?          @db.ObjectId
+  exchangeId  String?          @db.ObjectId
+  offerTitle       String?
+  offerDescription String?
+  offerImageUrl    String?
 }
 
 enum NotificationType {

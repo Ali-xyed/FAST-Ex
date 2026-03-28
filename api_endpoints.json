@@ -907,6 +907,164 @@
               ]
             }
           }
+        },
+        {
+          "name": "Get Bargain Details",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/listings/bargains/:id?listingId=",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "listings", "bargains", ":id"],
+              "query": [
+                {
+                  "key": "listingId",
+                  "value": "",
+                  "description": "Optional: Get all bargains for a listing (if not using bargain ID)"
+                }
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "bargain_id_here",
+                  "description": "Bargain ID (or use query param listingId instead)"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Exchange Details",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/listings/exchanges/:id?listingId=",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "listings", "exchanges", ":id"],
+              "query": [
+                {
+                  "key": "listingId",
+                  "value": "",
+                  "description": "Optional: Get all exchanges for a listing (if not using exchange ID)"
+                }
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "exchange_id_here",
+                  "description": "Exchange ID (or use query param listingId instead)"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Respond to Bargain",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"ACCEPTED\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/listings/bargains/:bargainId/respond",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "listings", "bargains", ":bargainId", "respond"],
+              "variable": [
+                {
+                  "key": "bargainId",
+                  "value": "bargain_id_here",
+                  "description": "The bargain ID to respond to"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Respond to Exchange",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"ACCEPTED\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/listings/exchanges/:exchangeId/respond",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "listings", "exchanges", ":exchangeId", "respond"],
+              "variable": [
+                {
+                  "key": "exchangeId",
+                  "value": "exchange_id_here",
+                  "description": "The exchange ID to respond to"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Update Listing Marked Status",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"marked\": \"SOLD\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/listings/:id/mark",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "listings", ":id", "mark"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "listing_id_here",
+                  "description": "The listing ID to update"
+                }
+              ]
+            }
+          }
         }
       ]
     },
@@ -1053,6 +1211,23 @@
     {
       "name": "6. Admin Service",
       "item": [
+        {
+          "name": "Get All Users",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/users",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "admin", "users"]
+            }
+          }
+        },
         {
           "name": "Toggle Ban User",
           "request": {

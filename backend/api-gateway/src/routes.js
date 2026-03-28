@@ -25,8 +25,8 @@ router.use('/api/auth', proxy(process.env.AUTH_SERVICE_URL, proxyOptions(process
 router.use('/api/users', requireAuth, proxy(process.env.USER_SERVICE_URL, proxyOptions(process.env.USER_SERVICE_URL)));
 
 router.get('/api/listings', proxy(process.env.LISTING_SERVICE_URL, proxyOptions(process.env.LISTING_SERVICE_URL)));
+router.get('/api/listings/my', requireAuth, proxy(process.env.LISTING_SERVICE_URL, proxyOptions(process.env.LISTING_SERVICE_URL)));
 router.get('/api/listings/:id', proxy(process.env.LISTING_SERVICE_URL, proxyOptions(process.env.LISTING_SERVICE_URL)));
-
 router.use('/api/listings', requireAuth, proxy(process.env.LISTING_SERVICE_URL, proxyOptions(process.env.LISTING_SERVICE_URL)));
 
 router.use('/api/messages', requireAuth, proxy(process.env.MESSAGE_SERVICE_URL, proxyOptions(process.env.MESSAGE_SERVICE_URL)));

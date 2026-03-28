@@ -160,4 +160,26 @@ const toggleBan = async (req, res) => {
   }
 };
 
-module.exports = { getProfile, updateProfile, uploadImage, getPublicProfile, getReputation, addReputation, deductReputation, toggleBan };
+const getAllUsers = async (req, res) => {
+  try {
+    const cacheKey = 'users:all';
+    const cached = await getFromCache(cacheKey);
+    if (cached) return res.status(200).json(cached);
+
+    const users = await userRepo.findAllUsers();
+    const filteredUsers = users.map(user => ({
+      email: user.email,
+      name: user.name,
+      imageUrl: user.imageUrl,
+      reputationScore: user.reputationScore
+    }));
+    
+    await setCache(cacheKey, filteredUsers);
+    res.status(200).json(filteredUsers);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Error fetching users' });
+  }
+};
+
+module.exports = { getProfile, updateProfile, uploadImage, getPublicProfile, getReputation, addReputation, deductReputation, toggleBan, getAllUsers };

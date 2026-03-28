@@ -6,7 +6,33 @@ const getChats = async (req, res) => {
   try {
     const email = req.headers['x-user-email'];
     const chats = await messagingRepo.findChatsForUser(email);
-    res.status(200).json(chats);
+    
+    // Fetch profile images for other users in chats
+    const axios = require('axios');
+    const chatsWithProfiles = await Promise.all(
+      chats.map(async (chat) => {
+        const otherUserEmail = chat.user1 === email ? chat.user2 : chat.user1;
+        try {
+          const profileResponse = await axios.get(`${process.env.USER_SERVICE_URL}/api/users/public/${otherUserEmail}`);
+          return {
+            ...chat,
+            otherUserEmail,
+            otherUserName: profileResponse.data?.name || null,
+            profileImageUrl: profileResponse.data?.imageUrl || null
+          };
+        } catch (err) {
+          console.error(`Failed to fetch profile for ${otherUserEmail}:`, err.message);
+          return {
+            ...chat,
+            otherUserEmail,
+            otherUserName: null,
+            profileImageUrl: null
+          };
+        }
+      })
+    );
+    
+    res.status(200).json(chatsWithProfiles);
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Error fetching chats' });

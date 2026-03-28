@@ -67,6 +67,44 @@ class ListingRepository {
   async updateRentListing(id, data) {
     return prisma.rentListing.update({ where: { id }, data });
   }
+
+  async createBargain(data) {
+    return prisma.bargain.create({ data });
+  }
+
+  async updateBargainStatus(id, status) {
+    return prisma.bargain.update({ where: { id }, data: { status } });
+  }
+
+  async findBargainById(id) {
+    return prisma.bargain.findUnique({ where: { id } });
+  }
+
+  async createExchange(data) {
+    return prisma.exchange.create({ data });
+  }
+
+  async updateExchangeStatus(id, status) {
+    return prisma.exchange.update({ where: { id }, data: { status } });
+  }
+
+  async findExchangeById(id) {
+    return prisma.exchange.findUnique({ where: { id } });
+  }
+
+  async findBargainsByListingId(listingId) {
+    return prisma.bargain.findMany({ 
+      where: { listingId },
+      orderBy: { createdAt: 'desc' }
+    });
+  }
+
+  async findExchangesByListingId(listingId) {
+    return prisma.exchange.findMany({ 
+      where: { listingId },
+      orderBy: { createdAt: 'desc' }
+    });
+  }
 }
 
 module.exports = new ListingRepository();
