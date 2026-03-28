@@ -15,6 +15,18 @@ function ListingDetailsPage() {
   const [activeTab, setActiveTab] = useState('comments'); // 'comments' or 'offer'
   const [offerPrice, setOfferPrice] = useState('');
   const [showImageModal, setShowImageModal] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editData, setEditData] = useState({
+    title: '',
+    description: '',
+    price: '',
+    pricePerHour: '',
+    imageUrl: null,
+  });
+  const [imagePreview, setImagePreview] = useState(null);
+  const [saving, setSaving] = useState(false);
+  const [showMarkAsDropdown, setShowMarkAsDropdown] = useState(false);
+  const [updatingStatus, setUpdatingStatus] = useState(false);
 
   useEffect(() => {
     fetchListing();
@@ -32,6 +44,16 @@ function ListingDetailsPage() {
         rentIsBargaining: response.data.rentListing?.isBargaining,
       });
       setListing(response.data);
+      
+      // Initialize edit data
+      setEditData({
+        title: response.data.title,
+        description: response.data.description,
+        price: response.data.sellListing?.price || '',
+        pricePerHour: response.data.rentListing?.pricePerHour || '',
+        imageUrl: null,
+      });
+      setImagePreview(response.data.imageUrl);
     } catch (error) {
       console.error('Error fetching listing:', error);
       toast.error('Failed to load listing');
@@ -50,6 +72,21 @@ function ListingDetailsPage() {
       navigate('/home');
     } catch (error) {
       toast.error('Failed to delete listing');
+    }
+  };
+
+  const handleMarkAs = async (status) => {
+    try {
+      setUpdatingStatus(true);
+      await listingAPI.markListing(id, { marked: status });
+      toast.success(`Listing marked as ${status}!`);
+      setShowMarkAsDropdown(false);
+      fetchListing(); // Refresh listing data
+    } catch (error) {
+      console.error('Error updating status:', error);
+      toast.error(error.response?.data?.message || 'Failed to update status');
+    } finally {
+      setUpdatingStatus(false);
     }
   };
 
@@ -105,6 +142,79 @@ function ListingDetailsPage() {
     }
   };
 
+  const handleEditClick = () => {
+    setIsEditing(true);
+  };
+
+  const handleCancelEdit = () => {
+    setIsEditing(false);
+    // Reset edit data to original values
+    setEditData({
+      title: listing.title,
+      description: listing.description,
+      price: listing.sellListing?.price || '',
+      pricePerHour: listing.rentListing?.pricePerHour || '',
+      imageUrl: null,
+    });
+    setImagePreview(listing.imageUrl);
+  };
+
+  const handleEditChange = (e) => {
+    const { name, value } = e.target;
+    setEditData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setEditData(prev => ({ ...prev, imageUrl: file }));
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleRemoveImage = () => {
+    setEditData(prev => ({ ...prev, imageUrl: null }));
+    setImagePreview(null);
+  };
+
+  const handleSaveEdit = async () => {
+    if (!editData.title || !editData.description) {
+      toast.error('Title and description are required');
+      return;
+    }
+
+    setSaving(true);
+    try {
+      const formData = new FormData();
+      formData.append('title', editData.title);
+      formData.append('description', editData.description);
+      
+      if (listing.type === 'SELL' && editData.price) {
+        formData.append('price', editData.price);
+      } else if (listing.type === 'RENT' && editData.pricePerHour) {
+        formData.append('pricePerHour', editData.pricePerHour);
+      }
+      
+      if (editData.imageUrl) {
+        formData.append('imageUrl', editData.imageUrl);
+      }
+
+      await listingAPI.updateListing(id, formData);
+      toast.success('Listing updated successfully!');
+      setIsEditing(false);
+      fetchListing(); // Refresh listing data
+    } catch (error) {
+      console.error('Error updating listing:', error);
+      toast.error(error.response?.data?.message || 'Failed to update listing');
+    } finally {
+      setSaving(false);
+    }
+  };
+
   // Check if bargaining is allowed
   const isBargainingAllowed = listing?.sellListing?.isBargaining || listing?.rentListing?.isBargaining;
   const maxPrice = listing?.sellListing?.price || listing?.rentListing?.pricePerHour || 0;
@@ -145,28 +255,77 @@ function ListingDetailsPage() {
           <div className="lg:col-span-4 bg-white border-2 border-gray-200 rounded-2xl overflow-hidden flex flex-col">
             {/* Image */}
             <div 
-              className="relative h-64 bg-gray-50 cursor-pointer"
-              onClick={() => image && setShowImageModal(true)}
+              className="relative h-64 bg-gray-50"
             >
-              {image ? (
-                <img
-                  src={image}
-                  alt={listing.title}
-                  className="w-full h-full object-cover"
-                />
+              {isEditing ? (
+                <div className="relative w-full h-full">
+                  {imagePreview ? (
+                    <>
+                      <img
+                        src={imagePreview}
+                        alt={editData.title}
+                        className="w-full h-full object-cover"
+                      />
+                      <button
+                        onClick={handleRemoveImage}
+                        className="absolute top-3 right-3 w-8 h-8 rounded-full bg-red-500 text-white flex items-center justify-center hover:bg-red-600 transition-all"
+                      >
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </button>
+                    </>
+                  ) : (
+                    <label className="w-full h-full flex flex-col items-center justify-center cursor-pointer hover:bg-gray-100 transition-colors">
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleImageChange}
+                        className="hidden"
+                      />
+                      <svg className="w-16 h-16 text-gray-300 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                      </svg>
+                      <p className="text-gray-400 text-xs font-bold">Click to upload image</p>
+                    </label>
+                  )}
+                </div>
               ) : (
-                <div className="w-full h-full flex flex-col items-center justify-center">
-                  <svg className="w-16 h-16 text-gray-300 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                  </svg>
-                  <p className="text-gray-400 text-xs font-bold">NO PREVIEW IMAGE</p>
+                <div 
+                  className="relative w-full h-full cursor-pointer"
+                  onClick={() => image && setShowImageModal(true)}
+                >
+                  {image ? (
+                    <img
+                      src={image}
+                      alt={listing.title}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex flex-col items-center justify-center">
+                      <svg className="w-16 h-16 text-gray-300 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                      </svg>
+                      <p className="text-gray-400 text-xs font-bold">NO PREVIEW IMAGE</p>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
 
             {/* Details */}
             <div className="p-6 flex-1 flex flex-col">
-              <h1 className="text-2xl font-black tracking-tight mb-2">{listing.title}</h1>
+              {isEditing ? (
+                <input
+                  type="text"
+                  name="title"
+                  value={editData.title}
+                  onChange={handleEditChange}
+                  className="text-2xl font-black tracking-tight mb-2 bg-gray-50 border-2 border-gray-200 rounded-xl py-2 px-3 focus:ring-2 focus:ring-black/5 outline-none"
+                />
+              ) : (
+                <h1 className="text-2xl font-black tracking-tight mb-2">{listing.title}</h1>
+              )}
               
               <div className="flex items-center gap-3 mb-4">
                 <span className="inline-block bg-red-50 text-red-600 text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-widest">
@@ -185,11 +344,33 @@ function ListingDetailsPage() {
                 {(listing.sellListing || listing.rentListing) && (
                   <div>
                     <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Price</p>
-                    <p className="text-2xl font-black">
-                      {listing.sellListing?.price !== undefined ? `Rs ${listing.sellListing.price}` : 
-                       listing.rentListing?.pricePerHour !== undefined ? `Rs ${listing.rentListing.pricePerHour}/hr` : 
-                       'N/A'}
-                    </p>
+                    {isEditing ? (
+                      listing.type === 'SELL' ? (
+                        <input
+                          type="number"
+                          name="price"
+                          value={editData.price}
+                          onChange={handleEditChange}
+                          className="w-full text-xl font-black bg-gray-50 border-2 border-gray-200 rounded-xl py-1 px-2 focus:ring-2 focus:ring-black/5 outline-none"
+                        />
+                      ) : listing.type === 'RENT' ? (
+                        <input
+                          type="number"
+                          name="pricePerHour"
+                          value={editData.pricePerHour}
+                          onChange={handleEditChange}
+                          className="w-full text-xl font-black bg-gray-50 border-2 border-gray-200 rounded-xl py-1 px-2 focus:ring-2 focus:ring-black/5 outline-none"
+                        />
+                      ) : (
+                        <p className="text-2xl font-black">Negotiable</p>
+                      )
+                    ) : (
+                      <p className="text-2xl font-black">
+                        {listing.sellListing?.price !== undefined ? `Rs ${listing.sellListing.price}` : 
+                         listing.rentListing?.pricePerHour !== undefined ? `Rs ${listing.rentListing.pricePerHour}/hr` : 
+                         'N/A'}
+                      </p>
+                    )}
                   </div>
                 )}
                 <div>
@@ -213,7 +394,17 @@ function ListingDetailsPage() {
 
               <div className="mb-3">
                 <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Description</p>
-                <p className="text-sm text-gray-700 font-medium leading-relaxed">{listing.description}</p>
+                {isEditing ? (
+                  <textarea
+                    name="description"
+                    value={editData.description}
+                    onChange={handleEditChange}
+                    rows="4"
+                    className="w-full text-sm text-gray-700 font-medium leading-relaxed bg-gray-50 border-2 border-gray-200 rounded-xl py-2 px-3 focus:ring-2 focus:ring-black/5 outline-none resize-none"
+                  />
+                ) : (
+                  <p className="text-sm text-gray-700 font-medium leading-relaxed">{listing.description}</p>
+                )}
               </div>
 
               <p className="text-[10px] text-gray-400 mb-4">
@@ -230,7 +421,16 @@ function ListingDetailsPage() {
               <div className="mt-auto">
                 {!isOwner ? (
                   <div className="space-y-3">
-                    {listing.type === 'EXCHANGE' ? (
+                    {listing.marked !== 'PENDING' ? (
+                      <div className="w-full bg-gray-100 border-2 border-gray-200 py-3 rounded-xl text-center">
+                        <p className="text-sm font-black text-gray-400 uppercase tracking-widest">
+                          {listing.marked === 'SOLD' && 'SOLD OUT'}
+                          {listing.marked === 'RENTED' && 'RENTED OUT'}
+                          {listing.marked === 'EXCHANGED' && 'EXCHANGED'}
+                          {!['SOLD', 'RENTED', 'EXCHANGED', 'PENDING'].includes(listing.marked) && 'NOT AVAILABLE'}
+                        </p>
+                      </div>
+                    ) : listing.type === 'EXCHANGE' ? (
                       <button
                         onClick={handleContactSeller}
                         className="w-full bg-black text-white py-3 rounded-xl text-sm font-black uppercase tracking-widest hover:bg-gray-800 transition-all"
@@ -260,13 +460,100 @@ function ListingDetailsPage() {
                       </>
                     )}
                   </div>
+                ) : isEditing ? (
+                  <div className="flex gap-3">
+                    <button
+                      onClick={handleCancelEdit}
+                      disabled={saving}
+                      className="flex-1 bg-gray-100 text-gray-700 py-3 rounded-xl text-sm font-black uppercase tracking-widest hover:bg-gray-200 transition-all"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={handleSaveEdit}
+                      disabled={saving}
+                      className={`flex-1 bg-black text-white py-3 rounded-xl text-sm font-black uppercase tracking-widest hover:bg-gray-800 transition-all ${
+                        saving ? 'opacity-50 cursor-not-allowed' : ''
+                      }`}
+                    >
+                      {saving ? 'Saving...' : 'Save'}
+                    </button>
+                  </div>
                 ) : (
-                  <button
-                    onClick={handleDelete}
-                    className="w-full bg-red-50 text-red-600 py-3 rounded-xl text-sm font-black uppercase tracking-widest hover:bg-red-100 transition-all"
-                  >
-                    Delete Listing
-                  </button>
+                  <div className="space-y-3">
+                    {/* Mark As Dropdown */}
+                    <div className="relative">
+                      <button
+                        onClick={() => setShowMarkAsDropdown(!showMarkAsDropdown)}
+                        disabled={updatingStatus}
+                        className="w-full bg-gray-100 text-gray-700 py-3 rounded-xl text-sm font-black uppercase tracking-widest hover:bg-gray-200 transition-all flex items-center justify-center gap-2"
+                      >
+                        <span>Mark as: {listing.marked}</span>
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                        </svg>
+                      </button>
+                      
+                      {showMarkAsDropdown && (
+                        <div className="absolute bottom-full left-0 right-0 mb-2 bg-white border-2 border-gray-200 rounded-xl shadow-xl overflow-hidden z-10">
+                          <button
+                            onClick={() => handleMarkAs('PENDING')}
+                            disabled={updatingStatus || listing.marked === 'PENDING'}
+                            className={`w-full px-4 py-3 text-left text-sm font-bold hover:bg-gray-50 transition-all ${
+                              listing.marked === 'PENDING' ? 'bg-green-50 text-green-600' : 'text-gray-700'
+                            }`}
+                          >
+                            PENDING (Available)
+                          </button>
+                          <button
+                            onClick={() => handleMarkAs('SOLD')}
+                            disabled={updatingStatus || listing.marked === 'SOLD'}
+                            className={`w-full px-4 py-3 text-left text-sm font-bold hover:bg-gray-50 transition-all border-t border-gray-100 ${
+                              listing.marked === 'SOLD' ? 'bg-red-50 text-red-600' : 'text-gray-700'
+                            }`}
+                          >
+                            SOLD
+                          </button>
+                          <button
+                            onClick={() => handleMarkAs('RENTED')}
+                            disabled={updatingStatus || listing.marked === 'RENTED'}
+                            className={`w-full px-4 py-3 text-left text-sm font-bold hover:bg-gray-50 transition-all border-t border-gray-100 ${
+                              listing.marked === 'RENTED' ? 'bg-orange-50 text-orange-600' : 'text-gray-700'
+                            }`}
+                          >
+                            RENTED
+                          </button>
+                          <button
+                            onClick={() => handleMarkAs('EXCHANGED')}
+                            disabled={updatingStatus || listing.marked === 'EXCHANGED'}
+                            className={`w-full px-4 py-3 text-left text-sm font-bold hover:bg-gray-50 transition-all border-t border-gray-100 ${
+                              listing.marked === 'EXCHANGED' ? 'bg-purple-50 text-purple-600' : 'text-gray-700'
+                            }`}
+                          >
+                            EXCHANGED
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                    
+                    <div className="flex gap-3">
+                      <button
+                        onClick={handleEditClick}
+                        className="flex-1 bg-blue-50 text-blue-600 py-3 rounded-xl text-sm font-black uppercase tracking-widest hover:bg-blue-100 transition-all flex items-center justify-center gap-2"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                        </svg>
+                      Edit
+                    </button>
+                    <button
+                      onClick={handleDelete}
+                      className="flex-1 bg-red-50 text-red-600 py-3 rounded-xl text-sm font-black uppercase tracking-widest hover:bg-red-100 transition-all"
+                    >
+                      Delete
+                    </button>
+                  </div>
+                  </div>
                 )}
               </div>
             </div>

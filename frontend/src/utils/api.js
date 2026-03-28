@@ -26,14 +26,24 @@ api.interceptors.request.use(
 );
 
 // Response interceptor for error handling
+let isRedirecting = false;
+
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401) {
+    if (error.response?.status === 401 && !isRedirecting) {
+      // Prevent multiple redirects
+      isRedirecting = true;
+      
       // Unauthorized - clear token and redirect to login
       localStorage.removeItem('token');
       localStorage.removeItem('user');
-      window.location.href = '/login';
+      
+      // Use setTimeout to avoid redirect loops
+      setTimeout(() => {
+        window.location.href = '/login';
+        isRedirecting = false;
+      }, 100);
     }
     return Promise.reject(error);
   }
@@ -71,11 +81,21 @@ export const listingAPI = {
       : {};
     return api.post('/api/listings', data, config);
   },
+  updateListing: (id, data) => {
+    // Handle FormData for image upload
+    const config = data instanceof FormData 
+      ? { headers: { 'Content-Type': 'multipart/form-data' } }
+      : {};
+    return api.patch(`/api/listings/${id}`, data, config);
+  },
+  markListing: (id, data) => api.patch(`/api/listings/${id}/mark`, data),
   delete: (id) => api.delete(`/api/listings/${id}`),
   postComment: (id, data) => api.post(`/api/listings/${id}/comments`, data),
   deleteComment: (id, commentId) => api.delete(`/api/listings/${id}/comments/${commentId}`),
   submitBargain: (id, data) => api.post(`/api/listings/${id}/bargain`, data),
-  respondBargain: (bargainId, data) => api.patch(`/api/listings/bargain/${bargainId}`, data),
+  getAllBargains: () => api.get('/api/listings/bargains'),
+  getBargainById: (bargainId) => api.get(`/api/listings/bargains/${bargainId}`),
+  respondBargain: (bargainId, data) => api.patch(`/api/listings/bargains/${bargainId}/respond`, data),
   requestListing: (id) => api.post(`/api/listings/${id}/request`),
   verifyListing: (id, data) => api.patch(`/api/listings/${id}/verify`, data),
   submitExchange: (id, data) => {
@@ -85,6 +105,9 @@ export const listingAPI = {
       : {};
     return api.post(`/api/listings/${id}/exchange`, data, config);
   },
+  getAllExchanges: () => api.get('/api/listings/exchanges'),
+  getExchangeById: (exchangeId) => api.get(`/api/listings/exchanges/${exchangeId}`),
+  respondExchange: (exchangeId, data) => api.patch(`/api/listings/exchanges/${exchangeId}/respond`, data),
 };
 
 // Message API

@@ -1,52 +1,61 @@
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import Navbar from '../components/Navbar/Navbar';
+import { listingAPI } from '../utils/api';
 import { useAuth } from '../context/AuthContext';
 import toast from 'react-hot-toast';
 
 function BargainOffersPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const [searchParams] = useSearchParams();
+  const bargainId = searchParams.get('bargainId');
   const [offers, setOffers] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // TODO: Fetch bargain offers from API
-    // Placeholder data for now
-    setOffers([
-      {
-        id: '1',
-        buyerEmail: 'buyer@lhr.nu.edu.pk',
-        buyerName: 'John Doe',
-        buyerImage: null,
-        offeredPrice: 25000,
-        listingTitle: 'MY SELF',
-        listingPrice: 30000,
-        listingType: 'SELL',
-        status: 'PENDING',
-        createdAt: new Date().toISOString(),
-      }
-    ]);
-    setLoading(false);
-  }, []);
+    fetchBargainOffers();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [bargainId]);
 
-  const handleAccept = async (offerId) => {
+  const fetchBargainOffers = async () => {
     try {
-      // TODO: Call API to accept offer
-      toast.success('Offer accepted! Contact the buyer.');
-      // Optionally navigate to messages
+      if (bargainId) {
+        // Fetch single bargain
+        const response = await listingAPI.getBargainById(bargainId);
+        setOffers([response.data]);
+      } else {
+        // Fetch all bargains
+        const response = await listingAPI.getAllBargains();
+        setOffers(response.data);
+      }
     } catch (error) {
-      toast.error('Failed to accept offer');
+      console.error('Error fetching bargain offers:', error);
+      toast.error('Failed to load bargain offers');
+    } finally {
+      setLoading(false);
     }
   };
 
-  const handleReject = async (offerId) => {
+  const handleAccept = async (bargainId) => {
     try {
-      // TODO: Call API to reject offer
-      toast.success('Offer rejected');
-      setOffers(offers.filter(o => o.id !== offerId));
+      await listingAPI.respondBargain(bargainId, { status: 'ACCEPTED' });
+      toast.success('Offer accepted! You can now message the buyer.');
+      fetchBargainOffers(); // Refresh list
     } catch (error) {
-      toast.error('Failed to reject offer');
+      console.error('Error accepting offer:', error);
+      toast.error(error.response?.data?.message || 'Failed to accept offer');
+    }
+  };
+
+  const handleReject = async (bargainId) => {
+    try {
+      await listingAPI.respondBargain(bargainId, { status: 'REJECTED' });
+      toast.success('Offer rejected');
+      fetchBargainOffers(); // Refresh list
+    } catch (error) {
+      console.error('Error rejecting offer:', error);
+      toast.error(error.response?.data?.message || 'Failed to reject offer');
     }
   };
 
@@ -83,15 +92,17 @@ function BargainOffersPage() {
                   {/* Buyer Info */}
                   <div className="flex items-center gap-4 flex-1">
                     <div className="w-16 h-16 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden flex-shrink-0">
-                      {offer.buyerImage ? (
-                        <img src={offer.buyerImage} alt={offer.buyerName} className="w-full h-full object-cover" />
+                      {offer.requesterImageUrl ? (
+                        <img src={offer.requesterImageUrl} alt={offer.requesterName || offer.fromEmail} className="w-full h-full object-cover" />
                       ) : (
-                        <span className="text-xl font-bold">{offer.buyerName?.charAt(0).toUpperCase()}</span>
+                        <span className="text-xl font-bold">{(offer.requesterName || offer.fromEmail)?.charAt(0).toUpperCase()}</span>
                       )}
                     </div>
                     <div className="flex-1">
-                      <p className="text-lg font-black text-blue-600">{offer.buyerName}</p>
-                      <p className="text-xs text-gray-400 font-medium mb-2">{offer.buyerEmail}</p>
+                      <p className="text-lg font-black text-blue-600">{offer.requesterName || offer.fromEmail}</p>
+                      {offer.requesterName && (
+                        <p className="text-xs text-gray-400 font-medium mb-1">{offer.fromEmail}</p>
+                      )}
                       <p className="text-sm text-gray-600 font-medium">
                         offered a bargain on your listing
                       </p>
@@ -101,18 +112,20 @@ function BargainOffersPage() {
                   {/* Offer Details */}
                   <div className="text-right">
                     <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Listing</p>
-                    <p className="text-lg font-black mb-2">{offer.listingTitle}</p>
+                    <p className="text-lg font-black mb-2">{offer.listing?.title}</p>
                     <div className="flex items-center gap-3 justify-end mb-3">
                       <div>
                         <p className="text-[9px] text-gray-400 uppercase tracking-wider">Original</p>
-                        <p className="text-sm font-bold text-gray-500 line-through">Rs {offer.listingPrice}</p>
+                        <p className="text-sm font-bold text-gray-500 line-through">
+                          Rs {offer.listing?.sellListing?.price || offer.listing?.rentListing?.pricePerHour}
+                        </p>
                       </div>
                       <svg className="w-4 h-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
                       </svg>
                       <div>
                         <p className="text-[9px] text-gray-400 uppercase tracking-wider">Offered</p>
-                        <p className="text-2xl font-black text-green-600">Rs {offer.offeredPrice}</p>
+                        <p className="text-2xl font-black text-green-600">Rs {offer.price}</p>
                       </div>
                     </div>
                     <p className="text-[9px] text-gray-400 uppercase tracking-wider">
@@ -122,20 +135,32 @@ function BargainOffersPage() {
                 </div>
 
                 {/* Action Buttons */}
-                <div className="flex gap-3 mt-6">
-                  <button
-                    onClick={() => handleAccept(offer.id)}
-                    className="flex-1 bg-green-500 text-white py-3 rounded-xl text-sm font-black uppercase tracking-widest hover:bg-green-600 transition-all"
-                  >
-                    Accept & Contact
-                  </button>
-                  <button
-                    onClick={() => handleReject(offer.id)}
-                    className="flex-1 bg-gray-100 text-gray-700 py-3 rounded-xl text-sm font-black uppercase tracking-widest hover:bg-gray-200 transition-all"
-                  >
-                    Decline
-                  </button>
-                </div>
+                {offer.status === 'PENDING' && (
+                  <div className="flex gap-3 mt-6">
+                    <button
+                      onClick={() => handleAccept(offer.id)}
+                      className="flex-1 bg-green-500 text-white py-3 rounded-xl text-sm font-black uppercase tracking-widest hover:bg-green-600 transition-all"
+                    >
+                      Accept & Contact
+                    </button>
+                    <button
+                      onClick={() => handleReject(offer.id)}
+                      className="flex-1 bg-gray-100 text-gray-700 py-3 rounded-xl text-sm font-black uppercase tracking-widest hover:bg-gray-200 transition-all"
+                    >
+                      Decline
+                    </button>
+                  </div>
+                )}
+                {offer.status === 'ACCEPTED' && (
+                  <div className="mt-6 p-3 bg-green-50 border-2 border-green-200 rounded-xl text-center">
+                    <p className="text-sm font-black text-green-600 uppercase tracking-wider">Accepted</p>
+                  </div>
+                )}
+                {offer.status === 'REJECTED' && (
+                  <div className="mt-6 p-3 bg-red-50 border-2 border-red-200 rounded-xl text-center">
+                    <p className="text-sm font-black text-red-600 uppercase tracking-wider">Rejected</p>
+                  </div>
+                )}
               </div>
             ))}
           </div>

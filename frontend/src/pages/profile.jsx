@@ -33,7 +33,10 @@ function ProfilePage() {
       setMyListings(response.data);
     } catch (error) {
       console.error('Error fetching listings:', error);
-      toast.error('Failed to load your listings');
+      // Don't show error toast if it's a 401 (will be handled by interceptor)
+      if (error.response?.status !== 401) {
+        toast.error('Failed to load your listings');
+      }
     } finally {
       setLoading(false);
     }

@@ -12,10 +12,33 @@ const ListingCard = ({ listing }) => {
     }
   };
 
+  const getStatusInfo = (marked, type) => {
+    // For unavailable items, show overlay
+    if (marked === 'SOLD' || marked === 'RENTED' || marked === 'EXCHANGED') {
+      return {
+        showOverlay: true,
+        overlayText: marked,
+        badge: null
+      };
+    }
+    
+    // For available items, combine type and status in one badge
+    return {
+      showOverlay: false,
+      overlayText: null,
+      badge: {
+        text: type,
+        color: getTypeColor(type)
+      }
+    };
+  };
+
   const handleSellerClick = (e) => {
     e.stopPropagation();
     navigate(`/profile/${listing.email}`);
   };
+
+  const statusInfo = getStatusInfo(listing.marked, listing.type);
 
   return (
     <div 
@@ -37,15 +60,21 @@ const ListingCard = ({ listing }) => {
           </div>
         )}
         
-        <div className="absolute top-3 right-3">
-          <div className={`${getTypeColor(listing.type)} text-white text-[9px] font-black px-3 py-1.5 rounded-full uppercase tracking-widest shadow-lg`}>
-            {listing.type}
+        {/* Single badge for available items */}
+        {statusInfo.badge && (
+          <div className="absolute top-3 right-3">
+            <div className={`${statusInfo.badge.color} text-white text-[9px] font-black px-3 py-1.5 rounded-full uppercase tracking-widest shadow-lg`}>
+              {statusInfo.badge.text}
+            </div>
           </div>
-        </div>
+        )}
 
-        {listing.marked === 'SOLD' && (
-          <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
-            <span className="text-white text-2xl font-black uppercase tracking-wider">SOLD</span>
+        {/* Simple overlay for unavailable items */}
+        {statusInfo.showOverlay && (
+          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent flex items-end justify-center pb-8">
+            <span className="text-white text-3xl font-black uppercase tracking-wider drop-shadow-lg">
+              {statusInfo.overlayText}
+            </span>
           </div>
         )}
       </div>
@@ -75,8 +104,12 @@ const ListingCard = ({ listing }) => {
             onClick={handleSellerClick}
             className="flex items-center gap-2 hover:opacity-70 transition-opacity"
           >
-            <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center overflow-hidden">
-              <span className="text-[10px] font-bold">{listing.email?.charAt(0).toUpperCase()}</span>
+            <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center overflow-hidden border-2 border-gray-200">
+              {listing.profileImageUrl ? (
+                <img src={listing.profileImageUrl} alt={listing.email} className="w-full h-full object-cover" />
+              ) : (
+                <span className="text-[10px] font-bold">{listing.email?.charAt(0).toUpperCase()}</span>
+              )}
             </div>
           </div>
         </div>

@@ -108,7 +108,11 @@ const NotificationDropdown = ({ onClose }) => {
           label: 'Get Info',
           icon: 'ℹ',
           onClick: () => {
-            navigate('/bargain-offers');
+            if (bargainId) {
+              navigate(`/bargain-offers?bargainId=${bargainId}`);
+            } else {
+              navigate('/bargain-offers');
+            }
             onClose();
           }
         };
@@ -118,7 +122,11 @@ const NotificationDropdown = ({ onClose }) => {
           label: 'Get Info',
           icon: 'ℹ',
           onClick: () => {
-            navigate('/exchange-requests');
+            if (exchangeId) {
+              navigate(`/exchange-requests?exchangeId=${exchangeId}`);
+            } else {
+              navigate('/exchange-requests');
+            }
             onClose();
           }
         };
