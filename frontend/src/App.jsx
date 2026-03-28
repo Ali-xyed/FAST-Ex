@@ -13,6 +13,8 @@ import EditListingPage from './pages/editListing';
 import ListingDetailsPage from './pages/listingDetails';
 import MessagesPage from './pages/messages';
 import AdminPage from './pages/admin';
+import AdminListingsPage from './pages/adminListings';
+import AdminCommentsPage from './pages/adminComments';
 import BargainOffersPage from './pages/bargainOffers';
 import ExchangeRequestsPage from './pages/exchangeRequests';
 import CreateExchangeRequestPage from './pages/createExchangeRequest';
@@ -38,6 +40,8 @@ function App() {
           <Route path="/listing/:id" element={<ListingDetailsPage />} />
           <Route path="/messages" element={<MessagesPage />} />
           <Route path="/admin" element={<AdminPage />} />
+          <Route path="/admin/listings" element={<AdminListingsPage />} />
+          <Route path="/admin/comments" element={<AdminCommentsPage />} />
           <Route path="/bargain-offers" element={<BargainOffersPage />} />
           <Route path="/exchange-requests" element={<ExchangeRequestsPage />} />
           <Route path="/exchange-request/:listingId" element={<CreateExchangeRequestPage />} />
