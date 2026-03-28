@@ -120,7 +120,7 @@ function HomePage() {
     <div className="min-h-screen bg-gray-50 text-black font-sans selection:bg-black selection:text-white">
       <Navbar />
 
-      <main className="px-8 lg:px-20 py-8 max-w-7xl mx-auto">
+      <main className="px-4 lg:px-8 py-8 max-w-[1600px] mx-auto">
         <div className="mb-8">
           <h1 className="text-4xl font-black tracking-tight mb-2">Browse Listings</h1>
           <p className="text-gray-400 font-medium">Discover items from your campus community</p>
@@ -130,14 +130,14 @@ function HomePage() {
           <SearchBar onSearch={handleSearch} />
         </div>
 
-        <div className="flex gap-8">
-          <aside className="hidden lg:block w-72 flex-shrink-0">
+        <div className="flex gap-6">
+          <aside className="hidden lg:block w-64 flex-shrink-0">
             <FilterPanel filters={filters} onFilterChange={handleFilterChange} />
           </aside>
 
           <div className="flex-1">
             {loading ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
                 {[...Array(6)].map((_, i) => (
                   <div key={i} className="bg-white border border-gray-100 rounded-2xl overflow-hidden animate-pulse">
                     <div className="aspect-[4/3] bg-gray-200"></div>
@@ -165,7 +165,7 @@ function HomePage() {
                 </button>
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
                 {filteredListings.map((listing) => (
                   <ListingCard key={listing.id} listing={listing} />
                 ))}

@@ -106,7 +106,7 @@ const NotificationDropdown = ({ onClose }) => {
       case 'bargain_received':
         return {
           label: 'Get Info',
-          icon: 'ℹ',
+          icon: '',
           onClick: () => {
             if (bargainId) {
               navigate(`/bargain-offers?bargainId=${bargainId}`);
@@ -120,7 +120,7 @@ const NotificationDropdown = ({ onClose }) => {
       case 'exchange_received':
         return {
           label: 'Get Info',
-          icon: 'ℹ',
+          icon: '',
           onClick: () => {
             if (exchangeId) {
               navigate(`/exchange-requests?exchangeId=${exchangeId}`);
@@ -134,7 +134,7 @@ const NotificationDropdown = ({ onClose }) => {
       case 'comment_posted':
         return {
           label: 'View Comments',
-          icon: '💬',
+          icon: '',
           onClick: () => {
             if (listingId) {
               navigate(`/listing/${listingId}`);
@@ -239,7 +239,7 @@ const NotificationDropdown = ({ onClose }) => {
                         }}
                         className="text-[10px] font-bold text-blue-600 hover:text-blue-700 uppercase tracking-widest"
                       >
-                        {action.label} {action.icon}
+                        {action.label}
                       </button>
                     )}
                   </div>

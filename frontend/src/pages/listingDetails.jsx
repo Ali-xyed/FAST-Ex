@@ -505,33 +505,42 @@ function ListingDetailsPage() {
                           >
                             PENDING (Available)
                           </button>
-                          <button
-                            onClick={() => handleMarkAs('SOLD')}
-                            disabled={updatingStatus || listing.marked === 'SOLD'}
-                            className={`w-full px-4 py-3 text-left text-sm font-bold hover:bg-gray-50 transition-all border-t border-gray-100 ${
-                              listing.marked === 'SOLD' ? 'bg-red-50 text-red-600' : 'text-gray-700'
-                            }`}
-                          >
-                            SOLD
-                          </button>
-                          <button
-                            onClick={() => handleMarkAs('RENTED')}
-                            disabled={updatingStatus || listing.marked === 'RENTED'}
-                            className={`w-full px-4 py-3 text-left text-sm font-bold hover:bg-gray-50 transition-all border-t border-gray-100 ${
-                              listing.marked === 'RENTED' ? 'bg-orange-50 text-orange-600' : 'text-gray-700'
-                            }`}
-                          >
-                            RENTED
-                          </button>
-                          <button
-                            onClick={() => handleMarkAs('EXCHANGED')}
-                            disabled={updatingStatus || listing.marked === 'EXCHANGED'}
-                            className={`w-full px-4 py-3 text-left text-sm font-bold hover:bg-gray-50 transition-all border-t border-gray-100 ${
-                              listing.marked === 'EXCHANGED' ? 'bg-purple-50 text-purple-600' : 'text-gray-700'
-                            }`}
-                          >
-                            EXCHANGED
-                          </button>
+                          
+                          {listing.type === 'SELL' && (
+                            <button
+                              onClick={() => handleMarkAs('SOLD')}
+                              disabled={updatingStatus || listing.marked === 'SOLD'}
+                              className={`w-full px-4 py-3 text-left text-sm font-bold hover:bg-gray-50 transition-all border-t border-gray-100 ${
+                                listing.marked === 'SOLD' ? 'bg-red-50 text-red-600' : 'text-gray-700'
+                              }`}
+                            >
+                              SOLD
+                            </button>
+                          )}
+                          
+                          {listing.type === 'RENT' && (
+                            <button
+                              onClick={() => handleMarkAs('RENTED')}
+                              disabled={updatingStatus || listing.marked === 'RENTED'}
+                              className={`w-full px-4 py-3 text-left text-sm font-bold hover:bg-gray-50 transition-all border-t border-gray-100 ${
+                                listing.marked === 'RENTED' ? 'bg-orange-50 text-orange-600' : 'text-gray-700'
+                              }`}
+                            >
+                              RENTED
+                            </button>
+                          )}
+                          
+                          {listing.type === 'EXCHANGE' && (
+                            <button
+                              onClick={() => handleMarkAs('EXCHANGED')}
+                              disabled={updatingStatus || listing.marked === 'EXCHANGED'}
+                              className={`w-full px-4 py-3 text-left text-sm font-bold hover:bg-gray-50 transition-all border-t border-gray-100 ${
+                                listing.marked === 'EXCHANGED' ? 'bg-purple-50 text-purple-600' : 'text-gray-700'
+                              }`}
+                            >
+                              EXCHANGED
+                            </button>
+                          )}
                         </div>
                       )}
                     </div>
