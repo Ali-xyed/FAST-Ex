@@ -3,6 +3,7 @@ const { sendEvent } = require('../config/kafka');
 const { getIo } = require('../socket');
 const { publishMessage } = require('../config/rabbitmq');
 const redis = require('../config/redis');
+const axios = require('axios');
 
 const CACHE_TTL_ALL = 120;
 const CACHE_TTL_ONE = 300;
@@ -92,7 +93,6 @@ const getListings = async (req, res) => {
       orderBy: { createdAt: 'desc' }
     });
 
-    const axios = require('axios');
     const listingsWithProfiles = await Promise.all(
       listings.map(async (listing) => {
         try {
@@ -228,7 +228,6 @@ const submitBargain = async (req, res) => {
       return res.status(400).json({ message: 'Bargaining is only available for SELL and RENT listings' });
     }
 
-    // Create bargain record
     const bargain = await listingRepo.createBargain({
       listingId: id,
       fromEmail: email,
@@ -236,7 +235,6 @@ const submitBargain = async (req, res) => {
       price: parseFloat(price)
     });
 
-    // Send Kafka notification
     await sendEvent('bargain.received', { 
       fromEmail: email, 
       toEmail: listing.email, 
@@ -247,7 +245,6 @@ const submitBargain = async (req, res) => {
       bargainId: bargain.id
     });
 
-    // Send RabbitMQ email
     publishMessage('bargain.requested', {
       ownerEmail: listing.email,
       requesterEmail: email,
@@ -384,7 +381,6 @@ const submitExchange = async (req, res) => {
 
     const imageUrl = req.file ? req.file.location : null;
 
-    // Create exchange record
     const exchange = await listingRepo.createExchange({
       listingId: id,
       fromEmail,
@@ -394,7 +390,6 @@ const submitExchange = async (req, res) => {
       offerImageUrl: imageUrl
     });
 
-    // Send Kafka notification
     await sendEvent('exchange.received', { 
       fromEmail, 
       toEmail: listing.email, 
@@ -406,7 +401,6 @@ const submitExchange = async (req, res) => {
       exchangeId: exchange.id
     });
 
-    // Send RabbitMQ email
     publishMessage('exchange.requested', {
       ownerEmail: listing.email,
       requesterEmail: fromEmail,
@@ -430,24 +424,19 @@ const getBargainDetails = async (req, res) => {
 
     let bargains;
     if (id) {
-      // Get by bargain ID
       const bargain = await listingRepo.findBargainById(id);
       if (!bargain) return res.status(404).json({ message: 'Bargain not found' });
       bargains = [bargain];
     } else if (listingId) {
-      // Get all bargains for a listing
       bargains = await listingRepo.findBargainsByListingId(listingId);
     } else {
       return res.status(400).json({ message: 'Either bargain ID or listing ID is required' });
     }
 
-    // Fetch listing details for each bargain
-    const axios = require('axios');
     const bargainsWithDetails = await Promise.all(
       bargains.map(async (bargain) => {
         const listing = await listingRepo.findListingById(bargain.listingId);
         
-        // Fetch requester's profile image and name
         let requesterImageUrl = null;
         let requesterName = null;
         try {
@@ -487,24 +476,19 @@ const getExchangeDetails = async (req, res) => {
 
     let exchanges;
     if (id) {
-      // Get by exchange ID
       const exchange = await listingRepo.findExchangeById(id);
       if (!exchange) return res.status(404).json({ message: 'Exchange not found' });
       exchanges = [exchange];
     } else if (listingId) {
-      // Get all exchanges for a listing
       exchanges = await listingRepo.findExchangesByListingId(listingId);
     } else {
       return res.status(400).json({ message: 'Either exchange ID or listing ID is required' });
     }
 
-    // Fetch listing details for each exchange
-    const axios = require('axios');
     const exchangesWithDetails = await Promise.all(
       exchanges.map(async (exchange) => {
         const listing = await listingRepo.findListingById(exchange.listingId);
         
-        // Fetch requester's profile image and name
         let requesterImageUrl = null;
         let requesterName = null;
         try {
@@ -541,7 +525,7 @@ const respondBargain = async (req, res) => {
   try {
     const email = req.headers['x-user-email'];
     const { bargainId } = req.params;
-    const { status } = req.body; // 'ACCEPTED' or 'DECLINED'
+    const { status } = req.body; 
 
     if (!['ACCEPTED', 'DECLINED'].includes(status)) {
       return res.status(400).json({ message: 'Invalid status. Must be ACCEPTED or DECLINED' });
@@ -586,7 +570,7 @@ const respondExchange = async (req, res) => {
   try {
     const email = req.headers['x-user-email'];
     const { exchangeId } = req.params;
-    const { status } = req.body; // 'ACCEPTED' or 'DECLINED'
+    const { status } = req.body; 
 
     if (!['ACCEPTED', 'DECLINED'].includes(status)) {
       return res.status(400).json({ message: 'Invalid status. Must be ACCEPTED or DECLINED' });
@@ -633,7 +617,6 @@ const updateMarkedStatus = async (req, res) => {
     const { id } = req.params;
     const { marked } = req.body;
 
-    // Validate marked status
     const validStatuses = ['PENDING', 'SOLD', 'RENTED', 'EXCHANGED'];
     if (!marked || !validStatuses.includes(marked)) {
       return res.status(400).json({ 
@@ -644,15 +627,12 @@ const updateMarkedStatus = async (req, res) => {
     const listing = await listingRepo.findListingById(id);
     if (!listing) return res.status(404).json({ message: 'Listing not found' });
 
-    // Check if user owns the listing
     if (listing.email !== email) {
       return res.status(403).json({ message: 'Unauthorized: You can only update your own listings' });
     }
 
-    // Update the marked status
     await listingRepo.updateListing(id, { marked });
 
-    // Clear cache
     await delCache(`listing:${id}`);
     await delCachePattern('listings:*');
 

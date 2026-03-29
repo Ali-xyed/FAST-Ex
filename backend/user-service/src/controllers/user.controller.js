@@ -167,17 +167,18 @@ const getAllUsers = async (req, res) => {
     if (cached) return res.status(200).json(cached);
 
     const users = await userRepo.findAllUsers();
-    const filteredUsers = users.map(user => ({
-      email: user.email,
-      name: user.name,
-      imageUrl: user.imageUrl,
-      reputationScore: user.reputationScore
-    }));
+    const filteredUsers = users
+      .filter(user => user.role !== 'ADMIN')
+      .map(user => ({
+        email: user.email,
+        name: user.name,
+        imageUrl: user.imageUrl,
+        reputationScore: user.reputationScore
+      }));
     
     await setCache(cacheKey, filteredUsers);
     res.status(200).json(filteredUsers);
   } catch (error) {
-    console.error(error);
     res.status(500).json({ message: 'Error fetching users' });
   }
 };

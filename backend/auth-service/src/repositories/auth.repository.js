@@ -38,9 +38,9 @@ class AuthRepository {
   }
 
   async deleteExpiredOTPs() {
-    const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
+    const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
     return prisma.oTP.deleteMany({
-      where: { createdAt: { lt: oneHourAgo } }
+      where: { createdAt: { lt: fiveMinutesAgo } }
     });
   }
 

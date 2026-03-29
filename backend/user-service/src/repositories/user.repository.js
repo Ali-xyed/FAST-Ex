@@ -5,11 +5,11 @@ class UserRepository {
     return prisma.userProfile.findUnique({ where: { email } });
   }
 
-  async upsertUser(email, name, rollNo) {
+  async upsertUser(email, name, rollNo, role = 'STUDENT') {
     return prisma.userProfile.upsert({
       where: { email },
       update: {},
-      create: { email, name, rollNo }
+      create: { email, name, rollNo, role }
     });
   }
 

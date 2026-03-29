@@ -7,7 +7,6 @@ const getChats = async (req, res) => {
     const email = req.headers['x-user-email'];
     const chats = await messagingRepo.findChatsForUser(email);
     
-    // Fetch profile images for other users in chats
     const axios = require('axios');
     const chatsWithProfiles = await Promise.all(
       chats.map(async (chat) => {

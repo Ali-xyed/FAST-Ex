@@ -74,7 +74,6 @@ model Exchange {
   status           ExchangeStatus @default(PENDING)
   createdAt        DateTime       @default(now())
   
-  // Offer details (what the requester is offering)
   offerTitle       String
   offerDescription String
   offerImageUrl    String?

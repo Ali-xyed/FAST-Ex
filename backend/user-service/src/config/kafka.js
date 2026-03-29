@@ -38,17 +38,20 @@ const connectKafkaConsumer = async () => {
 
     await consumer.subscribe({ topic: 'user.registered', fromBeginning: true });
     await consumer.subscribe({ topic: 'reputation.updated', fromBeginning: true });
+    await consumer.subscribe({ topic: 'user.promoted', fromBeginning: true });
 
     await consumer.run({
       eachMessage: async ({ topic, message }) => {
         const data = JSON.parse(message.value.toString());
 
         if (topic === 'user.registered') {
-          await userRepo.upsertUser(data.email, data.name || '', data.rollNo || '');
-          console.log(`Created profile for ${data.email}`);
+          await userRepo.upsertUser(data.email, data.name || '', data.rollNo || '', data.role || 'STUDENT');
         }
         if (topic === 'reputation.updated') {
           await userRepo.updateReputation(data.email, data.change).catch(console.error);
+        }
+        if (topic === 'user.promoted') {
+          await userRepo.updateUser(data.email, { role: data.role });
         }
       }
     });

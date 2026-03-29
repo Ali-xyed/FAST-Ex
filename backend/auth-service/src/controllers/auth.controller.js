@@ -26,7 +26,7 @@ const sendOTP = async (req, res) => {
 
     const otp = generateOTP();
     await authRepo.createOTP({ email, code: otp });
-    publishMessage('email.otp', { email, otp });
+    publishMessage('email.otp', { email, otp, expiresIn: 5 });
 
     res.status(200).json({ message: 'OTP sent to email' });
   } catch (error) {
@@ -60,7 +60,7 @@ const register = async (req, res) => {
 
     const otp = generateOTP();
     await authRepo.createOTP({ email, code: otp });
-    publishMessage('email.otp', { email, otp });
+    publishMessage('email.otp', { email, otp, expiresIn: 5 });
 
     res.status(200).json({ message: 'Registration initiated. OTP sent to email.' });
   } catch (error) {
@@ -81,7 +81,7 @@ const verifyOTP = async (req, res) => {
     await authRepo.deleteOTPs(email);
     await authRepo.verifyUser(email);
 
-    await sendEvent('user.registered', { email: user.email, name: user.name, rollNo: user.rollNo });
+    await sendEvent('user.registered', { email: user.email, name: user.name, rollNo: user.rollNo, role: user.role || 'STUDENT' });
 
     res.status(200).json({ message: 'Account verified successfully.' });
   } catch (error) {
@@ -194,7 +194,6 @@ const changePassword = async (req, res) => {
       return res.status(400).json({ message: 'Email and new password are required' });
     }
 
-    // Validate password strength (Clerk requires at least 8 characters)
     if (password.length < 8) {
       return res.status(400).json({ message: 'Password must be at least 8 characters long' });
     }
@@ -255,6 +254,8 @@ const promote = async (req, res) => {
     await clerk.users.updateUser(clerkUser.id, {
       publicMetadata: { role: 'ADMIN' }
     });
+
+    await sendEvent('user.promoted', { email, role: 'ADMIN' });
 
     res.status(200).json({ message: `User ${email} promoted to Admin successfully` });
   } catch (error) {
@@ -333,6 +334,13 @@ const toggleBan = async (req, res) => {
 
     const newBanStatus = !user.isBan;
     await authRepo.updateUserBanStatus(email, newBanStatus);
+
+    publishMessage('email.account.status', { 
+      email, 
+      name: user.name,
+      isBanned: newBanStatus,
+      action: newBanStatus ? 'banned' : 'unbanned'
+    });
 
     res.status(200).json({ message: `User ${email} ${newBanStatus ? 'banned' : 'unbanned'} successfully`, isBan: newBanStatus });
   } catch (error) {

@@ -39,15 +39,15 @@ class ListingRepository {
 
   async deleteListing(id) {
     return prisma.$transaction(async (tx) => {
-      // 1. Delete associated sub-models
+      // deleting associated sub-models
       await tx.sellListing.deleteMany({ where: { listingId: id } });
       await tx.rentListing.deleteMany({ where: { listingId: id } });
       await tx.exchangeListing.deleteMany({ where: { listingId: id } });
 
-      // 2. Delete associated comments
+      // deleting associated comments
       await tx.comment.deleteMany({ where: { listingId: id } });
 
-      // 3. Finally delete the parent listing
+      // and in last deleting the parent listing
       return tx.listing.delete({ where: { id } });
     });
   }

@@ -55,7 +55,7 @@ const connectRabbitMQConsumer = async () => {
               <div style="background-color: #f1f5f9; padding: 16px; border-radius: 6px; text-align: center; margin: 24px 0;">
                 <span style="font-size: 32px; font-family: monospace; font-weight: 700; letter-spacing: 8px; color: #0f172a;">${otp}</span>
               </div>
-              <p>This code is valid for 1 hour. If you did not request this, please disregard this message.</p>
+              <p>This code is valid for 5 minutes. If you did not request this, please disregard this message.</p>
             `)
           });
           console.log(`OTP Email sent to ${email}`);
@@ -81,7 +81,7 @@ const connectRabbitMQConsumer = async () => {
                 <p style="margin: 0; font-weight: 600; color: #0f172a;">Item: ${listingTitle}</p>
                 <p style="margin: 4px 0 0 0; color: #64748b;">Requester: ${requesterEmail}</p>
               </div>
-              <p>Please log in to your dashboard to review the request and manage the transaction.</p>
+              <p>Please log in to review the request.</p>
             `)
           });
           console.log(`Request Email sent to ${ownerEmail}`);
@@ -136,7 +136,7 @@ const connectRabbitMQConsumer = async () => {
                 <p style="margin: 4px 0 0 0; color: #64748b;">Requester: ${requesterEmail}</p>
                 <p style="margin: 4px 0 0 0; color: #0f172a; font-weight: 600;">Offered Price: ${price} ${listingType === 'RENT' ? '/hour' : ''}</p>
               </div>
-              <p>Please log in to your dashboard to review and respond to this offer.</p>
+              <p>Please log in to review.</p>
             `)
           });
           console.log(`Bargain Email sent to ${ownerEmail}`);
@@ -168,7 +168,7 @@ const connectRabbitMQConsumer = async () => {
                 <p style="margin: 4px 0 0 0; color: #475569;">${offerDescription}</p>
                 ${offerImageUrl ? `<p style="margin: 8px 0 0 0;"><a href="${offerImageUrl}" style="color: #334155;">View Image</a></p>` : ''}
               </div>
-              <p>Please log in to your dashboard to review and respond to this exchange offer.</p>
+              <p>Please log in to review.</p>
             `)
           });
           console.log(`Exchange Email sent to ${ownerEmail}`);

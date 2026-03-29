@@ -48,7 +48,7 @@ app.listen(PORT, async () => {
     } catch (err) {
       console.error('[OTP Cleanup] Error:', err.message);
     }
-  }, 10 * 60 * 1000); // 10 minutes
+  }, 10 * 60 * 1000);
 
   console.log(`Auth service running on port ${PORT}`);
   console.log(`OTP cleanup scheduled every 10 minutes`);

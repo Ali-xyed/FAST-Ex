@@ -14,5 +14,6 @@ model UserProfile {
   imageUrl         String?
   reputationScore  Int      @default(100)
   isBan            Boolean  @default(false)
+  role             String   @default("STUDENT")
   createdAt        DateTime @default(now())
 }

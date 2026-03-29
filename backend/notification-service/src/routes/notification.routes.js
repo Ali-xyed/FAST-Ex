@@ -6,6 +6,7 @@ const router = express.Router();
 
 router.get('/health', (req, res) => res.json({ status: 'ok', service: 'notification' }));
 
+// User notifications
 router.get('/', verifyAuth, notificationController.getMyNotifications);
 router.patch('/read-all', verifyAuth, notificationController.markAllRead);
 

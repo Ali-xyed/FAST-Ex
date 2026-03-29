@@ -2,8 +2,8 @@ const Redis = require('ioredis');
 
 const redis = new Redis(process.env.REDIS_URL);
 
-const TOKEN_BUCKET_CAPACITY = 200;
-const REFILL_RATE = 100;
+const TOKEN_BUCKET_CAPACITY = 300;
+const REFILL_RATE = 150;
 const REFILL_INTERVAL = 60;
 
 const rateLimiter = async (req, res, next) => {

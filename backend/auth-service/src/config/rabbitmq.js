@@ -7,8 +7,7 @@ const connectRabbitMQ = async () => {
     const connection = await amqplib.connect(process.env.RABBITMQ_URL);
     channel = await connection.createChannel();
     await channel.assertQueue('email.otp', { durable: true });
-    await channel.assertQueue('email.reset', { durable: true });
-    await channel.assertQueue('email.banned', { durable: true });
+    await channel.assertQueue('email.account.status', { durable: true });
     console.log('RabbitMQ connected (auth-service)');
   } catch (err) {
     console.error('Failed to connect RabbitMQ (auth-service)', err);

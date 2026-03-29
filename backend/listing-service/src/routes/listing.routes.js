@@ -1,49 +1,39 @@
 const express = require('express');
 const listingController = require('../controllers/listing.controller');
 const { verifyAuth } = require('../middleware/auth.middleware');
-const upload = require('../config/s3');
+const { uploadSingleImage } = require('../middleware/upload.middleware');
 
 const router = express.Router();
 
 router.get('/health', (req, res) => res.json({ status: 'ok', service: 'listing' }));
 
-router.post('/', verifyAuth, (req, res, next) => {
-  upload.single('imageUrl')(req, res, (err) => {
-    if (err) return res.status(400).json({ message: 'File upload error', error: err.message });
-    next();
-  });
-}, listingController.createListing);
+// Listing CRUD
+router.post('/', verifyAuth, uploadSingleImage(), listingController.createListing);
 router.get('/', listingController.getListings);
 router.get('/my', verifyAuth, listingController.getMyListings);
 router.get('/:id', listingController.getListingById);
-router.patch('/:id', verifyAuth, (req, res, next) => {
-  upload.single('imageUrl')(req, res, (err) => {
-    if (err) return res.status(400).json({ message: 'File upload error', error: err.message });
-    next();
-  });
-}, listingController.editListing);
+router.patch('/:id', verifyAuth, uploadSingleImage(), listingController.editListing);
 router.delete('/:id', verifyAuth, listingController.deleteListing);
 
+// Comments
 router.post('/:id/comments', verifyAuth, listingController.postComment);
 router.delete('/:id/comments/:commentId', verifyAuth, listingController.deleteComment);
+
+// Admin actions
 router.patch('/:id/verify', verifyAuth, listingController.verifyListingStatus);
+router.patch('/:id/mark', verifyAuth, listingController.updateMarkedStatus);
 
+// Bargain
 router.post('/:id/bargain', verifyAuth, listingController.submitBargain);
-router.post('/:id/request', verifyAuth, listingController.requestListing);
-
-router.post('/:id/exchange', verifyAuth, (req, res, next) => {
-  upload.single('imageUrl')(req, res, (err) => {
-    if (err) return res.status(400).json({ message: 'File upload error', error: err.message });
-    next();
-  });
-}, listingController.submitExchange);
-
 router.get('/bargains/:id', verifyAuth, listingController.getBargainDetails);
-router.get('/exchanges/:id', verifyAuth, listingController.getExchangeDetails);
-
 router.patch('/bargains/:bargainId/respond', verifyAuth, listingController.respondBargain);
+
+// Exchange
+router.post('/:id/exchange', verifyAuth, uploadSingleImage(), listingController.submitExchange);
+router.get('/exchanges/:id', verifyAuth, listingController.getExchangeDetails);
 router.patch('/exchanges/:exchangeId/respond', verifyAuth, listingController.respondExchange);
 
-router.patch('/:id/mark', verifyAuth, listingController.updateMarkedStatus);
+// Request
+router.post('/:id/request', verifyAuth, listingController.requestListing);
 
 module.exports = router;

@@ -11,6 +11,7 @@ domains.txt
 dockers.ps1
 redeploy-all-services.ps1
 test-ssh.ps1
+cleanup-all-dockers.ps1
 
 # Dependencies
 node_modules/
