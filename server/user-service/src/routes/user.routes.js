@@ -13,6 +13,7 @@ router.get('/all', verifyAuth, userController.getAllUsers);
 // User profile - Protected
 router.get('/profile', verifyAuth, userController.getProfile);
 router.put('/profile', verifyAuth, userController.updateProfile);
+router.post('/profile', verifyAuth, userController.createProfile); // Add this route
 router.post('/upload-image', verifyAuth, upload.single('imageUrl'), userController.uploadImage);
 
 // Public profile

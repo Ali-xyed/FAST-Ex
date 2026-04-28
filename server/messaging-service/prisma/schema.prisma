@@ -15,11 +15,12 @@ model Chat {
 }
 
 model Message {
-  id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  chatId    String   @db.ObjectId
-  chat      Chat     @relation(fields: [chatId], references: [id])
-  content   String
-  sender    String
-  receiver  String
-  createdAt DateTime @default(now())
+  id               String   @id @default(auto()) @map("_id") @db.ObjectId
+  chatId           String   @db.ObjectId
+  chat             Chat     @relation(fields: [chatId], references: [id])
+  content          String
+  sender           String
+  receiver         String
+  listingReference Json?   
+  createdAt        DateTime @default(now())
 }

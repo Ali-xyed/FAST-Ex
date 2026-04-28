@@ -41,10 +41,43 @@ const getChats = async (req, res) => {
 const createOrGetChat = async (req, res) => {
   try {
     const email = req.headers['x-user-email'];
-    const { otherUserEmail } = req.body;
+    const { otherUserEmail, initialMessage, listingReference } = req.body;
 
     let chat = await messagingRepo.findChatBetweenUsers(email, otherUserEmail);
-    if (!chat) chat = await messagingRepo.createChat(email, otherUserEmail);
+    let isNewChat = false;
+    
+    if (!chat) {
+      chat = await messagingRepo.createChat(email, otherUserEmail);
+      isNewChat = true;
+    }
+
+    // If this is a new chat and we have an initial message, send it
+    if (isNewChat && initialMessage) {
+      const message = await messagingRepo.createMessage(
+        chat.id, 
+        email, 
+        otherUserEmail, 
+        initialMessage,
+        listingReference
+      );
+
+      // Send notification event
+      await sendEvent('message.sent', { 
+        chatId: chat.id, 
+        senderId: email, 
+        receiverId: otherUserEmail, 
+        content: initialMessage,
+        listingReference 
+      });
+
+      // Emit via WebSocket
+      try {
+        const { getIo } = require('../socket');
+        getIo().to(chat.id).emit('new_message', message);
+      } catch (err) {
+        console.error('WebSocket Error:', err.message);
+      }
+    }
 
     res.status(200).json(chat);
   } catch (error) {
@@ -69,15 +102,21 @@ const sendMessage = async (req, res) => {
   try {
     const email = req.headers['x-user-email'];
     const { chatId } = req.params;
-    const { content } = req.body;
+    const { content, listingReference } = req.body;
 
     const chat = await messagingRepo.findChatById(chatId);
     if (!chat) return res.status(404).json({ message: 'Chat not found' });
 
     const receiver = chat.user1 === email ? chat.user2 : chat.user1;
-    const message = await messagingRepo.createMessage(chatId, email, receiver, content);
+    const message = await messagingRepo.createMessage(chatId, email, receiver, content, listingReference);
 
-    await sendEvent('message.sent', { chatId, senderId: email, receiverId: receiver, content });
+    await sendEvent('message.sent', { 
+      chatId, 
+      senderId: email, 
+      receiverId: receiver, 
+      content,
+      listingReference 
+    });
 
     try {
       const { getIo } = require('../socket');

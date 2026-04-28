@@ -11,12 +11,18 @@ const app = express();
 
 const allowedOrigins = [
   process.env.CLIENT_URL?.trim().replace(/\/$/, ""),
-  "http://localhost:5173"
+  process.env.GATEWAY_URL?.trim().replace(/\/$/, ""),
+  "http://localhost:5173",
+  "http://localhost",
+  "http://localhost:5000"
 ].filter(Boolean);
 
 const corsOptions = {
   origin: (origin, callback) => {
-    if (!origin || allowedOrigins.includes(origin)) {
+    // Allow requests with no origin (like mobile apps, Postman, or server-to-server)
+    if (!origin) {
+      callback(null, true);
+    } else if (allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
       callback(new Error("CORS not allowed"));

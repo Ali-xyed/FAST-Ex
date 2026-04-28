@@ -64,6 +64,13 @@ class AuthRepository {
       data: { role }
     });
   }
+
+  async updateUserProfile(email, data) {
+    return prisma.user.update({
+      where: { email },
+      data
+    });
+  }
 }
 
 module.exports = new AuthRepository();

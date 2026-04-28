@@ -1,4 +1,5 @@
 const axios = require('axios');
+const { sendEvent } = require('../config/kafka');
 
 const LISTING_SVC = `${process.env.LISTING_SERVICE_URL || 'http://localhost:5004'}/api/listings`;
 const USER_SVC = `${process.env.USER_SERVICE_URL || 'http://localhost:5003'}/api/users`;
@@ -64,8 +65,6 @@ const verifyListing = async (req, res) => {
       { isVerified: true }, 
       { headers: getAdminHeaders(req) }
     );
-
-    await sendEvent('reputation.updated', { email: listingEmail, change: 1 });
 
     await sendEvent('reputation.updated', { email: listingEmail, change: 1 });
 

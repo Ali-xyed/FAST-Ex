@@ -81,10 +81,9 @@ function CreateListingPage() {
       }
       
       const response = await listingAPI.create(formDataToSend);
-      const listingId = response.data.id;
 
       toast.success('Listing created successfully!');
-      navigate(`/listing/${listingId}`);
+      navigate('/home');
     } catch (error) {
       console.error('Error creating listing:', error);
       toast.error(error.response?.data?.message || 'Failed to create listing');

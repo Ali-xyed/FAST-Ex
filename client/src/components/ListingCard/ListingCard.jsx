@@ -1,7 +1,16 @@
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext';
+import { messageAPI } from '../../utils/api';
+import toast from 'react-hot-toast';
 
 const ListingCard = ({ listing }) => {
   const navigate = useNavigate();
+  const { user } = useAuth();
+
+  // Debug logging
+  console.log('ListingCard - User:', user?.email, 'Listing Owner:', listing.email, 'Show Chat:', user?.email !== listing.email);
+  console.log('ListingCard - userProfile:', listing.userProfile);
+  console.log('ListingCard - Profile Image URL:', listing.userProfile?.imageUrl || listing.profileImageUrl);
 
   const getTypeColor = (type) => {
     switch (type) {
@@ -36,6 +45,47 @@ const ListingCard = ({ listing }) => {
   const handleSellerClick = (e) => {
     e.stopPropagation();
     navigate(`/profile/${listing.email}`);
+  };
+
+  const handleChatClick = async (e) => {
+    e.stopPropagation();
+    
+    // Check if user is logged in
+    if (!user) {
+      toast.error("Please login to send messages");
+      navigate('/login');
+      return;
+    }
+    
+    // Don't allow chat with yourself
+    if (user?.email === listing.email) {
+      toast.error("You can't chat with yourself");
+      return;
+    }
+
+    try {
+      // Create listing reference object
+      const listingReference = {
+        id: listing.id,
+        title: listing.title,
+        imageUrl: listing.imageUrl,
+        type: listing.type,
+        price: listing.sellListing?.price || listing.rentListing?.pricePerHour || null,
+        withTitle: listing.exchangeListing?.withTitle || null
+      };
+
+      const response = await messageAPI.createOrFetchChat({
+        otherUserEmail: listing.email,
+        initialMessage: `Hi! I'm interested in your listing "${listing.title}"`,
+        listingReference
+      });
+      
+      navigate('/messages');
+      toast.success('Chat started!');
+    } catch (error) {
+      console.error('Error creating chat:', error);
+      toast.error('Failed to start chat');
+    }
   };
 
   const statusInfo = getStatusInfo(listing.marked, listing.type);
@@ -92,24 +142,45 @@ const ListingCard = ({ listing }) => {
 
         <div className="flex items-center justify-between pt-4 border-t border-gray-50">
           <div>
-            <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-1">Price</p>
-            <p className="text-xl font-black text-black">
+            <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-1">
+              {listing.type === 'EXCHANGE' ? 'Wants' : 'Price'}
+            </p>
+            <p className="text-xl font-black text-black line-clamp-1">
               {listing.sellListing?.price ? `Rs ${listing.sellListing.price}` : 
                listing.rentListing?.pricePerHour ? `Rs ${listing.rentListing.pricePerHour}/hr` : 
+               listing.exchangeListing?.withTitle ? listing.exchangeListing.withTitle :
                'Negotiable'}
             </p>
           </div>
           
-          <div 
-            onClick={handleSellerClick}
-            className="flex items-center gap-2 hover:opacity-70 transition-opacity"
-          >
-            <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center overflow-hidden border-2 border-gray-200">
-              {listing.profileImageUrl ? (
-                <img src={listing.profileImageUrl} alt={listing.email} className="w-full h-full object-cover" />
-              ) : (
-                <span className="text-[10px] font-bold">{listing.email?.charAt(0).toUpperCase()}</span>
-              )}
+          <div className="flex items-center gap-3">
+            {/* Chat Button - simple black icon */}
+            <button
+              onClick={handleChatClick}
+              className="w-10 h-10 rounded-full bg-black text-white flex items-center justify-center hover:bg-gray-800 transition-all shadow-md border-2 border-white"
+              title="Send Message"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+              </svg>
+            </button>
+            
+            {/* Profile Button - show user image or "L" */}
+            <div 
+              onClick={handleSellerClick}
+              className="relative hover:opacity-70 transition-opacity cursor-pointer"
+            >
+              <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center overflow-hidden border-2 border-gray-200 shadow-md">
+                {(listing.userProfile?.imageUrl || listing.profileImageUrl) ? (
+                  <img 
+                    src={listing.userProfile?.imageUrl || listing.profileImageUrl} 
+                    alt={listing.email} 
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <span className="text-sm font-bold text-gray-600">L</span>
+                )}
+              </div>
             </div>
           </div>
         </div>

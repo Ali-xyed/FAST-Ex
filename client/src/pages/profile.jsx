@@ -59,13 +59,14 @@ function ProfilePage() {
     if (!file) return;
 
     const formData = new FormData();
-    formData.append('image', file);
+    formData.append('imageUrl', file); // Changed from 'image' to 'imageUrl'
 
     try {
       await userAPI.uploadProfileImage(formData);
       await refreshProfile();
       toast.success('Profile image updated!');
     } catch (error) {
+      console.error('Upload error:', error);
       toast.error('Failed to upload image');
     }
   };

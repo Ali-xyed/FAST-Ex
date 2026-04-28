@@ -1,50 +1,55 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import AdminNavbar from '../components/AdminNavbar/AdminNavbar';
-import { adminAPI } from '../utils/api';
+import { adminAPI, listingAPI } from '../utils/api';
 import toast from 'react-hot-toast';
-
-// Dummy data for listings
-const DUMMY_LISTINGS = [
-  { id: 1, title: 'iPhone 13 Pro', type: 'SELL', email: 'john.doe@university.edu', imageUrl: '/open_peeps/astro.png', isVerified: false, price: 800, description: 'Excellent condition, barely used' },
-  { id: 2, title: 'MacBook Air M1', type: 'SELL', email: 'jane.smith@university.edu', imageUrl: '/open_peeps/bueno.png', isVerified: true, price: 900, description: '2020 model, 8GB RAM' },
-  { id: 3, title: 'Gaming Chair', type: 'EXCHANGE', email: 'mike.wilson@university.edu', imageUrl: '/open_peeps/coffee.png', isVerified: false, description: 'Ergonomic gaming chair' },
-  { id: 4, title: 'Calculus Textbook', type: 'SELL', email: 'sarah.jones@university.edu', imageUrl: '/open_peeps/feliz.png', isVerified: true, price: 50, description: '10th edition, like new' },
-  { id: 5, title: 'Bicycle', type: 'EXCHANGE', email: 'alex.brown@university.edu', imageUrl: '/open_peeps/growth.png', isVerified: false, description: 'Mountain bike, good condition' },
-  { id: 6, title: 'Desk Lamp', type: 'SELL', email: 'emily.davis@university.edu', imageUrl: '/open_peeps/kiddo.png', isVerified: false, price: 25, description: 'LED desk lamp with adjustable brightness' },
-  { id: 7, title: 'Wireless Headphones', type: 'SELL', email: 'chris.taylor@university.edu', imageUrl: '/open_peeps/pilot.png', isVerified: true, price: 120, description: 'Sony WH-1000XM4, noise cancelling' },
-  { id: 8, title: 'Study Desk', type: 'EXCHANGE', email: 'lisa.anderson@university.edu', imageUrl: '/open_peeps/plants.png', isVerified: false, description: 'Wooden desk with drawers' },
-];
 
 function AdminListingsPage() {
   const navigate = useNavigate();
-  const [listings, setListings] = useState(DUMMY_LISTINGS);
-  const [loading, setLoading] = useState(false);
+  const [listings, setListings] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [filterType, setFilterType] = useState('ALL');
   const [filterVerified, setFilterVerified] = useState('ALL');
+
+  useEffect(() => {
+    fetchListings();
+  }, []);
+
+  const fetchListings = async () => {
+    try {
+      setLoading(true);
+      const response = await listingAPI.getAll();
+      setListings(response.data);
+    } catch (error) {
+      console.error('Error fetching listings:', error);
+      toast.error('Failed to load listings');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleDeleteListing = async (id) => {
     if (!confirm('Are you sure you want to delete this listing?')) return;
     
     try {
+      await adminAPI.deleteListing(id);
       setListings(listings.filter(l => l.id !== id));
-      // Uncomment when backend is ready
-      // await adminAPI.deleteListing(id);
       toast.success('Listing deleted successfully');
     } catch (error) {
+      console.error('Error deleting listing:', error);
       toast.error('Failed to delete listing');
     }
   };
 
   const handleVerifyListing = async (id) => {
     try {
+      await adminAPI.verifyListing(id);
       setListings(listings.map(l => 
         l.id === id ? { ...l, isVerified: true } : l
       ));
-      // Uncomment when backend is ready
-      // await adminAPI.verifyListing(id);
       toast.success('Listing verified successfully');
     } catch (error) {
+      console.error('Error verifying listing:', error);
       toast.error('Failed to verify listing');
     }
   };

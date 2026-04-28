@@ -68,6 +68,7 @@ export const AuthProvider = ({ children }) => {
     try {
       const response = await userAPI.getProfile();
       setUser(response.data);
+      localStorage.setItem('user', JSON.stringify(response.data));
     } catch (error) {
       console.error('Error refreshing profile:', error);
     }

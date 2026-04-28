@@ -22,16 +22,43 @@ const delCache = async (...keys) => {
 const getProfile = async (req, res) => {
   try {
     const email = req.headers['x-user-email'];
+    const role = req.headers['x-user-role'];
     const cacheKey = `user:profile:${email}`;
 
     const cached = await getFromCache(cacheKey);
     if (cached) return res.status(200).json(cached);
 
-    const profile = await userRepo.findByEmail(email);
-    if (!profile) return res.status(404).json({ message: 'Profile not found' });
+    let profile = await userRepo.findByEmail(email);
+    
+    // If profile doesn't exist, create it automatically
+    if (!profile) {
+      console.log(`Creating missing profile for ${email}`);
+      profile = await userRepo.upsertUser(email, email.split('@')[0], '', role || 'STUDENT');
+    }
 
     await setCache(cacheKey, profile);
     res.status(200).json(profile);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+const createProfile = async (req, res) => {
+  try {
+    const email = req.headers['x-user-email'];
+    const role = req.headers['x-user-role'];
+    const { name, rollNo } = req.body;
+
+    const profile = await userRepo.upsertUser(
+      email, 
+      name || email.split('@')[0], 
+      rollNo || '', 
+      role || 'STUDENT'
+    );
+
+    await delCache(`user:profile:${email}`, `user:public:${email}`);
+    res.status(201).json(profile);
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Server error' });
@@ -42,9 +69,40 @@ const updateProfile = async (req, res) => {
   try {
     const email = req.headers['x-user-email'];
     const { name, rollNo } = req.body;
+    
+    // Update profile in User Service
     const profile = await userRepo.updateUser(email, { name, rollNo });
 
+    // Also update the Auth Service
+    try {
+      const axios = require('axios');
+      await axios.put(`${process.env.AUTH_SERVICE_URL}/api/auth/profile`, {
+        name,
+        rollNo
+      }, {
+        headers: {
+          'x-user-email': email,
+          'x-user-role': req.headers['x-user-role']
+        }
+      });
+    } catch (authServiceError) {
+      console.error('Failed to update profile in Auth Service:', authServiceError.message);
+      // Don't fail the update if auth service is down
+    }
+
+    // Clear user profile caches
     await delCache(`user:profile:${email}`, `user:public:${email}`);
+    
+    // Clear all listing caches so profile updates reflect immediately
+    try {
+      const keys = await redis.keys('listings:all:*');
+      if (keys.length > 0) {
+        await redis.del(...keys);
+        console.log(`Cleared ${keys.length} listing cache keys after profile update`);
+      }
+    } catch (cacheErr) {
+      console.error('Error clearing listing caches:', cacheErr);
+    }
 
     res.status(200).json({message:"Profile has been updated!"});
   } catch (error) {
@@ -60,7 +118,19 @@ const uploadImage = async (req, res) => {
     const imageUrl = req.file.location;
     const profile = await userRepo.updateUser(email, { imageUrl });
 
+    // Clear user profile caches
     await delCache(`user:profile:${email}`, `user:public:${email}`);
+    
+    // Clear all listing caches so profile images update immediately
+    try {
+      const keys = await redis.keys('listings:all:*');
+      if (keys.length > 0) {
+        await redis.del(...keys);
+        console.log(`Cleared ${keys.length} listing cache keys after profile image upload`);
+      }
+    } catch (cacheErr) {
+      console.error('Error clearing listing caches:', cacheErr);
+    }
 
     res.status(200).json({ message: 'Image uploaded', profile });
   } catch (error) {
@@ -77,8 +147,13 @@ const getPublicProfile = async (req, res) => {
     const cached = await getFromCache(cacheKey);
     if (cached) return res.status(200).json(cached);
 
-    const profile = await userRepo.findByEmail(email);
-    if (!profile) return res.status(404).json({ message: 'Profile not found' });
+    let profile = await userRepo.findByEmail(email);
+    
+    // If profile doesn't exist, create it automatically
+    if (!profile) {
+      console.log(`Creating missing public profile for ${email}`);
+      profile = await userRepo.upsertUser(email, email.split('@')[0], '', 'STUDENT');
+    }
 
     await setCache(cacheKey, profile);
     res.status(200).json(profile);
@@ -173,14 +248,16 @@ const getAllUsers = async (req, res) => {
         email: user.email,
         name: user.name,
         imageUrl: user.imageUrl,
-        reputationScore: user.reputationScore
+        reputationScore: user.reputationScore,
+        isBan: user.isBan || false
       }));
     
     await setCache(cacheKey, filteredUsers);
     res.status(200).json(filteredUsers);
   } catch (error) {
+    console.error('Error fetching all users:', error);
     res.status(500).json({ message: 'Error fetching users' });
   }
 };
 
-module.exports = { getProfile, updateProfile, uploadImage, getPublicProfile, getReputation, addReputation, deductReputation, toggleBan, getAllUsers };
+module.exports = { getProfile, createProfile, updateProfile, uploadImage, getPublicProfile, getReputation, addReputation, deductReputation, toggleBan, getAllUsers };

@@ -41,9 +41,11 @@ model RentListing {
 }
 
 model ExchangeListing {
-  id        String  @id @default(auto()) @map("_id") @db.ObjectId
-  listingId String  @unique @db.ObjectId
-  listing   Listing @relation(fields: [listingId], references: [id])
+  id              String  @id @default(auto()) @map("_id") @db.ObjectId
+  listingId       String  @unique @db.ObjectId
+  listing         Listing @relation(fields: [listingId], references: [id])
+  withTitle       String?
+  withDescription String?
 }
 
 model Comment {

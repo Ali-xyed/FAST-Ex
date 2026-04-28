@@ -37,7 +37,7 @@ const createListing = async (req, res) => {
       return res.status(401).json({ message: 'User email not found in headers' });
     }
 
-    const { type, title, description, price, pricePerHour } = req.body;
+    const { type, title, description, price, pricePerHour, withTitle, withDescription, isBargaining } = req.body;
     
     if (!type || !title || !description) {
       return res.status(400).json({ message: 'Missing required fields: type, title, description' });
@@ -45,30 +45,40 @@ const createListing = async (req, res) => {
 
     const imageUrl = req.file ? req.file.location : null;
 
-    const listing = await listingRepo.createListing({ email, type, title, description, imageUrl });
+    const listing = await listingRepo.createListing({ 
+      email, 
+      type, 
+      title, 
+      description, 
+      imageUrl
+    });
 
     if (type === 'SELL' && price) {
       await listingRepo.createSellListing({ 
         listingId: listing.id, 
-        price: parseFloat(price)
+        price: parseFloat(price),
+        isBargaining: isBargaining === 'true' || isBargaining === true
       });
     }
     if (type === 'RENT' && pricePerHour) {
       await listingRepo.createRentListing({ 
         listingId: listing.id, 
-        pricePerHour: parseFloat(pricePerHour)
+        pricePerHour: parseFloat(pricePerHour),
+        isBargaining: isBargaining === 'true' || isBargaining === true
       });
     }
     if (type === 'EXCHANGE') {
       await listingRepo.createExchangeListing({ 
-        listingId: listing.id
+        listingId: listing.id,
+        withTitle: withTitle || '',
+        withDescription: withDescription || ''
       });
     }
 
     await delCachePattern('listings:all:*');
     await delCache(`listings:my:${email}`);
 
-    res.status(201).json({message: "Item has been posted!"});
+    res.status(201).json({ message: "Item has been posted!", listing: { id: listing.id } });
   } catch (err) {
     console.error('Error creating listing:', err);
     res.status(500).json({ message: 'Server error creating listing', error: err.message });
@@ -89,7 +99,12 @@ const getListings = async (req, res) => {
 
     const listings = await listingRepo.findAllListings({
       where,
-      include: { sellListing: true, rentListing: true, exchangeListing: true },
+      include: { 
+        sellListing: true, 
+        rentListing: true, 
+        exchangeListing: true,
+        comments: { orderBy: { createdAt: 'desc' } }
+      },
       orderBy: { createdAt: 'desc' }
     });
 

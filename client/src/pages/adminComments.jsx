@@ -1,38 +1,59 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import AdminNavbar from '../components/AdminNavbar/AdminNavbar';
-import { adminAPI } from '../utils/api';
+import { adminAPI, listingAPI } from '../utils/api';
 import toast from 'react-hot-toast';
-
-// Dummy data for comments
-const DUMMY_COMMENTS = [
-  { id: 1, listingId: 1, listingTitle: 'iPhone 13 Pro', email: 'jane.smith@university.edu', userName: 'Jane Smith', content: 'Is this still available?', createdAt: '2024-03-15T10:30:00Z' },
-  { id: 2, listingId: 1, listingTitle: 'iPhone 13 Pro', email: 'mike.wilson@university.edu', userName: 'Mike Wilson', content: 'Can you do $700?', createdAt: '2024-03-15T11:00:00Z' },
-  { id: 3, listingId: 2, listingTitle: 'MacBook Air M1', email: 'sarah.jones@university.edu', userName: 'Sarah Jones', content: 'Great deal!', createdAt: '2024-03-14T14:20:00Z' },
-  { id: 4, listingId: 3, listingTitle: 'Gaming Chair', email: 'alex.brown@university.edu', userName: 'Alex Brown', content: 'What would you exchange for?', createdAt: '2024-03-14T09:15:00Z' },
-  { id: 5, listingId: 4, listingTitle: 'Calculus Textbook', email: 'emily.davis@university.edu', userName: 'Emily Davis', content: 'Which edition is this?', createdAt: '2024-03-13T16:45:00Z' },
-  { id: 6, listingId: 5, listingTitle: 'Bicycle', email: 'chris.taylor@university.edu', userName: 'Chris Taylor', content: 'Interested! Can we meet tomorrow?', createdAt: '2024-03-13T12:30:00Z' },
-  { id: 7, listingId: 6, listingTitle: 'Desk Lamp', email: 'lisa.anderson@university.edu', userName: 'Lisa Anderson', content: 'Does it come with a bulb?', createdAt: '2024-03-12T18:00:00Z' },
-  { id: 8, listingId: 2, listingTitle: 'MacBook Air M1', email: 'john.doe@university.edu', userName: 'John Doe', content: 'How many charge cycles?', createdAt: '2024-03-12T10:15:00Z' },
-  { id: 9, listingId: 7, listingTitle: 'Wireless Headphones', email: 'jane.smith@university.edu', userName: 'Jane Smith', content: 'Do they have warranty?', createdAt: '2024-03-11T15:45:00Z' },
-  { id: 10, listingId: 8, listingTitle: 'Study Desk', email: 'mike.wilson@university.edu', userName: 'Mike Wilson', content: 'What are the dimensions?', createdAt: '2024-03-11T09:20:00Z' },
-];
 
 function AdminCommentsPage() {
   const navigate = useNavigate();
-  const [comments, setComments] = useState(DUMMY_COMMENTS);
-  const [loading, setLoading] = useState(false);
+  const [comments, setComments] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+
+  useEffect(() => {
+    fetchAllComments();
+  }, []);
+
+  const fetchAllComments = async () => {
+    try {
+      setLoading(true);
+      const response = await listingAPI.getAll();
+      const allComments = [];
+      
+      for (const listing of response.data) {
+        if (listing.comments && listing.comments.length > 0) {
+          for (const comment of listing.comments) {
+            allComments.push({
+              id: comment.id,
+              content: comment.content,
+              email: comment.fromEmail,
+              userName: listing.userProfile?.name || comment.fromEmail.split('@')[0],
+              createdAt: comment.createdAt,
+              listingId: listing.id,
+              listingTitle: listing.title
+            });
+          }
+        }
+      }
+      
+      setComments(allComments);
+    } catch (error) {
+      console.error('Error fetching comments:', error);
+      toast.error('Failed to load comments');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleDeleteComment = async (listingId, commentId) => {
     if (!confirm('Are you sure you want to delete this comment?')) return;
     
     try {
+      await adminAPI.deleteComment(listingId, commentId);
       setComments(comments.filter(c => c.id !== commentId));
-      // Uncomment when backend is ready
-      // await adminAPI.deleteComment(listingId, commentId);
       toast.success('Comment deleted successfully');
     } catch (error) {
+      console.error('Error deleting comment:', error);
       toast.error('Failed to delete comment');
     }
   };
@@ -52,9 +73,9 @@ function AdminCommentsPage() {
   };
 
   const filteredComments = comments.filter(comment => 
-    comment.content.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    comment.userName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    comment.listingTitle.toLowerCase().includes(searchTerm.toLowerCase())
+    comment.content?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    comment.userName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    comment.listingTitle?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   return (

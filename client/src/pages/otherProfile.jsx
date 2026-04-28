@@ -1,13 +1,15 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { userAPI, listingAPI } from '../utils/api';
+import { userAPI, listingAPI, messageAPI } from '../utils/api';
 import toast from 'react-hot-toast';
 import Navbar from '../components/Navbar/Navbar';
 import ListingCard from '../components/ListingCard/ListingCard';
+import { useAuth } from '../context/AuthContext';
 
 function OtherProfilePage() {
   const { email } = useParams();
   const navigate = useNavigate();
+  const { user: currentUser } = useAuth();
   const [user, setUser] = useState(null);
   const [listings, setListings] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -34,6 +36,31 @@ function OtherProfilePage() {
       toast.error('Failed to load user profile');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleMessageClick = async () => {
+    if (!currentUser) {
+      toast.error('Please login to send messages');
+      return;
+    }
+
+    if (currentUser.email === email) {
+      toast.error("You can't message yourself");
+      return;
+    }
+
+    try {
+      await messageAPI.createOrFetchChat({
+        otherUserEmail: email,
+        initialMessage: `Hi ${user.name}! I'd like to connect with you.`
+      });
+      
+      navigate('/messages');
+      toast.success('Chat started!');
+    } catch (error) {
+      console.error('Error creating chat:', error);
+      toast.error('Failed to start chat');
     }
   };
 
@@ -87,17 +114,38 @@ function OtherProfilePage() {
             </div>
 
             <div className="flex-1">
-              <h1 className="text-3xl font-black tracking-tight mb-2">{user.name}</h1>
-              <p className="text-sm font-bold text-gray-400 uppercase tracking-wider mb-4">{user.rollNo}</p>
-              
-              <div className="flex items-center gap-6 mb-6">
+              <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-6">
                 <div>
-                  <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Reputation</p>
-                  <p className="text-2xl font-black">{user.reputationScore || 0}</p>
+                  <h1 className="text-3xl font-black tracking-tight mb-2">{user.name}</h1>
+                  <p className="text-sm font-bold text-gray-400 uppercase tracking-wider mb-4">{user.rollNo}</p>
+                  
+                  <div className="flex items-center gap-8 mb-6">
+                    <div className="text-center">
+                      <p className="text-2xl font-black text-black">{user.reputationScore || 0}</p>
+                      <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Reputation</p>
+                    </div>
+                    <div className="text-center">
+                      <p className="text-2xl font-black text-black">{listings.length}</p>
+                      <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Listings</p>
+                    </div>
+                    <div className="text-center">
+                      <p className="text-sm font-bold text-black">{new Date(user.createdAt).toLocaleDateString()}</p>
+                      <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Member Since</p>
+                    </div>
+                  </div>
                 </div>
-                <div>
-                  <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Member Since</p>
-                  <p className="text-sm font-bold">{new Date(user.createdAt).toLocaleDateString()}</p>
+
+                {/* Message Button - only show message button with black background */}
+                <div className="flex flex-col gap-3">
+                  <button
+                    onClick={handleMessageClick}
+                    className="flex items-center justify-center gap-2 bg-black text-white px-8 py-3 rounded-xl text-sm font-black uppercase tracking-widest hover:bg-gray-800 transition-all shadow-lg min-w-[160px]"
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                    </svg>
+                    Message
+                  </button>
                 </div>
               </div>
             </div>

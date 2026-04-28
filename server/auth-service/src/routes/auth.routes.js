@@ -18,5 +18,6 @@ router.post('/change-password', authController.changePassword);
 // Admin actions
 router.post('/promote', verifyAuth, authController.promote);
 router.patch('/toggle-ban', verifyAuth, authController.toggleBan);
+router.put('/profile', verifyAuth, authController.updateProfile); // Add this route
 
 module.exports = router;

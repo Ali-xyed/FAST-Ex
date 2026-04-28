@@ -7,8 +7,9 @@ const AdminNavbar = () => {
   const { user, logout } = useAuth();
 
   const handleLogout = () => {
+    localStorage.removeItem('adminToken');
     logout();
-    navigate('/');
+    navigate('/admin/login');
   };
 
   const isActive = (path) => location.pathname === path;

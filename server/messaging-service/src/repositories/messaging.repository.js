@@ -32,9 +32,9 @@ class MessagingRepository {
     });
   }
 
-  async createMessage(chatId, sender, receiver, content) {
+  async createMessage(chatId, sender, receiver, content, listingReference = null) {
     return prisma.message.create({
-      data: { chatId, sender, receiver, content }
+      data: { chatId, sender, receiver, content, listingReference }
     });
   }
 }

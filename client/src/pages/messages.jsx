@@ -281,11 +281,49 @@ function MessagesPage() {
                       const isOwn = message.sender === currentUserEmail;
                       return (
                         <div key={message.id} className={`flex ${isOwn ? 'justify-end' : 'justify-start'}`}>
-                          <div className={`max-w-md px-4 py-3 rounded-2xl ${isOwn ? 'bg-black text-white' : 'bg-gray-100 text-black'}`}>
-                            <p className="text-sm font-medium">{message.content}</p>
-                            <p className={`text-[9px] font-bold uppercase tracking-wider mt-1 ${isOwn ? 'text-white/60' : 'text-gray-400'}`}>
-                              {new Date(message.createdAt).toLocaleTimeString()}
-                            </p>
+                          <div className={`max-w-md ${isOwn ? 'bg-black text-white' : 'bg-gray-100 text-black'} rounded-2xl overflow-hidden`}>
+                            {/* Listing Reference */}
+                            {message.listingReference && (
+                              <div className={`p-3 border-b ${isOwn ? 'border-white/20' : 'border-gray-200'}`}>
+                                <div className="flex gap-3 items-center">
+                                  <div className="w-12 h-12 rounded-lg overflow-hidden bg-gray-200 flex-shrink-0">
+                                    {message.listingReference.imageUrl ? (
+                                      <img 
+                                        src={message.listingReference.imageUrl} 
+                                        alt={message.listingReference.title}
+                                        className="w-full h-full object-cover"
+                                      />
+                                    ) : (
+                                      <div className="w-full h-full flex items-center justify-center">
+                                        <svg className="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                        </svg>
+                                      </div>
+                                    )}
+                                  </div>
+                                  <div className="flex-1 min-w-0">
+                                    <p className={`text-xs font-bold uppercase tracking-wider ${isOwn ? 'text-white/80' : 'text-gray-500'}`}>
+                                      {message.listingReference.type}
+                                    </p>
+                                    <p className={`text-sm font-black truncate ${isOwn ? 'text-white' : 'text-black'}`}>
+                                      {message.listingReference.title}
+                                    </p>
+                                    <p className={`text-xs font-medium ${isOwn ? 'text-white/70' : 'text-gray-600'}`}>
+                                      {message.listingReference.price ? `Rs ${message.listingReference.price}` : 
+                                       message.listingReference.withTitle || 'Negotiable'}
+                                    </p>
+                                  </div>
+                                </div>
+                              </div>
+                            )}
+                            
+                            {/* Message Content */}
+                            <div className="px-4 py-3">
+                              <p className="text-sm font-medium">{message.content}</p>
+                              <p className={`text-[9px] font-bold uppercase tracking-wider mt-1 ${isOwn ? 'text-white/60' : 'text-gray-400'}`}>
+                                {new Date(message.createdAt).toLocaleTimeString()}
+                              </p>
+                            </div>
                           </div>
                         </div>
                       );

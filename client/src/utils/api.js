@@ -1,6 +1,8 @@
 import axios from 'axios';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
+
+console.log('API Base URL:', API_BASE_URL);
 
 // Create axios instance
 const api = axios.create({
@@ -62,9 +64,9 @@ export const authAPI = {
 // User API
 export const userAPI = {
   getProfile: () => api.get('/api/users/profile'),
-  getPublicProfile: (email) => api.get(`/api/users/${email}`),
+  getPublicProfile: (email) => api.get(`/api/users/public/${email}`),
   updateProfile: (data) => api.put('/api/users/profile', data),
-  uploadProfileImage: (formData) => api.post('/api/users/profile/image', formData, {
+  uploadProfileImage: (formData) => api.post('/api/users/upload-image', formData, {
     headers: { 'Content-Type': 'multipart/form-data' },
   }),
 };
@@ -126,7 +128,8 @@ export const notificationAPI = {
 
 // Admin API
 export const adminAPI = {
-  toggleBanUser: (email, data) => api.patch(`/api/admin/users/${email}/toggle-ban`, data),
+  getAllUsers: () => api.get('/api/admin/users'),
+  toggleBanUser: (email) => api.patch(`/api/admin/users/${email}/toggle-ban`),
   verifyListing: (id) => api.patch(`/api/admin/listings/${id}/verify`),
   deleteListing: (id) => api.delete(`/api/admin/listings/${id}`),
   deleteComment: (listingId, commentId) => api.delete(`/api/admin/listings/${listingId}/comments/${commentId}`),
