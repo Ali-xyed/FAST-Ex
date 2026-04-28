@@ -1,0 +1,22 @@
+services:
+  redis:
+    image: redis:7.2-alpine
+    container_name: fast-ex-redis
+    ports:
+      - "6380:6379"
+    command: redis-server --requirepass 123
+    volumes:
+      - fast-ex-redis-data:/data
+    restart: unless-stopped
+
+  redis-insight:
+    image: redislabs/redisinsight:latest
+    container_name: fast-ex-redis-insight
+    ports:
+      - "5540:5540"
+    depends_on:
+      - redis
+    restart: unless-stopped
+
+volumes:
+  fast-ex-redis-data:
