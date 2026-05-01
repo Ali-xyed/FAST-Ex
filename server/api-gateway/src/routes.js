@@ -21,7 +21,15 @@ const proxyOptions = () => ({
 });
 
 
+router.use('/api/auth/toggle-ban', requireAuth, proxy(process.env.AUTH_SERVICE_URL, proxyOptions(process.env.AUTH_SERVICE_URL)));
+router.use('/api/auth/profile', requireAuth, proxy(process.env.AUTH_SERVICE_URL, proxyOptions(process.env.AUTH_SERVICE_URL)));
 router.use('/api/auth', proxy(process.env.AUTH_SERVICE_URL, proxyOptions(process.env.AUTH_SERVICE_URL)));
+
+// Make specific user routes public for admin service
+router.get('/api/users/all', proxy(process.env.USER_SERVICE_URL, proxyOptions(process.env.USER_SERVICE_URL)));
+router.patch('/api/users/:email/ban', proxy(process.env.USER_SERVICE_URL, proxyOptions(process.env.USER_SERVICE_URL)));
+
+// Other user routes require auth
 router.use('/api/users', requireAuth, proxy(process.env.USER_SERVICE_URL, proxyOptions(process.env.USER_SERVICE_URL)));
 router.get('/api/listings', proxy(process.env.LISTING_SERVICE_URL, proxyOptions(process.env.LISTING_SERVICE_URL)));
 router.get('/api/listings/my', requireAuth, proxy(process.env.LISTING_SERVICE_URL, proxyOptions(process.env.LISTING_SERVICE_URL)));
@@ -29,6 +37,9 @@ router.get('/api/listings/:id', proxy(process.env.LISTING_SERVICE_URL, proxyOpti
 router.use('/api/listings', requireAuth, proxy(process.env.LISTING_SERVICE_URL, proxyOptions(process.env.LISTING_SERVICE_URL)));
 router.use('/api/messages', requireAuth, proxy(process.env.MESSAGE_SERVICE_URL, proxyOptions(process.env.MESSAGE_SERVICE_URL)));
 router.use('/api/notifications', requireAuth, proxy(process.env.NOTIFICATION_SERVICE_URL, proxyOptions(process.env.NOTIFICATION_SERVICE_URL)));
-router.use('/api/admin', requireAuth, requireAdmin, proxy(process.env.ADMIN_SERVICE_URL, proxyOptions(process.env.ADMIN_SERVICE_URL)));
+
+// Admin routes - login is public, others require auth
+router.post('/api/admin/login', proxy(process.env.ADMIN_SERVICE_URL, proxyOptions(process.env.ADMIN_SERVICE_URL)));
+router.use('/api/admin', requireAuth, proxy(process.env.ADMIN_SERVICE_URL, proxyOptions(process.env.ADMIN_SERVICE_URL)));
 
 module.exports = router;

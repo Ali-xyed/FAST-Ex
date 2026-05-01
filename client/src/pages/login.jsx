@@ -10,10 +10,11 @@ function LoginPage() {
     const [formData, setFormData] = useState({ email: "", password: "" });
 
     const navigate = useNavigate();
-    const { login, isAuthenticated } = useAuth();
+    const { login, isAuthenticated, user } = useAuth();
 
     useEffect(() => {
         if (isAuthenticated) {
+            // Always redirect to home for regular users
             navigate("/home");
         }
     }, [isAuthenticated, navigate]);
@@ -33,9 +34,14 @@ function LoginPage() {
                 password: formData.password,
             });
 
+            console.log('Login response:', response.data);
+            console.log('User role:', response.data.user?.role);
+
             if (response.data.token && response.data.user) {
-                login(response.data.token, response.data.user);
+                await login(response.data.token, response.data.user);
                 toast.success("Login successful!");
+                
+                // Always redirect to home for regular users
                 navigate("/home");
             }
         } catch (err) {

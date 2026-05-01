@@ -51,13 +51,14 @@ function OtherProfilePage() {
     }
 
     try {
-      await messageAPI.createOrFetchChat({
+      const response = await messageAPI.createOrFetchChat({
         otherUserEmail: email,
-        initialMessage: `Hi ${user.name}! I'd like to connect with you.`
+        initialMessage: `Hi! I'd like to connect with you.`
       });
       
-      navigate('/messages');
+      const chatId = response.data.id;
       toast.success('Chat started!');
+      navigate(`/messages?chat=${chatId}`);
     } catch (error) {
       console.error('Error creating chat:', error);
       toast.error('Failed to start chat');
@@ -162,7 +163,40 @@ function OtherProfilePage() {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {listings.map((listing) => (
-                <ListingCard key={listing.id} listing={listing} />
+                listing.isVerified ? (
+                  <ListingCard key={listing.id} listing={listing} />
+                ) : (
+                  <div key={listing.id} className="relative bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-sm">
+                    <div className="relative aspect-[4/3] bg-gray-100 overflow-hidden">
+                      <div className="absolute inset-0 backdrop-blur-xl bg-gray-200/50 flex items-center justify-center">
+                        <div className="text-center p-6">
+                          <svg className="w-16 h-16 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                          </svg>
+                          <p className="text-sm font-black text-gray-600 uppercase tracking-wider">Image Hidden</p>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="p-5">
+                      <div className="mb-3">
+                        <h3 className="text-lg font-black tracking-tight text-gray-400 uppercase blur-sm">
+                          This post is under verification
+                        </h3>
+                      </div>
+                      <p className="text-sm text-gray-400 mb-4 font-medium leading-relaxed blur-sm">
+                        Content is hidden until admin verification is complete
+                      </p>
+                      <div className="flex items-center justify-center pt-4 border-t border-gray-50">
+                        <div className="inline-flex items-center gap-2 px-4 py-2 bg-yellow-100 text-yellow-700 rounded-full text-xs font-bold">
+                          <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                          </svg>
+                          Under Verification
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )
               ))}
             </div>
           )}

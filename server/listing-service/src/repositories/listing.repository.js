@@ -56,8 +56,16 @@ class ListingRepository {
     return prisma.comment.create({ data });
   }
 
+  async findCommentById(id) {
+    return prisma.comment.findUnique({ where: { id } });
+  }
+
   async deleteComment(id) {
     return prisma.comment.delete({ where: { id } });
+  }
+
+  async updateComment(id, data) {
+    return prisma.comment.update({ where: { id }, data });
   }
 
   async updateSellListing(id, data) {

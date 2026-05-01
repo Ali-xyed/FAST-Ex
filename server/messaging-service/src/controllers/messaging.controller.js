@@ -43,16 +43,30 @@ const createOrGetChat = async (req, res) => {
     const email = req.headers['x-user-email'];
     const { otherUserEmail, initialMessage, listingReference } = req.body;
 
+    if (!email) {
+      return res.status(401).json({ message: 'Unauthorized' });
+    }
+
+    if (!otherUserEmail) {
+      return res.status(400).json({ message: 'Other user email is required' });
+    }
+
+    console.log(`[MESSAGING] Creating/getting chat between ${email} and ${otherUserEmail}`);
+
     let chat = await messagingRepo.findChatBetweenUsers(email, otherUserEmail);
     let isNewChat = false;
     
     if (!chat) {
+      console.log(`[MESSAGING] Creating new chat`);
       chat = await messagingRepo.createChat(email, otherUserEmail);
       isNewChat = true;
+    } else {
+      console.log(`[MESSAGING] Chat already exists: ${chat.id}`);
     }
 
     // If this is a new chat and we have an initial message, send it
     if (isNewChat && initialMessage) {
+      console.log(`[MESSAGING] Sending initial message`);
       const message = await messagingRepo.createMessage(
         chat.id, 
         email, 
@@ -62,27 +76,31 @@ const createOrGetChat = async (req, res) => {
       );
 
       // Send notification event
-      await sendEvent('message.sent', { 
-        chatId: chat.id, 
-        senderId: email, 
-        receiverId: otherUserEmail, 
-        content: initialMessage,
-        listingReference 
-      });
+      try {
+        await sendEvent('message.sent', { 
+          chatId: chat.id, 
+          senderId: email, 
+          receiverId: otherUserEmail, 
+          content: initialMessage,
+          listingReference 
+        });
+      } catch (kafkaErr) {
+        console.error('[MESSAGING] Kafka error:', kafkaErr.message);
+      }
 
       // Emit via WebSocket
       try {
         const { getIo } = require('../socket');
         getIo().to(chat.id).emit('new_message', message);
       } catch (err) {
-        console.error('WebSocket Error:', err.message);
+        console.error('[MESSAGING] WebSocket Error:', err.message);
       }
     }
 
     res.status(200).json(chat);
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'Server error' });
+    console.error('[MESSAGING] Error in createOrGetChat:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
   }
 };
 

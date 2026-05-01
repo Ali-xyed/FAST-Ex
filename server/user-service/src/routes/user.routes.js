@@ -7,8 +7,8 @@ const router = express.Router();
 
 router.get('/health', (req, res) => res.json({ status: 'ok', service: 'user' }));
 
-// Admin routes
-router.get('/all', verifyAuth, userController.getAllUsers);
+// Admin routes - public (no auth required for admin service to call)
+router.get('/all', userController.getAllUsers);
 
 // User profile - Protected
 router.get('/profile', verifyAuth, userController.getProfile);
@@ -24,7 +24,7 @@ router.get('/reputation/:email', userController.getReputation);
 router.post('/reputation/:email/add', verifyAuth, userController.addReputation);
 router.post('/reputation/:email/deduct', verifyAuth, userController.deductReputation);
 
-// Admin actions
-router.patch('/:email/ban', verifyAuth, userController.toggleBan);
+// Admin actions - public (no auth required for admin service to call)
+router.patch('/:email/ban', userController.toggleBan);
 
 module.exports = router;

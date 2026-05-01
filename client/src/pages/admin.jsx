@@ -1,21 +1,26 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import AdminNavbar from '../components/AdminNavbar/AdminNavbar';
-import { useAuth } from '../context/AuthContext';
 import { adminAPI } from '../utils/api';
 import toast from 'react-hot-toast';
 
 function AdminPage() {
   const navigate = useNavigate();
-  const { user } = useAuth();
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  // Check admin session
   useEffect(() => {
-    if (user) {
-      fetchUsers();
+    const token = localStorage.getItem('token');
+    const user = JSON.parse(localStorage.getItem('user') || '{}');
+    
+    if (!token || user.role !== 'admin') {
+      toast.error('Please login as admin');
+      navigate('/admin');
+      return;
     }
-  }, [user, navigate]);
+    fetchUsers();
+  }, [navigate]);
 
   const fetchUsers = async () => {
     try {

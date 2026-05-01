@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { UserButton } from '@clerk/clerk-react';
 import Navbar from '../components/Navbar/Navbar';
 import ListingCard from '../components/ListingCard/ListingCard';
 import { useAuth } from '../context/AuthContext';
@@ -11,18 +12,9 @@ function ProfilePage() {
   const { user, refreshProfile } = useAuth();
   const [myListings, setMyListings] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [editing, setEditing] = useState(false);
-  const [formData, setFormData] = useState({
-    name: '',
-    rollNo: '',
-  });
 
   useEffect(() => {
     if (user) {
-      setFormData({
-        name: user.name || '',
-        rollNo: user.rollNo || '',
-      });
       fetchMyListings();
     }
   }, [user]);
@@ -42,24 +34,12 @@ function ProfilePage() {
     }
   };
 
-  const handleUpdateProfile = async (e) => {
-    e.preventDefault();
-    try {
-      await userAPI.updateProfile(formData);
-      await refreshProfile();
-      setEditing(false);
-      toast.success('Profile updated!');
-    } catch (error) {
-      toast.error('Failed to update profile');
-    }
-  };
-
   const handleImageUpload = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
 
     const formData = new FormData();
-    formData.append('imageUrl', file); // Changed from 'image' to 'imageUrl'
+    formData.append('imageUrl', file);
 
     try {
       await userAPI.uploadProfileImage(formData);
@@ -69,6 +49,10 @@ function ProfilePage() {
       console.error('Upload error:', error);
       toast.error('Failed to upload image');
     }
+  };
+
+  const handleDeleteListing = (deletedId) => {
+    setMyListings(myListings.filter(listing => listing.id !== deletedId));
   };
 
   if (!user) return null;
@@ -107,57 +91,31 @@ function ProfilePage() {
             </div>
 
             <div className="flex-1">
-              {editing ? (
-                <form onSubmit={handleUpdateProfile} className="space-y-4">
-                  <div>
-                    <label className="block text-[11px] font-black text-gray-400 uppercase tracking-widest mb-2">Name</label>
-                    <input
-                      type="text"
-                      value={formData.name}
-                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                      className="w-full bg-gray-50 border-none rounded-xl py-3 px-4 text-sm font-bold focus:ring-2 focus:ring-black/5 outline-none"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-[11px] font-black text-gray-400 uppercase tracking-widest mb-2">Roll Number</label>
-                    <input
-                      type="text"
-                      value={formData.rollNo}
-                      onChange={(e) => setFormData({ ...formData, rollNo: e.target.value })}
-                      className="w-full bg-gray-50 border-none rounded-xl py-3 px-4 text-sm font-bold focus:ring-2 focus:ring-black/5 outline-none"
-                    />
-                  </div>
-                  <div className="flex gap-3">
-                    <button
-                      type="button"
-                      onClick={() => setEditing(false)}
-                      className="flex-1 bg-gray-100 text-black py-2 rounded-lg text-sm font-black uppercase tracking-widest hover:bg-gray-200 transition-all"
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      type="submit"
-                      className="flex-1 bg-black text-white py-2 rounded-lg text-sm font-black uppercase tracking-widest hover:bg-gray-800 transition-all"
-                    >
-                      Save
-                    </button>
-                  </div>
-                </form>
-              ) : (
-                <>
-                  <div className="mb-6">
-                    <h1 className="text-3xl font-black tracking-tight mb-2">{user.name}</h1>
-                    <p className="text-sm font-bold text-gray-400 uppercase tracking-wider">{user.rollNo}</p>
-                    <p className="text-sm text-gray-500 font-medium mt-1">{user.email}</p>
-                  </div>
-                  <button
-                    onClick={() => setEditing(true)}
-                    className="bg-black text-white px-6 py-2 rounded-lg text-[11px] font-black uppercase tracking-widest hover:bg-gray-800 transition-all"
-                  >
-                    Edit Profile
-                  </button>
-                </>
-              )}
+              <div className="mb-6">
+                <h1 className="text-3xl font-black tracking-tight mb-2">{user.name}</h1>
+                <p className="text-sm font-bold text-gray-400 uppercase tracking-wider">{user.rollNo}</p>
+                <p className="text-sm text-gray-500 font-medium mt-1">{user.email}</p>
+              </div>
+              <div className="bg-gray-50 border border-gray-200 rounded-xl p-4">
+                <p className="text-xs font-black text-gray-900 uppercase tracking-wider mb-2">Account Management</p>
+                <p className="text-xs text-gray-500 font-medium mb-3">
+                  Click the button below to manage your account settings
+                </p>
+                <div className="flex items-center gap-3">
+                  <UserButton 
+                    appearance={{
+                      elements: {
+                        avatarBox: "w-10 h-10",
+                        userButtonPopoverCard: "shadow-2xl",
+                      }
+                    }}
+                    showName={false}
+                  />
+                  <span className="text-xs font-bold text-gray-600">
+                    Click to manage your name, password, and security settings
+                  </span>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -194,7 +152,12 @@ function ProfilePage() {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {myListings.map((listing) => (
-                <ListingCard key={listing.id} listing={listing} />
+                <ListingCard 
+                  key={listing.id} 
+                  listing={listing} 
+                  isOwnProfile={true}
+                  onDelete={handleDeleteListing}
+                />
               ))}
             </div>
           )}

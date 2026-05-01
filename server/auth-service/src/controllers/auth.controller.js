@@ -94,15 +94,31 @@ const login = async (req, res) => {
     const { email, emailAddress, password } = req.body;
     const targetEmail = email || emailAddress;
 
+    console.log(`[LOGIN] Attempt for: ${targetEmail}`);
+
     if (!targetEmail) return res.status(400).json({ message: 'Email is required' });
 
     const user = await authRepo.findUserByEmail(targetEmail);
-    if (!user) return res.status(400).json({ message: 'Invalid credentials' });
-    if (!user.isVerified) return res.status(403).json({ message: 'Please verify your email first' });
-    if (user.isBan) return res.status(403).json({ message: 'Your account has been banned' });
+    if (!user) {
+      console.log(`[LOGIN] User not found: ${targetEmail}`);
+      return res.status(400).json({ message: 'Invalid credentials' });
+    }
+    if (!user.isVerified) {
+      console.log(`[LOGIN] User not verified: ${targetEmail}`);
+      return res.status(403).json({ message: 'Please verify your email first' });
+    }
+    if (user.isBan) {
+      console.log(`[LOGIN] User banned: ${targetEmail}`);
+      return res.status(403).json({ message: 'Your account has been banned' });
+    }
 
     const isValid = await bcrypt.compare(password, user.password);
-    if (!isValid) return res.status(400).json({ message: 'Invalid credentials' });
+    if (!isValid) {
+      console.log(`[LOGIN] Invalid password for: ${targetEmail}`);
+      return res.status(400).json({ message: 'Invalid credentials' });
+    }
+
+    console.log(`[LOGIN] Password valid, checking Clerk for: ${targetEmail}`);
 
     let clerkUser;
     try {
@@ -110,20 +126,28 @@ const login = async (req, res) => {
       clerkUser = users.data?.[0];
 
       if (!clerkUser) {
+        console.log(`[LOGIN] Creating Clerk user for: ${targetEmail}`);
         clerkUser = await clerk.users.createUser({
           emailAddress: [targetEmail],
           password: password,
           firstName: user.name.split(' ')[0] || 'User',
-          publicMetadata: { rollNo: user.rollNo, role: 'STUDENT' }
+          publicMetadata: { rollNo: user.rollNo, role: user.role || 'STUDENT' }
         });
+      } else {
+        console.log(`[LOGIN] Clerk user found: ${targetEmail}`);
       }
     } catch (err) {
-      return res.status(500).json({ message: 'Authentication service error' });
+      console.error(`[LOGIN] Clerk error for ${targetEmail}:`, JSON.stringify(err, null, 2));
+      console.error(`[LOGIN] Clerk error details:`, err);
+      return res.status(500).json({ message: 'Authentication service error', details: err.errors || err.message });
     }
 
+    console.log(`[LOGIN] Creating sign-in token for: ${targetEmail}`);
     const signInToken = await clerk.signInTokens.createSignInToken({
       userId: clerkUser.id
     });
+    
+    console.log(`[LOGIN] Exchanging token for session: ${targetEmail}`);
     const signInResponse = await fetch(`${CLERK_FAPI_URL}/v1/client/sign_ins?_clerk_js_version=5`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -136,26 +160,31 @@ const login = async (req, res) => {
     const signInData = await signInResponse.json();
 
     if (signInData.errors) {
+      console.error(`[LOGIN] Session creation failed for ${targetEmail}:`, signInData.errors);
       return res.status(500).json({ message: 'Session creation failed' });
     }
 
     const createdSessionId = signInData.response?.created_session_id;
 
     if (!createdSessionId) {
+      console.error(`[LOGIN] No session ID for ${targetEmail}`);
       return res.status(500).json({ message: 'Session ID not found' });
     }
 
     try {
+      console.log(`[LOGIN] Getting session token for: ${targetEmail}`);
       const tokenResponse = await clerk.sessions.getToken(createdSessionId);
       const sessionToken = tokenResponse?.jwt;
       console.log(`[AUTH] Clerk session created for ${targetEmail} (session: ${createdSessionId})`);
 
       if (!sessionToken) {
+        console.error(`[LOGIN] No JWT token for ${targetEmail}`);
         return res.status(500).json({ message: 'Token generation failed from session' });
       }
 
       const { password: _, ...safeUser } = user;
 
+      console.log(`[LOGIN] Success for: ${targetEmail}, role: ${user.role}`);
       res.status(200).json({
         message: 'Login successful',
         token: sessionToken,
@@ -239,116 +268,6 @@ const changePassword = async (req, res) => {
   }
 };
 
-const promote = async (req, res) => {
-  try {
-    const { email } = req.body;
-    if (!email) return res.status(400).json({ message: 'Email is required' });
-
-    await authRepo.updateUserRole(email, 'ADMIN');
-
-    const users = await clerk.users.getUserList({ emailAddress: [email] });
-    const clerkUser = users.data?.[0];
-
-    if (!clerkUser) return res.status(404).json({ message: 'User not found in Clerk' });
-
-    await clerk.users.updateUser(clerkUser.id, {
-      publicMetadata: { role: 'ADMIN' }
-    });
-
-    await sendEvent('user.promoted', { email, role: 'ADMIN' });
-
-    res.status(200).json({ message: `User ${email} promoted to Admin successfully` });
-  } catch (error) {
-    res.status(500).json({ message: 'Server error' });
-  }
-};
-
-
-const getToken = async (req, res) => {
-  try {
-    const { email, emailAddress, password } = req.body;
-    const targetEmail = email || emailAddress;
-
-    if (!targetEmail) return res.status(400).json({ message: 'Email is required' });
-
-    const user = await authRepo.findUserByEmail(targetEmail);
-    if (!user) return res.status(400).json({ message: 'Invalid credentials' });
-    if (!user.isVerified) return res.status(403).json({ message: 'Please verify your email first' });
-    if (user.isBan) return res.status(403).json({ message: 'Your account has been banned' });
-
-    const isValid = await bcrypt.compare(password, user.password);
-    if (!isValid) return res.status(400).json({ message: 'Invalid credentials' });
-
-    let clerkUser;
-    try {
-      const users = await clerk.users.getUserList({ emailAddress: [targetEmail] });
-      clerkUser = users.data?.[0];
-
-      if (!clerkUser) {
-        clerkUser = await clerk.users.createUser({
-          emailAddress: [targetEmail],
-          password: password,
-          firstName: user.name.split(' ')[0] || 'User',
-          publicMetadata: { rollNo: user.rollNo, role: 'STUDENT' }
-        });
-      }
-    } catch (err) {
-      return res.status(500).json({ message: 'Authentication service error' });
-    }
-
-    const signInToken = await clerk.signInTokens.createSignInToken({ userId: clerkUser.id });
-    const signInResponse = await fetch(`${CLERK_FAPI_URL}/v1/client/sign_ins?_clerk_js_version=5`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: new URLSearchParams({ strategy: 'ticket', ticket: signInToken.token })
-    });
-
-    const signInData = await signInResponse.json();
-    const createdSessionId = signInData.response?.created_session_id;
-
-    if (!createdSessionId) {
-      return res.status(500).json({ message: 'Session ID not found' });
-    }
-
-    const tokenResponse = await clerk.sessions.getToken(createdSessionId);
-    const sessionToken = tokenResponse?.jwt;
-
-    if (!sessionToken) {
-      return res.status(500).json({ message: 'Token generation failed' });
-    }
-
-    res.status(200).json({ token: sessionToken });
-  } catch (error) {
-    console.error('Token error:', error);
-    res.status(500).json({ message: 'Server error' });
-  }
-};
-
-const toggleBan = async (req, res) => {
-  try {
-    const { email } = req.body;
-    if (!email) return res.status(400).json({ message: 'Email is required' });
-
-    const user = await authRepo.findUserByEmail(email);
-    if (!user) return res.status(404).json({ message: 'User not found' });
-
-    const newBanStatus = !user.isBan;
-    await authRepo.updateUserBanStatus(email, newBanStatus);
-
-    publishMessage('email.account.status', { 
-      email, 
-      name: user.name,
-      isBanned: newBanStatus,
-      action: newBanStatus ? 'banned' : 'unbanned'
-    });
-
-    res.status(200).json({ message: `User ${email} ${newBanStatus ? 'banned' : 'unbanned'} successfully`, isBan: newBanStatus });
-  } catch (error) {
-    console.error('Toggle ban error:', error);
-    res.status(500).json({ message: 'Server error' });
-  }
-};
-
 const updateProfile = async (req, res) => {
   try {
     const email = req.headers['x-user-email'];
@@ -364,4 +283,77 @@ const updateProfile = async (req, res) => {
   }
 };
 
-module.exports = { register, verifyOTP, sendOTP, login, checkEmail, changePassword, promote, getToken, toggleBan, updateProfile };
+const getToken = async (req, res) => {
+  try {
+    const { email } = req.body;
+    if (!email) return res.status(400).json({ message: 'Email is required' });
+
+    const user = await authRepo.findUserByEmail(email);
+    if (!user) return res.status(404).json({ message: 'User not found' });
+
+    // Get user from Clerk
+    const users = await clerk.users.getUserList({ emailAddress: [email] });
+    const clerkUser = users.data?.[0];
+
+    if (!clerkUser) {
+      return res.status(404).json({ message: 'User not found in authentication service' });
+    }
+
+    // Create sign-in token
+    const signInToken = await clerk.signInTokens.createSignInToken({
+      userId: clerkUser.id
+    });
+    
+    // Exchange for session
+    const signInResponse = await fetch(`${CLERK_FAPI_URL}/v1/client/sign_ins?_clerk_js_version=5`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({
+        strategy: 'ticket',
+        ticket: signInToken.token
+      })
+    });
+
+    const signInData = await signInResponse.json();
+    const createdSessionId = signInData.response?.created_session_id;
+
+    if (!createdSessionId) {
+      return res.status(500).json({ message: 'Session creation failed' });
+    }
+
+    const tokenResponse = await clerk.sessions.getToken(createdSessionId);
+    const sessionToken = tokenResponse?.jwt;
+
+    if (!sessionToken) {
+      return res.status(500).json({ message: 'Token generation failed' });
+    }
+
+    res.status(200).json({ token: sessionToken });
+  } catch (error) {
+    console.error('Get token error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+const toggleBan = async (req, res) => {
+  try {
+    const { email } = req.body;
+    if (!email) return res.status(400).json({ message: 'Email is required' });
+
+    const user = await authRepo.findUserByEmail(email);
+    if (!user) return res.status(404).json({ message: 'User not found' });
+
+    const newBanStatus = !user.isBan;
+    await authRepo.updateUserBanStatus(email, newBanStatus);
+
+    res.status(200).json({ 
+      message: `User ${newBanStatus ? 'banned' : 'unbanned'} successfully`,
+      isBan: newBanStatus
+    });
+  } catch (error) {
+    console.error('Toggle ban error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+module.exports = { register, verifyOTP, sendOTP, login, checkEmail, changePassword, updateProfile, getToken, toggleBan };

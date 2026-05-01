@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import AdminNavbar from '../components/AdminNavbar/AdminNavbar';
-import { adminAPI, listingAPI } from '../utils/api';
+import { adminAPI } from '../utils/api';
 import toast from 'react-hot-toast';
 
 function AdminCommentsPage() {
@@ -9,6 +9,18 @@ function AdminCommentsPage() {
   const [comments, setComments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [filterVerified, setFilterVerified] = useState('UNVERIFIED'); // Default to unverified
+
+  // Check admin session
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    const user = JSON.parse(localStorage.getItem('user') || '{}');
+    
+    if (!token || user.role !== 'admin') {
+      toast.error('Please login as admin');
+      navigate('/admin');
+    }
+  }, [navigate]);
 
   useEffect(() => {
     fetchAllComments();
@@ -17,7 +29,8 @@ function AdminCommentsPage() {
   const fetchAllComments = async () => {
     try {
       setLoading(true);
-      const response = await listingAPI.getAll();
+      // Use admin API to get ALL listings including unverified posts and comments
+      const response = await adminAPI.getAllListings();
       const allComments = [];
       
       for (const listing of response.data) {
@@ -30,7 +43,8 @@ function AdminCommentsPage() {
               userName: listing.userProfile?.name || comment.fromEmail.split('@')[0],
               createdAt: comment.createdAt,
               listingId: listing.id,
-              listingTitle: listing.title
+              listingTitle: listing.title,
+              isVerified: comment.isVerified || false
             });
           }
         }
@@ -58,6 +72,19 @@ function AdminCommentsPage() {
     }
   };
 
+  const handleVerifyComment = async (commentId) => {
+    try {
+      await adminAPI.verifyComment(commentId);
+      setComments(comments.map(c => 
+        c.id === commentId ? { ...c, isVerified: true } : c
+      ));
+      toast.success('Comment verified successfully');
+    } catch (error) {
+      console.error('Error verifying comment:', error);
+      toast.error('Failed to verify comment');
+    }
+  };
+
   const formatDate = (dateString) => {
     const date = new Date(dateString);
     const now = new Date();
@@ -72,11 +99,20 @@ function AdminCommentsPage() {
     return date.toLocaleDateString();
   };
 
-  const filteredComments = comments.filter(comment => 
-    comment.content?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    comment.userName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    comment.listingTitle?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredComments = comments.filter(comment => {
+    // Filter by verification status
+    if (filterVerified === 'VERIFIED' && !comment.isVerified) return false;
+    if (filterVerified === 'UNVERIFIED' && comment.isVerified) return false;
+    
+    // Filter by search term
+    if (searchTerm && !(
+      comment.content?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      comment.userName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      comment.listingTitle?.toLowerCase().includes(searchTerm.toLowerCase())
+    )) return false;
+    
+    return true;
+  });
 
   return (
     <div className="min-h-screen bg-gray-50 text-black font-sans selection:bg-black selection:text-white">
@@ -90,7 +126,7 @@ function AdminCommentsPage() {
 
         {/* Search Bar */}
         <div className="bg-white border border-gray-100 rounded-2xl p-6 mb-6 shadow-lg">
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-4 mb-4">
             <div className="flex-1 relative">
               <svg className="w-5 h-5 text-gray-400 absolute left-4 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -104,9 +140,32 @@ function AdminCommentsPage() {
               />
             </div>
             <div className="flex items-center gap-2 text-sm">
-              <span className="px-3 py-1 bg-gray-100 text-gray-600 rounded-lg font-bold">
-                {filteredComments.length} Comments
+              <span className="px-3 py-1 bg-green-50 text-green-600 rounded-lg font-bold">
+                {comments.filter(c => c.isVerified).length} Verified
               </span>
+              <span className="px-3 py-1 bg-yellow-50 text-yellow-600 rounded-lg font-bold">
+                {comments.filter(c => !c.isVerified).length} Pending
+              </span>
+            </div>
+          </div>
+          
+          {/* Filter Buttons */}
+          <div>
+            <label className="text-xs font-black text-gray-400 uppercase tracking-wider mb-2 block">Status</label>
+            <div className="flex gap-2">
+              {['ALL', 'VERIFIED', 'UNVERIFIED'].map(status => (
+                <button
+                  key={status}
+                  onClick={() => setFilterVerified(status)}
+                  className={`px-4 py-2 rounded-lg text-xs font-black uppercase tracking-wider transition-all ${
+                    filterVerified === status
+                      ? 'bg-black text-white shadow-md'
+                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  }`}
+                >
+                  {status}
+                </button>
+              ))}
             </div>
           </div>
         </div>
@@ -158,17 +217,35 @@ function AdminCommentsPage() {
                           {/* Comment Content */}
                           <div className="ml-13 bg-white p-3 rounded-lg border border-gray-200">
                             <p className="text-sm text-gray-700 leading-relaxed">{comment.content}</p>
+                            {comment.isVerified && (
+                              <div className="mt-2 inline-flex items-center gap-1 px-2 py-1 bg-green-100 text-green-700 rounded-md text-xs font-bold">
+                                <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                                </svg>
+                                Verified
+                              </div>
+                            )}
+                            {!comment.isVerified && (
+                              <div className="mt-2 inline-flex items-center gap-1 px-2 py-1 bg-yellow-100 text-yellow-700 rounded-md text-xs font-bold">
+                                <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                                </svg>
+                                Pending Verification
+                              </div>
+                            )}
                           </div>
                         </div>
 
                         {/* Actions */}
                         <div className="flex flex-col gap-2">
-                          <button
-                            onClick={() => navigate(`/listing/${comment.listingId}`)}
-                            className="bg-black text-white px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest hover:bg-gray-800 transition-all whitespace-nowrap"
-                          >
-                            View Post
-                          </button>
+                          {!comment.isVerified && (
+                            <button
+                              onClick={() => handleVerifyComment(comment.id)}
+                              className="bg-green-600 text-white px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest hover:bg-green-700 transition-all whitespace-nowrap"
+                            >
+                              Verify
+                            </button>
+                          )}
                           <button
                             onClick={() => handleDeleteComment(comment.listingId, comment.id)}
                             className="bg-red-600 text-white px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest hover:bg-red-700 transition-all whitespace-nowrap"

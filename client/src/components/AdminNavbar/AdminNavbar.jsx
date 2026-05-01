@@ -1,21 +1,19 @@
 import { useNavigate, useLocation } from 'react-router-dom';
-import { useAuth } from '../../context/AuthContext';
 
 const AdminNavbar = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { user, logout } = useAuth();
 
   const handleLogout = () => {
     localStorage.removeItem('adminToken');
-    logout();
-    navigate('/admin/login');
+    localStorage.removeItem('adminEmail');
+    navigate('/admin');
   };
 
   const isActive = (path) => location.pathname === path;
 
   const navItems = [
-    { path: '/admin', label: 'Users', icon: 'M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z' },
+    { path: '/admin/users', label: 'Users', icon: 'M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z' },
     { path: '/admin/listings', label: 'Listings', icon: 'M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10' },
     { path: '/admin/comments', label: 'Comments', icon: 'M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z' },
   ];
@@ -76,15 +74,11 @@ const AdminNavbar = () => {
           {/* Profile */}
           <div className="flex items-center gap-3 bg-gray-50 px-4 py-2 rounded-xl border border-gray-200">
             <div className="w-8 h-8 rounded-lg bg-black flex items-center justify-center">
-              {user?.imageUrl ? (
-                <img src={user.imageUrl} className="w-full h-full object-cover rounded-lg" alt="profile" />
-              ) : (
-                <span className="text-white text-sm font-black">{(user?.name || 'A').charAt(0)}</span>
-              )}
+              <span className="text-white text-sm font-black">A</span>
             </div>
             <div className="hidden md:block">
-              <p className="text-xs font-black text-black">{user?.name}</p>
-              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Admin</p>
+              <p className="text-xs font-black text-black">Admin</p>
+              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Administrator</p>
             </div>
           </div>
 

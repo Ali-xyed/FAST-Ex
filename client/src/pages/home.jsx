@@ -10,7 +10,7 @@ import toast from 'react-hot-toast';
 
 function HomePage() {
   const navigate = useNavigate();
-  const { isAuthenticated, loading: authLoading } = useAuth();
+  const { isAuthenticated, loading: authLoading, user } = useAuth();
   const [listings, setListings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState({
@@ -20,6 +20,13 @@ function HomePage() {
     bargaining: false,
     search: '',
   });
+
+  // Remove admin redirect - admins use separate login
+  // useEffect(() => {
+  //   if (!authLoading && user?.role === 'ADMIN') {
+  //     navigate('/admin');
+  //   }
+  // }, [authLoading, user, navigate]);
 
   // Memoize filtered listings to avoid recalculating on every render
   const filteredListings = useMemo(() => {

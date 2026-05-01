@@ -1,9 +1,9 @@
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { messageAPI } from '../../utils/api';
+import { messageAPI, listingAPI } from '../../utils/api';
 import toast from 'react-hot-toast';
 
-const ListingCard = ({ listing }) => {
+const ListingCard = ({ listing, isOwnProfile = false, onDelete }) => {
   const navigate = useNavigate();
   const { user } = useAuth();
 
@@ -88,6 +88,21 @@ const ListingCard = ({ listing }) => {
     }
   };
 
+  const handleDeleteClick = async (e) => {
+    e.stopPropagation();
+    
+    if (!confirm('Are you sure you want to delete this listing?')) return;
+    
+    try {
+      await listingAPI.delete(listing.id);
+      toast.success('Listing deleted successfully');
+      if (onDelete) onDelete(listing.id);
+    } catch (error) {
+      console.error('Error deleting listing:', error);
+      toast.error('Failed to delete listing');
+    }
+  };
+
   const statusInfo = getStatusInfo(listing.marked, listing.type);
 
   return (
@@ -107,6 +122,15 @@ const ListingCard = ({ listing }) => {
             <svg className="w-16 h-16 text-gray-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
             </svg>
+          </div>
+        )}
+        
+        {/* Unverified badge for owner's view */}
+        {!listing.isVerified && user?.email === listing.email && (
+          <div className="absolute top-3 left-3">
+            <div className="bg-yellow-500 text-white text-[9px] font-black px-3 py-1.5 rounded-full uppercase tracking-widest shadow-lg">
+              Unverified
+            </div>
           </div>
         )}
         
@@ -153,36 +177,49 @@ const ListingCard = ({ listing }) => {
             </p>
           </div>
           
-          <div className="flex items-center gap-3">
-            {/* Chat Button - simple black icon */}
+          {/* Show delete icon only on own profile, otherwise show chat and profile icons */}
+          {isOwnProfile ? (
             <button
-              onClick={handleChatClick}
-              className="w-10 h-10 rounded-full bg-black text-white flex items-center justify-center hover:bg-gray-800 transition-all shadow-md border-2 border-white"
-              title="Send Message"
+              onClick={handleDeleteClick}
+              className="w-10 h-10 rounded-full bg-red-600 text-white flex items-center justify-center hover:bg-red-700 transition-all shadow-md"
+              title="Delete Listing"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
               </svg>
             </button>
-            
-            {/* Profile Button - show user image or "L" */}
-            <div 
-              onClick={handleSellerClick}
-              className="relative hover:opacity-70 transition-opacity cursor-pointer"
-            >
-              <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center overflow-hidden border-2 border-gray-200 shadow-md">
-                {(listing.userProfile?.imageUrl || listing.profileImageUrl) ? (
-                  <img 
-                    src={listing.userProfile?.imageUrl || listing.profileImageUrl} 
-                    alt={listing.email} 
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <span className="text-sm font-bold text-gray-600">L</span>
-                )}
+          ) : (
+            <div className="flex items-center gap-3">
+              {/* Chat Button - simple black icon */}
+              <button
+                onClick={handleChatClick}
+                className="w-10 h-10 rounded-full bg-black text-white flex items-center justify-center hover:bg-gray-800 transition-all shadow-md border-2 border-white"
+                title="Send Message"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                </svg>
+              </button>
+              
+              {/* Profile Button - show user image or "L" */}
+              <div 
+                onClick={handleSellerClick}
+                className="relative hover:opacity-70 transition-opacity cursor-pointer"
+              >
+                <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center overflow-hidden border-2 border-gray-200 shadow-md">
+                  {(listing.userProfile?.imageUrl || listing.profileImageUrl) ? (
+                    <img 
+                      src={listing.userProfile?.imageUrl || listing.profileImageUrl} 
+                      alt={listing.email} 
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <span className="text-sm font-bold text-gray-600">L</span>
+                  )}
+                </div>
               </div>
             </div>
-          </div>
+          )}
         </div>
       </div>
     </div>

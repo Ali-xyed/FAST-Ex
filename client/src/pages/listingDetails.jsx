@@ -108,9 +108,12 @@ function ListingDetailsPage() {
 
   const handleMessageSeller = async () => {
     try {
-      const response = await messageAPI.createOrFetchChat({ otherEmail: listing.email });
-      console.log('Create/fetch chat response:', response.data);
+      const response = await messageAPI.createOrFetchChat({ 
+        otherUserEmail: listing.email,
+        initialMessage: `Hi! I'm interested in your listing "${listing.title}"`
+      });
       const chatId = response.data.id;
+      toast.success('Chat opened!');
       navigate(`/messages?chat=${chatId}`);
     } catch (error) {
       console.error('Error creating chat:', error);
@@ -588,53 +591,129 @@ function ListingDetailsPage() {
               </>
             ) : (
               <>
-                <div className="p-4 border-b-2 border-gray-200 flex-shrink-0">
-                  <h2 className="text-sm font-black uppercase tracking-wider">Make Your Offer</h2>
+                <div className="p-6 border-b-2 border-gray-200 flex-shrink-0 bg-gradient-to-r from-gray-50 to-white">
+                  <div className="flex items-center gap-3 mb-2">
+                    <div className="w-10 h-10 rounded-full bg-black flex items-center justify-center">
+                      <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                    </div>
+                    <div>
+                      <h2 className="text-lg font-black tracking-tight">Make Your Offer</h2>
+                      <p className="text-xs text-gray-500 font-medium">Bargaining is enabled for this item</p>
+                    </div>
+                  </div>
                 </div>
                 <div 
-                  className="flex-1 overflow-y-scroll p-4" 
+                  className="flex-1 overflow-y-scroll p-6" 
                   style={{ 
                     maxHeight: 'calc(100vh - 200px)',
                     scrollbarWidth: 'thin',
                     scrollbarColor: '#9CA3AF #F3F4F6'
                   }}
                 >
-                  <div className="space-y-4">
-                    <p className="text-xs text-gray-600">
-                      The seller has enabled bargaining. Make an offer between Rs 0 and Rs {maxPrice}.
-                    </p>
+                  <div className="space-y-6">
+                    {/* Price Range Info */}
+                    <div className="bg-gradient-to-br from-gray-50 to-gray-100 border-2 border-gray-200 rounded-2xl p-4">
+                      <div className="flex items-center gap-2 mb-3">
+                        <svg className="w-5 h-5 text-gray-600" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                        </svg>
+                        <p className="text-sm font-black text-gray-900">Price Range</p>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-xs font-bold text-gray-600 uppercase tracking-wider mb-1">Minimum</p>
+                          <p className="text-2xl font-black text-gray-900">Rs 0</p>
+                        </div>
+                        <div className="flex-1 mx-4 border-t-2 border-dashed border-gray-300"></div>
+                        <div className="text-right">
+                          <p className="text-xs font-bold text-gray-600 uppercase tracking-wider mb-1">Maximum</p>
+                          <p className="text-2xl font-black text-gray-900">Rs {maxPrice}</p>
+                        </div>
+                      </div>
+                    </div>
 
+                    {/* Offer Input */}
                     <div>
-                      <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">
-                        Your Offer Price (Rs)
+                      <label className="block text-sm font-black text-gray-900 uppercase tracking-wider mb-3">
+                        Your Offer Price
                       </label>
-                      <input
-                        type="number"
-                        min="0"
-                        max={maxPrice}
-                        value={offerPrice}
-                        onChange={(e) => setOfferPrice(e.target.value)}
-                        placeholder={`Enter amount (Max: Rs ${maxPrice})`}
-                        className="w-full bg-gray-50 border-none rounded-xl py-2.5 px-3 text-xs font-bold focus:ring-2 focus:ring-black/5 outline-none"
-                      />
+                      <div className="relative">
+                        <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 font-black text-lg">
+                          Rs
+                        </div>
+                        <input
+                          type="number"
+                          min="0"
+                          max={maxPrice}
+                          value={offerPrice}
+                          onChange={(e) => setOfferPrice(e.target.value)}
+                          placeholder="0"
+                          className="w-full bg-white border-2 border-gray-200 rounded-xl py-4 pl-14 pr-4 text-2xl font-black focus:ring-2 focus:ring-black focus:border-black outline-none transition-all"
+                        />
+                      </div>
+                      
+                      {/* Validation Messages */}
                       {offerPrice && parseFloat(offerPrice) > maxPrice && (
-                        <p className="text-[10px] text-red-500 mt-1 font-medium">
-                          Offer cannot exceed Rs {maxPrice}
-                        </p>
+                        <div className="mt-3 flex items-center gap-2 p-3 bg-red-50 border-2 border-red-200 rounded-xl">
+                          <svg className="w-5 h-5 text-red-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                          </svg>
+                          <p className="text-sm font-bold text-red-700">
+                            Offer cannot exceed Rs {maxPrice}
+                          </p>
+                        </div>
+                      )}
+                      
+                      {offerPrice && parseFloat(offerPrice) > 0 && parseFloat(offerPrice) <= maxPrice && (
+                        <div className="mt-3 flex items-center gap-2 p-3 bg-green-50 border-2 border-green-200 rounded-xl">
+                          <svg className="w-5 h-5 text-green-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                          </svg>
+                          <p className="text-sm font-bold text-green-700">
+                            Valid offer! You're saving Rs {maxPrice - parseFloat(offerPrice)}
+                          </p>
+                        </div>
                       )}
                     </div>
 
+                    {/* Submit Button */}
                     <button
                       onClick={handleMakeOffer}
                       disabled={!offerPrice || parseFloat(offerPrice) <= 0 || parseFloat(offerPrice) > maxPrice}
-                      className={`w-full bg-black text-white py-2.5 rounded-xl text-xs font-black uppercase tracking-widest hover:bg-gray-800 transition-all ${
+                      className={`w-full bg-black text-white py-4 rounded-xl text-sm font-black uppercase tracking-widest hover:bg-gray-800 transition-all shadow-lg hover:shadow-xl ${
                         !offerPrice || parseFloat(offerPrice) <= 0 || parseFloat(offerPrice) > maxPrice
                           ? 'opacity-50 cursor-not-allowed'
-                          : ''
+                          : 'hover:scale-[1.02]'
                       }`}
                     >
-                      Submit Offer
+                      <span className="flex items-center justify-center gap-2">
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                        </svg>
+                        Submit Offer
+                      </span>
                     </button>
+
+                    {/* Tips */}
+                    <div className="bg-gray-50 border-2 border-gray-200 rounded-xl p-4">
+                      <p className="text-xs font-black text-gray-900 uppercase tracking-wider mb-2">Bargaining Tips</p>
+                      <ul className="space-y-2 text-xs text-gray-600 font-medium">
+                        <li className="flex items-start gap-2">
+                          <span className="text-gray-400">•</span>
+                          <span>Start with a reasonable offer to increase acceptance chances</span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <span className="text-gray-400">•</span>
+                          <span>The seller will be notified of your offer</span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <span className="text-gray-400">•</span>
+                          <span>You can negotiate further via messages</span>
+                        </li>
+                      </ul>
+                    </div>
                   </div>
                 </div>
               </>

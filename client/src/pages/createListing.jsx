@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar/Navbar';
+import ConfirmationModal from '../components/ConfirmationModal/ConfirmationModal';
 import { listingAPI } from '../utils/api';
 import { LISTING_TYPES } from '../utils/constants';
 import toast from 'react-hot-toast';
@@ -8,6 +9,7 @@ import toast from 'react-hot-toast';
 function CreateListingPage() {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
+  const [showModal, setShowModal] = useState(false);
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -82,8 +84,8 @@ function CreateListingPage() {
       
       const response = await listingAPI.create(formDataToSend);
 
-      toast.success('Listing created successfully!');
-      navigate('/home');
+      // Show confirmation modal instead of toast
+      setShowModal(true);
     } catch (error) {
       console.error('Error creating listing:', error);
       toast.error(error.response?.data?.message || 'Failed to create listing');
@@ -92,9 +94,21 @@ function CreateListingPage() {
     }
   };
 
+  const handleModalClose = () => {
+    setShowModal(false);
+    navigate('/profile');
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 text-black font-sans selection:bg-black selection:text-white">
       <Navbar />
+
+      <ConfirmationModal
+        isOpen={showModal}
+        onClose={handleModalClose}
+        title="Post Created Successfully!"
+        message="Your post has been created and sent for verification. It requires admin verification, so please wait for a while. You can view it in your profile."
+      />
 
       <main className="px-8 lg:px-20 py-8 max-w-5xl mx-auto">
         <div className="mb-8">

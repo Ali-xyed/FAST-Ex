@@ -1,10 +1,10 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { AuthProvider } from './context/AuthContext';
-import ProtectedAdminRoute from './components/ProtectedAdminRoute';
 import LandingPage from './pages/landing';
 import RegisterPage from './pages/register';
 import LoginPage from './pages/login';
+import AdminLoginPage from './pages/adminLogin';
 import ForgotPasswordPage from './pages/forgotPassword';
 import HomePage from './pages/home';
 import ProfilePage from './pages/profile';
@@ -13,7 +13,6 @@ import CreateListingPage from './pages/createListing';
 import EditListingPage from './pages/editListing';
 import ListingDetailsPage from './pages/listingDetails';
 import MessagesPage from './pages/messages';
-import AdminLoginPage from './pages/adminLogin';
 import AdminPage from './pages/admin';
 import AdminListingsPage from './pages/adminListings';
 import AdminCommentsPage from './pages/adminComments';
@@ -33,6 +32,12 @@ function App() {
           <Route path="/login" element={<LoginPage />} />
           <Route path="/forgot-password" element={<ForgotPasswordPage />} />
 
+          {/* Admin Routes - Public (no auth required) */}
+          <Route path="/admin" element={<AdminLoginPage />} />
+          <Route path="/admin/users" element={<AdminPage />} />
+          <Route path="/admin/listings" element={<AdminListingsPage />} />
+          <Route path="/admin/comments" element={<AdminCommentsPage />} />
+
           {/* Protected Routes */}
           <Route path="/home" element={<HomePage />} />
           <Route path="/profile" element={<ProfilePage />} />
@@ -44,12 +49,6 @@ function App() {
           <Route path="/bargain-offers" element={<BargainOffersPage />} />
           <Route path="/exchange-requests" element={<ExchangeRequestsPage />} />
           <Route path="/exchange-request/:listingId" element={<CreateExchangeRequestPage />} />
-
-          {/* Admin Routes */}
-          <Route path="/admin/login" element={<AdminLoginPage />} />
-          <Route path="/admin" element={<ProtectedAdminRoute><AdminPage /></ProtectedAdminRoute>} />
-          <Route path="/admin/listings" element={<ProtectedAdminRoute><AdminListingsPage /></ProtectedAdminRoute>} />
-          <Route path="/admin/comments" element={<ProtectedAdminRoute><AdminCommentsPage /></ProtectedAdminRoute>} />
 
           {/* Catch all */}
           <Route path="*" element={<Navigate to="/" replace />} />

@@ -10,6 +10,7 @@ router.get('/health', (req, res) => res.json({ status: 'ok', service: 'listing' 
 // Listing CRUD
 router.post('/', verifyAuth, uploadSingleImage(), listingController.createListing);
 router.get('/', listingController.getListings);
+router.get('/admin/all', listingController.getAllListingsForAdmin); // Admin endpoint - must be before /:id
 router.get('/my', verifyAuth, listingController.getMyListings);
 router.get('/:id', listingController.getListingById);
 router.patch('/:id', verifyAuth, uploadSingleImage(), listingController.editListing);
@@ -18,6 +19,7 @@ router.delete('/:id', verifyAuth, listingController.deleteListing);
 // Comments
 router.post('/:id/comments', verifyAuth, listingController.postComment);
 router.delete('/:id/comments/:commentId', verifyAuth, listingController.deleteComment);
+router.patch('/comments/:commentId/verify', verifyAuth, listingController.verifyComment);
 
 // Admin actions
 router.patch('/:id/verify', verifyAuth, listingController.verifyListingStatus);

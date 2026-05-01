@@ -3,14 +3,21 @@ let ioInstance;
 const initSocket = (io) => {
   ioInstance = io;
   io.on('connection', (socket) => {
-    console.log('User connected to messaging-service', socket.id);
+    console.log('[Messaging Service] User connected:', socket.id);
 
     socket.on('join_chat', (chatId) => {
-      console.log(`User ${socket.id} joined room ${chatId}`);
+      console.log(`[Messaging Service] Socket ${socket.id} joined room ${chatId}`);
       socket.join(chatId);
     });
 
-    socket.on('disconnect', () => {});
+    socket.on('leave_chat', (chatId) => {
+      console.log(`[Messaging Service] Socket ${socket.id} left room ${chatId}`);
+      socket.leave(chatId);
+    });
+
+    socket.on('disconnect', () => {
+      console.log('[Messaging Service] User disconnected:', socket.id);
+    });
   });
 };
 

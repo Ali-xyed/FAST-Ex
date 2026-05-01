@@ -88,10 +88,17 @@ const createListing = async (req, res) => {
 const getListings = async (req, res) => {
   try {
     const { type, search } = req.query;
+    const userEmail = req.headers['x-user-email']; // Get current user email if authenticated
     const cacheKey = `listings:all:${type || ''}:${search || ''}`;
 
     const cached = await getFromCache(cacheKey);
-    if (cached) return res.status(200).json(cached);
+    if (cached) {
+      // Filter unverified listings for non-owners
+      const filtered = cached.filter(listing => 
+        listing.isVerified || listing.email === userEmail
+      );
+      return res.status(200).json(filtered);
+    }
 
     const where = {};
     if (type) where.type = type;
@@ -103,7 +110,10 @@ const getListings = async (req, res) => {
         sellListing: true, 
         rentListing: true, 
         exchangeListing: true,
-        comments: { orderBy: { createdAt: 'desc' } }
+        comments: { 
+          where: { isVerified: true }, // Only include verified comments
+          orderBy: { createdAt: 'desc' } 
+        }
       },
       orderBy: { createdAt: 'desc' }
     });
@@ -128,7 +138,13 @@ const getListings = async (req, res) => {
     );
 
     await setCache(cacheKey, listingsWithProfiles, CACHE_TTL_ALL);
-    res.status(200).json(listingsWithProfiles);
+    
+    // Filter unverified listings for non-owners
+    const filtered = listingsWithProfiles.filter(listing => 
+      listing.isVerified || listing.email === userEmail
+    );
+    
+    res.status(200).json(filtered);
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: 'Error fetching listings' });
@@ -160,13 +176,20 @@ const getMyListings = async (req, res) => {
 const getListingById = async (req, res) => {
   try {
     const { id } = req.params;
-    const cacheKey = `listing:${id}`;
+    const userEmail = req.headers['x-user-email'];
+    const cacheKey = `listing:${id}:${userEmail || 'guest'}`;
 
     const cached = await getFromCache(cacheKey);
     if (cached) return res.status(200).json(cached);
 
     const listing = await listingRepo.findListingById(id);
     if (!listing) return res.status(404).json({ message: 'Listing not found' });
+
+    // Filter comments based on verification status
+    // Owner sees all comments, others see only verified comments
+    if (listing.email !== userEmail) {
+      listing.comments = listing.comments.filter(comment => comment.isVerified);
+    }
 
     await setCache(cacheKey, listing, CACHE_TTL_ONE);
     res.status(200).json(listing);
@@ -215,14 +238,23 @@ const postComment = async (req, res) => {
 const deleteComment = async (req, res) => {
   try {
     const { id, commentId } = req.params;
+    
+    // Check if comment exists first
+    const comment = await listingRepo.findCommentById(commentId);
+    if (!comment) {
+      return res.status(404).json({ message: 'Comment not found' });
+    }
+    
     await listingRepo.deleteComment(commentId);
 
     await delCache(`listing:${id}`);
+    await delCachePattern(`listing:${id}:*`);
+    await delCachePattern('listings:all:*');
 
     res.status(200).json({ message: 'Comment deleted' });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: 'Error deleting comment' });
+    console.error('Error deleting comment:', err);
+    res.status(500).json({ message: 'Error deleting comment', error: err.message });
   }
 };
 
@@ -471,7 +503,9 @@ const getBargainDetails = async (req, res) => {
             title: listing.title,
             description: listing.description,
             imageUrl: listing.imageUrl,
-            type: listing.type
+            type: listing.type,
+            sellListing: listing.sellListing,
+            rentListing: listing.rentListing
           } : null
         };
       })
@@ -658,6 +692,78 @@ const updateMarkedStatus = async (req, res) => {
   }
 };
 
+const verifyComment = async (req, res) => {
+  try {
+    const { commentId } = req.params;
+    const { isVerified } = req.body;
+
+    const comment = await listingRepo.findCommentById(commentId);
+    if (!comment) {
+      return res.status(404).json({ message: 'Comment not found' });
+    }
+
+    await listingRepo.updateComment(commentId, { isVerified });
+
+    await delCache(`listing:${comment.listingId}`);
+    await delCachePattern(`listing:${comment.listingId}:*`);
+    await delCachePattern('listings:all:*');
+
+    res.status(200).json({ message: 'Comment verification status updated', isVerified });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Error verifying comment' });
+  }
+};
+
+const getAllListingsForAdmin = async (req, res) => {
+  try {
+    const { type, search } = req.query;
+
+    const where = {};
+    if (type) where.type = type;
+    if (search) where.title = { contains: search, mode: 'insensitive' };
+
+    // Get ALL listings without filtering by verification status
+    const listings = await listingRepo.findAllListings({
+      where,
+      include: { 
+        sellListing: true, 
+        rentListing: true, 
+        exchangeListing: true,
+        comments: { 
+          orderBy: { createdAt: 'desc' } 
+        }
+      },
+      orderBy: { createdAt: 'desc' }
+    });
+
+    const listingsWithProfiles = await Promise.all(
+      listings.map(async (listing) => {
+        try {
+          const profileResponse = await axios.get(`${process.env.USER_SERVICE_URL}/api/users/public/${listing.email}`);
+          return { 
+            ...listing, 
+            userProfile: profileResponse.data,
+            profileImageUrl: profileResponse.data?.imageUrl || null
+          };
+        } catch (err) {
+          return { 
+            ...listing, 
+            userProfile: null,
+            profileImageUrl: null
+          };
+        }
+      })
+    );
+
+    // Return ALL listings without filtering
+    res.status(200).json(listingsWithProfiles);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Error fetching listings for admin' });
+  }
+};
+
 module.exports = {
   createListing,
   getListings,
@@ -675,5 +781,7 @@ module.exports = {
   getExchangeDetails,
   respondBargain,
   respondExchange,
-  updateMarkedStatus
+  updateMarkedStatus,
+  verifyComment,
+  getAllListingsForAdmin
 };

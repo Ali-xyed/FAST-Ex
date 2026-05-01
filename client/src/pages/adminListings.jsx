@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import AdminNavbar from '../components/AdminNavbar/AdminNavbar';
-import { adminAPI, listingAPI } from '../utils/api';
+import { adminAPI } from '../utils/api';
 import toast from 'react-hot-toast';
 
 function AdminListingsPage() {
@@ -9,7 +9,18 @@ function AdminListingsPage() {
   const [listings, setListings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filterType, setFilterType] = useState('ALL');
-  const [filterVerified, setFilterVerified] = useState('ALL');
+  const [filterVerified, setFilterVerified] = useState('UNVERIFIED'); // Default to unverified
+
+  // Check admin session
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    const user = JSON.parse(localStorage.getItem('user') || '{}');
+    
+    if (!token || user.role !== 'admin') {
+      toast.error('Please login as admin');
+      navigate('/admin');
+    }
+  }, [navigate]);
 
   useEffect(() => {
     fetchListings();
@@ -18,7 +29,8 @@ function AdminListingsPage() {
   const fetchListings = async () => {
     try {
       setLoading(true);
-      const response = await listingAPI.getAll();
+      // Use admin API to get ALL listings including unverified
+      const response = await adminAPI.getAllListings();
       setListings(response.data);
     } catch (error) {
       console.error('Error fetching listings:', error);
@@ -180,12 +192,6 @@ function AdminListingsPage() {
                         </div>
                       </div>
                       <div className="flex items-center gap-3 ml-4">
-                        <button
-                          onClick={() => navigate(`/listing/${listing.id}`)}
-                          className="bg-black text-white px-5 py-2.5 rounded-lg text-[10px] font-black uppercase tracking-widest hover:bg-gray-800 transition-all"
-                        >
-                          View
-                        </button>
                         {!listing.isVerified && (
                           <button
                             onClick={() => handleVerifyListing(listing.id)}

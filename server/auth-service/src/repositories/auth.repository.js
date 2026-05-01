@@ -33,6 +33,13 @@ class AuthRepository {
     });
   }
 
+  async getLatestOTPForEmail(email) {
+    return prisma.oTP.findFirst({
+      where: { email },
+      orderBy: { createdAt: 'desc' }
+    });
+  }
+
   async deleteOTPs(email) {
     return prisma.oTP.deleteMany({ where: { email } });
   }

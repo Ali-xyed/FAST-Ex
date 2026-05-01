@@ -15,7 +15,7 @@ const api = axios.create({
 // Request interceptor to add auth token
 api.interceptors.request.use(
   async (config) => {
-    // Get token from localStorage
+    // Use the same token for both users and admins (Clerk JWT)
     const token = localStorage.getItem('token');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
@@ -37,13 +37,16 @@ api.interceptors.response.use(
       // Prevent multiple redirects
       isRedirecting = true;
       
-      // Unauthorized - clear token and redirect to login
+      // Clear session
       localStorage.removeItem('token');
       localStorage.removeItem('user');
       
-      // Use setTimeout to avoid redirect loops
+      // Check if this is an admin route to redirect appropriately
+      const currentPath = window.location.pathname;
+      const isAdminRoute = currentPath.startsWith('/admin');
+      
       setTimeout(() => {
-        window.location.href = '/login';
+        window.location.href = isAdminRoute ? '/admin' : '/login';
         isRedirecting = false;
       }, 100);
     }
@@ -128,11 +131,14 @@ export const notificationAPI = {
 
 // Admin API
 export const adminAPI = {
+  login: (data) => api.post('/api/admin/login', data),
   getAllUsers: () => api.get('/api/admin/users'),
+  getAllListings: (params) => api.get('/api/admin/listings', { params }),
   toggleBanUser: (email) => api.patch(`/api/admin/users/${email}/toggle-ban`),
   verifyListing: (id) => api.patch(`/api/admin/listings/${id}/verify`),
   deleteListing: (id) => api.delete(`/api/admin/listings/${id}`),
   deleteComment: (listingId, commentId) => api.delete(`/api/admin/listings/${listingId}/comments/${commentId}`),
+  verifyComment: (commentId) => api.patch(`/api/admin/comments/${commentId}/verify`),
 };
 
 export default api;
