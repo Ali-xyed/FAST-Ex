@@ -88,12 +88,11 @@ const createListing = async (req, res) => {
 const getListings = async (req, res) => {
   try {
     const { type, search } = req.query;
-    const userEmail = req.headers['x-user-email']; // Get current user email if authenticated
+    const userEmail = req.headers['x-user-email'];
     const cacheKey = `listings:all:${type || ''}:${search || ''}`;
 
     const cached = await getFromCache(cacheKey);
     if (cached) {
-      // Filter unverified listings for non-owners
       const filtered = cached.filter(listing => 
         listing.isVerified || listing.email === userEmail
       );
@@ -111,7 +110,7 @@ const getListings = async (req, res) => {
         rentListing: true, 
         exchangeListing: true,
         comments: { 
-          where: { isVerified: true }, // Only include verified comments
+          where: { isVerified: true },
           orderBy: { createdAt: 'desc' } 
         }
       },
@@ -139,7 +138,6 @@ const getListings = async (req, res) => {
 
     await setCache(cacheKey, listingsWithProfiles, CACHE_TTL_ALL);
     
-    // Filter unverified listings for non-owners
     const filtered = listingsWithProfiles.filter(listing => 
       listing.isVerified || listing.email === userEmail
     );
@@ -185,8 +183,6 @@ const getListingById = async (req, res) => {
     const listing = await listingRepo.findListingById(id);
     if (!listing) return res.status(404).json({ message: 'Listing not found' });
 
-    // Filter comments based on verification status
-    // Owner sees all comments, others see only verified comments
     if (listing.email !== userEmail) {
       listing.comments = listing.comments.filter(comment => comment.isVerified);
     }
@@ -239,7 +235,6 @@ const deleteComment = async (req, res) => {
   try {
     const { id, commentId } = req.params;
     
-    // Check if comment exists first
     const comment = await listingRepo.findCommentById(commentId);
     if (!comment) {
       return res.status(404).json({ message: 'Comment not found' });
@@ -723,7 +718,6 @@ const getAllListingsForAdmin = async (req, res) => {
     if (type) where.type = type;
     if (search) where.title = { contains: search, mode: 'insensitive' };
 
-    // Get ALL listings without filtering by verification status
     const listings = await listingRepo.findAllListings({
       where,
       include: { 
@@ -756,7 +750,6 @@ const getAllListingsForAdmin = async (req, res) => {
       })
     );
 
-    // Return ALL listings without filtering
     res.status(200).json(listingsWithProfiles);
   } catch (err) {
     console.error(err);

@@ -22,7 +22,6 @@ function ForgotPasswordPage() {
         setButtonText("Verifying Email...");
 
         try {
-            // Step 1: Check if email exists
             const checkResponse = await authAPI.checkEmail({ email });
             
             if (!checkResponse.data.exists) {
@@ -32,19 +31,15 @@ function ForgotPasswordPage() {
                 return;
             }
 
-            // Step 2: Email verified
             toast.success("Email verified successfully!");
             setButtonText("Sending OTP...");
 
-            // TODO: Replace with actual API call when backend endpoint is ready
-            // For now, using hardcoded OTP: 123123
-            await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate API delay
+            await new Promise(resolve => setTimeout(resolve, 1000));
             
             toast.success("OTP sent to your email! (Use: 123123)");
-            setStep(2); // Navigate to OTP screen
+            setStep(2);
             setButtonText("Verify Email");
         } catch (err) {
-            console.error("Error:", err);
             toast.error(err.response?.data?.message || "Failed to verify email. Please try again.");
             setButtonText("Verify Email");
         } finally {
@@ -60,15 +55,13 @@ function ForgotPasswordPage() {
             return;
         }
 
-        // TODO: Replace with actual API call when backend endpoint is ready
-        // For now, checking against hardcoded OTP: 123123
         setIsLoading(true);
         try {
-            await new Promise(resolve => setTimeout(resolve, 800)); // Simulate API delay
+            await new Promise(resolve => setTimeout(resolve, 800));
             
             if (code === "123123") {
                 toast.success("OTP verified successfully!");
-                setStep(3); // Go to password reset step
+                setStep(3);
             } else {
                 toast.error("Invalid OTP code. Please try again.");
             }
@@ -99,7 +92,6 @@ function ForgotPasswordPage() {
             return;
         }
 
-        // Password validation
         const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]).{10,}$/;
         if (!passwordRegex.test(newPassword)) {
             toast.error("Password must contain at least 1 uppercase, 1 lowercase, 1 digit, and 1 special character.");

@@ -32,7 +32,6 @@ function AdminCommentsPage() {
   const fetchAllComments = async () => {
     try {
       setLoading(true);
-      // Use admin API to get ALL listings including unverified posts and comments
       const response = await adminAPI.getAllListings();
       const allComments = [];
       
@@ -55,7 +54,6 @@ function AdminCommentsPage() {
       
       setComments(allComments);
     } catch (error) {
-      console.error('Error fetching comments:', error);
       toast.error('Failed to load comments');
     } finally {
       setLoading(false);
@@ -75,7 +73,6 @@ function AdminCommentsPage() {
       setComments(comments.filter(c => c.id !== commentToDelete.commentId));
       toast.success('Comment deleted successfully');
     } catch (error) {
-      console.error('Error deleting comment:', error);
       toast.error('Failed to delete comment');
     } finally {
       setShowDeleteModal(false);
@@ -91,7 +88,6 @@ function AdminCommentsPage() {
       ));
       toast.success('Comment verified successfully');
     } catch (error) {
-      console.error('Error verifying comment:', error);
       toast.error('Failed to verify comment');
     }
   };

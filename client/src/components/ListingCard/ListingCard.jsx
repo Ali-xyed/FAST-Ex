@@ -11,18 +11,12 @@ const ListingCard = ({ listing, isOwnProfile = false, onDelete }) => {
   const [isSent, setIsSent] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
 
-  // Check if listing has been sent on mount
   useEffect(() => {
     const sentListings = JSON.parse(localStorage.getItem('sentListings') || '{}');
     if (sentListings[listing.id]) {
       setIsSent(true);
     }
   }, [listing.id]);
-
-  // Debug logging
-  console.log('ListingCard - User:', user?.email, 'Listing Owner:', listing.email, 'Show Chat:', user?.email !== listing.email);
-  console.log('ListingCard - userProfile:', listing.userProfile);
-  console.log('ListingCard - Profile Image URL:', listing.userProfile?.imageUrl || listing.profileImageUrl);
 
   const getTypeColor = (type) => {
     switch (type) {
@@ -34,7 +28,6 @@ const ListingCard = ({ listing, isOwnProfile = false, onDelete }) => {
   };
 
   const getStatusInfo = (marked, type) => {
-    // For unavailable items, show overlay
     if (marked === 'SOLD' || marked === 'RENTED' || marked === 'EXCHANGED') {
       return {
         showOverlay: true,
@@ -43,7 +36,6 @@ const ListingCard = ({ listing, isOwnProfile = false, onDelete }) => {
       };
     }
     
-    // For available items, combine type and status in one badge
     return {
       showOverlay: false,
       overlayText: null,
@@ -62,21 +54,18 @@ const ListingCard = ({ listing, isOwnProfile = false, onDelete }) => {
   const handleChatClick = async (e) => {
     e.stopPropagation();
     
-    // Check if user is logged in
     if (!user) {
       toast.error("Please login to send messages");
       navigate('/login');
       return;
     }
     
-    // Don't allow chat with yourself
     if (user?.email === listing.email) {
       toast.error("You can't chat with yourself");
       return;
     }
 
     try {
-      // Create listing reference object
       const listingReference = {
         id: listing.id,
         title: listing.title,
@@ -92,7 +81,6 @@ const ListingCard = ({ listing, isOwnProfile = false, onDelete }) => {
         listingReference
       });
       
-      // Mark listing as sent in localStorage
       const sentListings = JSON.parse(localStorage.getItem('sentListings') || '{}');
       sentListings[listing.id] = true;
       localStorage.setItem('sentListings', JSON.stringify(sentListings));
@@ -101,7 +89,6 @@ const ListingCard = ({ listing, isOwnProfile = false, onDelete }) => {
       navigate('/messages');
       toast.success('Listing sent in chat!');
     } catch (error) {
-      console.error('Error creating chat:', error);
       toast.error('Failed to start chat');
     }
   };
@@ -117,7 +104,6 @@ const ListingCard = ({ listing, isOwnProfile = false, onDelete }) => {
       toast.success('Listing deleted successfully');
       if (onDelete) onDelete(listing.id);
     } catch (error) {
-      console.error('Error deleting listing:', error);
       toast.error('Failed to delete listing');
     }
   };

@@ -26,7 +26,6 @@ export const AuthProvider = ({ children }) => {
           setIsAuthenticated(true);
         } catch (error) {
           console.error('Error fetching profile:', error);
-          // Token is invalid, clear it
           localStorage.removeItem('token');
           localStorage.removeItem('user');
           setIsAuthenticated(false);
@@ -43,15 +42,12 @@ export const AuthProvider = ({ children }) => {
   const login = async (token, userData) => {
     localStorage.setItem('token', token);
     setIsAuthenticated(true);
-    
-    // Fetch fresh profile data from server instead of using login response
     try {
       const response = await userAPI.getProfile();
       setUser(response.data);
       localStorage.setItem('user', JSON.stringify(response.data));
     } catch (error) {
       console.error('Error fetching profile after login:', error);
-      // Fallback to userData from login if profile fetch fails
       setUser(userData);
       localStorage.setItem('user', JSON.stringify(userData));
     }

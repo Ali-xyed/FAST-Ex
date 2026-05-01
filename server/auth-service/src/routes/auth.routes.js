@@ -6,7 +6,6 @@ const router = express.Router();
 
 router.get('/health', (req, res) => res.json({ status: 'ok', service: 'auth' }));
 
-//  Authentication
 router.post('/register', authController.register);
 router.post('/verify-otp', authController.verifyOTP);
 router.post('/send-otp', authController.sendOTP);
@@ -15,8 +14,7 @@ router.post('/token', authController.getToken);
 router.post('/check-email', authController.checkEmail);
 router.post('/change-password', authController.changePassword);
 
-// Admin actions
 router.patch('/toggle-ban', verifyAuth, authController.toggleBan);
-router.put('/profile', authController.updateProfile); // Remove verifyAuth for service-to-service calls
+router.put('/profile', authController.updateProfile);
 
 module.exports = router;

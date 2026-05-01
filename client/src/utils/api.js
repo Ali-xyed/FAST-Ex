@@ -4,7 +4,6 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000
 
 console.log('API Base URL:', API_BASE_URL);
 
-// Create axios instance
 const api = axios.create({
   baseURL: API_BASE_URL,
   headers: {
@@ -12,10 +11,8 @@ const api = axios.create({
   },
 });
 
-// Request interceptor to add auth token
 api.interceptors.request.use(
   async (config) => {
-    // Use the same token for both users and admins (Clerk JWT)
     const token = localStorage.getItem('token');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
@@ -27,21 +24,16 @@ api.interceptors.request.use(
   }
 );
 
-// Response interceptor for error handling
 let isRedirecting = false;
 
 api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401 && !isRedirecting) {
-      // Prevent multiple redirects
       isRedirecting = true;
-      
-      // Clear session
       localStorage.removeItem('token');
       localStorage.removeItem('user');
-      
-      // Check if this is an admin route to redirect appropriately
+    
       const currentPath = window.location.pathname;
       const isAdminRoute = currentPath.startsWith('/admin');
       
@@ -91,7 +83,6 @@ export const listingAPI = {
     return api.post('/api/listings', data, config);
   },
   updateListing: (id, data) => {
-    // Handle FormData for image upload
     const config = data instanceof FormData 
       ? { headers: { 'Content-Type': 'multipart/form-data' } }
       : {};
@@ -108,7 +99,6 @@ export const listingAPI = {
   requestListing: (id) => api.post(`/api/listings/${id}/request`),
   verifyListing: (id, data) => api.patch(`/api/listings/${id}/verify`, data),
   submitExchange: (id, data) => {
-    // Handle FormData for image upload
     const config = data instanceof FormData 
       ? { headers: { 'Content-Type': 'multipart/form-data' } }
       : {};

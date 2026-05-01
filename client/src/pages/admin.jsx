@@ -29,13 +29,11 @@ function AdminPage() {
     try {
       setLoading(true);
       const response = await adminAPI.getAllUsers();
-      // Filter out admin users (role === 'ADMIN' or role === 'admin')
       const nonAdminUsers = response.data.filter(user => 
         user.role?.toUpperCase() !== 'ADMIN'
       );
       setUsers(nonAdminUsers);
     } catch (error) {
-      console.error('Error fetching users:', error);
       toast.error('Failed to load users');
     } finally {
       setLoading(false);
@@ -52,20 +50,15 @@ function AdminPage() {
     if (!userToBan) return;
     
     const action = userToBan.isBan ? 'unban' : 'ban';
-    console.log(`[ADMIN UI] Attempting to ${action} user:`, userToBan.email);
     
     try {
-      console.log(`[ADMIN UI] Calling API to toggle ban for:`, userToBan.email);
       const response = await adminAPI.toggleBanUser(userToBan.email);
-      console.log(`[ADMIN UI] API response:`, response.data);
       
       setUsers(users.map(u => 
         u.email === userToBan.email ? { ...u, isBan: response.data.isBan } : u
       ));
       toast.success(`User ${action}ned successfully`);
     } catch (error) {
-      console.error('[ADMIN UI] Error toggling ban:', error);
-      console.error('[ADMIN UI] Error response:', error.response?.data);
       toast.error(`Failed to ${action} user`);
     } finally {
       setShowConfirmModal(false);

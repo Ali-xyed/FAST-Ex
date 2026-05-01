@@ -32,11 +32,9 @@ function AdminListingsPage() {
   const fetchListings = async () => {
     try {
       setLoading(true);
-      // Use admin API to get ALL listings including unverified
       const response = await adminAPI.getAllListings();
       setListings(response.data);
     } catch (error) {
-      console.error('Error fetching listings:', error);
       toast.error('Failed to load listings');
     } finally {
       setLoading(false);
@@ -53,7 +51,6 @@ function AdminListingsPage() {
       setShowDeleteModal(false);
       setListingToDelete(null);
     } catch (error) {
-      console.error('Error deleting listing:', error);
       toast.error('Failed to delete listing');
     }
   };
@@ -66,7 +63,6 @@ function AdminListingsPage() {
       ));
       toast.success('Listing verified successfully');
     } catch (error) {
-      console.error('Error verifying listing:', error);
       toast.error('Failed to verify listing');
     }
   };

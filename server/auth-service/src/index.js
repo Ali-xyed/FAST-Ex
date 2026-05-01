@@ -20,7 +20,6 @@ const allowedOrigins = [
 
 const corsOptions = {
   origin: (origin, callback) => {
-    // Allow requests with no origin (like mobile apps, Postman, or server-to-server)
     if (!origin) {
       callback(null, true);
     } else if (allowedOrigins.includes(origin)) {
@@ -42,13 +41,11 @@ app.use('/api/auth', authRoutes);
 
 const PORT = process.env.AUTH_PORT || 5002;
 
-// Kafka event handler for user deletion
 const handleUserDeleted = async (data) => {
   try {
     const { email } = data;
     console.log(`Received user.deleted event for: ${email}`);
     
-    // Delete user from auth database
     await authRepo.deleteUser(email);
     
     console.log(`Successfully deleted user from auth database: ${email}`);
@@ -63,7 +60,6 @@ app.listen(PORT, async () => {
   await subscribeToTopic('user.deleted', handleUserDeleted);
   connectRabbitMQ();
 
-  // Cleanup expired OTPs every 10 minutes
   setInterval(async () => {
     try {
       const result = await authRepo.deleteExpiredOTPs();

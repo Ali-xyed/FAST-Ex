@@ -31,7 +31,6 @@ const getProfile = async (req, res) => {
 
     let profile = await userRepo.findByEmail(email);
     
-    // If profile doesn't exist, create it automatically
     if (!profile) {
       console.log(`Creating missing profile for ${email}`);
       profile = await userRepo.upsertUser(email, email.split('@')[0], '', role || 'STUDENT');
@@ -73,11 +72,9 @@ const updateProfile = async (req, res) => {
     
     console.log(`[USER] Updating profile for ${email}:`, { name, rollNo });
     
-    // Update profile in User Service
     const profile = await userRepo.updateUser(email, { name, rollNo });
     console.log(`[USER] Profile updated in user database for ${email}`);
 
-    // Also update the Auth Service
     try {
       const authServiceUrl = `${process.env.AUTH_SERVICE_URL}/api/auth/profile`;
       console.log(`[USER] Calling auth service at: ${authServiceUrl}`);
@@ -99,13 +96,10 @@ const updateProfile = async (req, res) => {
         console.error('[USER] Auth service error response:', authServiceError.response.data);
         console.error('[USER] Auth service error status:', authServiceError.response.status);
       }
-      // Don't fail the update if auth service is down
     }
 
-    // Clear user profile caches
     await delCache(`user:profile:${email}`, `user:public:${email}`);
     
-    // Clear all listing caches so profile updates reflect immediately
     try {
       const keys = await redis.keys('listings:all:*');
       if (keys.length > 0) {
@@ -130,10 +124,8 @@ const uploadImage = async (req, res) => {
     const imageUrl = req.file.location;
     const profile = await userRepo.updateUser(email, { imageUrl });
 
-    // Clear user profile caches
     await delCache(`user:profile:${email}`, `user:public:${email}`);
     
-    // Clear all listing caches so profile images update immediately
     try {
       const keys = await redis.keys('listings:all:*');
       if (keys.length > 0) {
@@ -161,7 +153,6 @@ const getPublicProfile = async (req, res) => {
 
     let profile = await userRepo.findByEmail(email);
     
-    // If profile doesn't exist, create it automatically
     if (!profile) {
       console.log(`Creating missing public profile for ${email}`);
       profile = await userRepo.upsertUser(email, email.split('@')[0], '', 'STUDENT');
@@ -276,16 +267,12 @@ const deleteAccount = async (req, res) => {
   try {
     const email = req.headers['x-user-email'];
     
-    // Send event to delete all user data across services
     await sendEvent('user.deleted', { email });
     
-    // Delete user from user service
     await userRepo.deleteUser(email);
     
-    // Clear all caches related to this user
     await delCache(`user:profile:${email}`, `user:public:${email}`, `user:rep:${email}`);
     
-    // Clear all listing caches
     try {
       const keys = await redis.keys('listings:all:*');
       if (keys.length > 0) {

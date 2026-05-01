@@ -24,8 +24,6 @@ function ProfilePage() {
       const response = await listingAPI.getMy();
       setMyListings(response.data);
     } catch (error) {
-      console.error('Error fetching listings:', error);
-      // Don't show error toast if it's a 401 (will be handled by interceptor)
       if (error.response?.status !== 401) {
         toast.error('Failed to load your listings');
       }
@@ -46,7 +44,6 @@ function ProfilePage() {
       await refreshProfile();
       toast.success('Profile image updated!');
     } catch (error) {
-      console.error('Upload error:', error);
       toast.error('Failed to upload image');
     }
   };

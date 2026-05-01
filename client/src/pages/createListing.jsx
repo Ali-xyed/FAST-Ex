@@ -54,7 +54,6 @@ function CreateListingPage() {
     setIsLoading(true);
 
     try {
-      // Create FormData for multipart/form-data request
       const formDataToSend = new FormData();
       
       formDataToSend.append('type', formData.type);
@@ -62,7 +61,6 @@ function CreateListingPage() {
       formDataToSend.append('description', formData.description);
       formDataToSend.append('isBargaining', formData.isBargaining.toString());
 
-      // Add type-specific fields
       if (formData.type === 'SELL') {
         if (formData.price) formDataToSend.append('price', formData.price);
       } else if (formData.type === 'RENT') {
@@ -77,17 +75,14 @@ function CreateListingPage() {
         formDataToSend.append('withDescription', formData.withDescription);
       }
 
-      // Add image file if provided (backend expects 'imageUrl' field with File)
       if (image) {
         formDataToSend.append('imageUrl', image);
       }
       
       const response = await listingAPI.create(formDataToSend);
 
-      // Show confirmation modal instead of toast
       setShowModal(true);
     } catch (error) {
-      console.error('Error creating listing:', error);
       toast.error(error.response?.data?.message || 'Failed to create listing');
     } finally {
       setIsLoading(false);
@@ -246,7 +241,6 @@ function CreateListingPage() {
                 </div>
               )}
 
-              {/* Only show bargaining option for SELL and RENT types */}
               {(formData.type === 'SELL' || formData.type === 'RENT') && (
                 <div>
                   <label className={`flex items-center gap-3 cursor-pointer group ${

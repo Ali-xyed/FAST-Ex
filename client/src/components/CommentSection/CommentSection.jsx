@@ -14,7 +14,6 @@ const CommentSection = ({ listingId }) => {
 
   useEffect(() => {
     fetchComments();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [listingId]);
 
   const fetchComments = async () => {
@@ -22,7 +21,6 @@ const CommentSection = ({ listingId }) => {
       const response = await listingAPI.getById(listingId);
       setComments(response.data.comments || []);
     } catch (error) {
-      console.error('Error fetching comments:', error);
     } finally {
       setLoading(false);
     }
@@ -39,7 +37,7 @@ const CommentSection = ({ listingId }) => {
       });
       setNewComment('');
       setShowConfirmation(true);
-      fetchComments(); // Refresh comments
+      fetchComments();
     } catch (error) {
       toast.error('Failed to post comment');
     } finally {

@@ -32,22 +32,13 @@ function ListingDetailsPage() {
 
   useEffect(() => {
     fetchListing();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
   const fetchListing = async () => {
     try {
       const response = await listingAPI.getById(id);
-      console.log('Listing data:', response.data);
-      console.log('isBargaining check:', {
-        sellListing: response.data.sellListing,
-        rentListing: response.data.rentListing,
-        sellIsBargaining: response.data.sellListing?.isBargaining,
-        rentIsBargaining: response.data.rentListing?.isBargaining,
-      });
       setListing(response.data);
       
-      // Initialize edit data
       setEditData({
         title: response.data.title,
         description: response.data.description,
@@ -57,7 +48,6 @@ function ListingDetailsPage() {
       });
       setImagePreview(response.data.imageUrl);
     } catch (error) {
-      console.error('Error fetching listing:', error);
       toast.error('Failed to load listing');
       navigate('/home');
     } finally {
@@ -85,9 +75,8 @@ function ListingDetailsPage() {
       await listingAPI.markListing(id, { marked: status });
       toast.success(`Listing marked as ${status}!`);
       setShowMarkAsDropdown(false);
-      fetchListing(); // Refresh listing data
+      fetchListing();
     } catch (error) {
-      console.error('Error updating status:', error);
       toast.error(error.response?.data?.message || 'Failed to update status');
     } finally {
       setUpdatingStatus(false);
@@ -96,15 +85,12 @@ function ListingDetailsPage() {
 
   const handleContactSeller = async () => {
     if (listing.type === 'EXCHANGE') {
-      // Navigate to exchange request form
       navigate(`/exchange-request/${id}`);
     } else {
-      // For SELL/RENT, send request
       try {
         await listingAPI.requestListing(id);
         toast.success('Request sent successfully!');
       } catch (error) {
-        console.error('Error requesting listing:', error);
         toast.error(error.response?.data?.message || 'Failed to send request');
       }
     }
@@ -120,7 +106,6 @@ function ListingDetailsPage() {
       toast.success('Chat opened!');
       navigate(`/messages?chat=${chatId}`);
     } catch (error) {
-      console.error('Error creating chat:', error);
       toast.error('Failed to open chat');
     }
   };
@@ -144,7 +129,6 @@ function ListingDetailsPage() {
       setOfferPrice('');
       setActiveTab('comments');
     } catch (error) {
-      console.error('Error submitting offer:', error);
       toast.error(error.response?.data?.message || 'Failed to submit offer');
     }
   };
@@ -155,7 +139,6 @@ function ListingDetailsPage() {
 
   const handleCancelEdit = () => {
     setIsEditing(false);
-    // Reset edit data to original values
     setEditData({
       title: listing.title,
       description: listing.description,
@@ -213,16 +196,14 @@ function ListingDetailsPage() {
       await listingAPI.updateListing(id, formData);
       toast.success('Listing updated successfully!');
       setIsEditing(false);
-      fetchListing(); // Refresh listing data
+      fetchListing();
     } catch (error) {
-      console.error('Error updating listing:', error);
       toast.error(error.response?.data?.message || 'Failed to update listing');
     } finally {
       setSaving(false);
     }
   };
 
-  // Check if bargaining is allowed
   const isBargainingAllowed = listing?.sellListing?.isBargaining || listing?.rentListing?.isBargaining;
   const maxPrice = listing?.sellListing?.price || listing?.rentListing?.pricePerHour || 0;
 
@@ -494,7 +475,6 @@ function ListingDetailsPage() {
                           <button
                             onClick={() => {
                               setActiveTab('offer');
-                              // Scroll to top on mobile
                               window.scrollTo({ top: 0, behavior: 'smooth' });
                             }}
                             className={`w-full py-3 rounded-xl text-sm font-black uppercase tracking-widest transition-all ${

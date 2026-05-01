@@ -54,12 +54,10 @@ function CreateExchangeRequestPage() {
       await listingAPI.submitExchange(listingId, formDataToSend);
       toast.success('Exchange request submitted successfully!');
       
-      // Navigate back to listing details after a short delay
       setTimeout(() => {
         navigate(`/listing/${listingId}`);
       }, 1000);
     } catch (error) {
-      console.error('Error submitting exchange request:', error);
       toast.error(error.response?.data?.message || 'Failed to submit exchange request');
     } finally {
       setLoading(false);

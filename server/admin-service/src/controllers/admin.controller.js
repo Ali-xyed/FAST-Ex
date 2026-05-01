@@ -32,7 +32,6 @@ const adminLogin = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Email and password are required' });
     }
 
-    // Use auth service login endpoint to verify credentials
     let authLoginResponse;
     try {
       console.log(`[ADMIN LOGIN] Verifying credentials via auth service for: ${targetEmail}`);
@@ -53,7 +52,6 @@ const adminLogin = async (req, res) => {
       return res.status(400).json({ success: false, message: errorMsg });
     }
 
-    // Now check if user has admin role in Clerk
     let clerkUser;
     try {
       const users = await clerk.users.getUserList({ emailAddress: [targetEmail] });
@@ -66,7 +64,6 @@ const adminLogin = async (req, res) => {
 
       console.log(`[ADMIN LOGIN] Clerk user found: ${targetEmail}`);
       
-      // Check if user has admin role in metadata
       const userRole = clerkUser.publicMetadata?.role;
       console.log(`[ADMIN LOGIN] User role from Clerk: ${userRole}`);
 
@@ -82,7 +79,6 @@ const adminLogin = async (req, res) => {
       return res.status(500).json({ success: false, message: 'Authentication service error' });
     }
 
-    // Return the token from auth service (it's already a valid Clerk JWT)
     console.log(`[ADMIN LOGIN] Success for: ${targetEmail}, role: admin`);
     res.status(200).json({
       success: true,
@@ -106,7 +102,6 @@ const toggleUserBan = async (req, res) => {
     const { email } = req.params;
     console.log(`[ADMIN] Toggling ban for user: ${email}`);
 
-    // First toggle in auth service
     console.log(`[ADMIN] Calling auth service to toggle ban`);
     const authRes = await axios.patch(
       `${AUTH_SVC}/toggle-ban`, 
@@ -116,7 +111,6 @@ const toggleUserBan = async (req, res) => {
     const isBan = authRes.data.isBan;
     console.log(`[ADMIN] Auth service response - isBan: ${isBan}`);
 
-    // Then update user service
     try {
       console.log(`[ADMIN] Calling user service to update ban status`);
       await axios.patch(
@@ -243,7 +237,7 @@ const getAllListings = async (req, res) => {
   try {
     const response = await axios.get(`${LISTING_SVC}/admin/all`, { 
       headers: getAdminHeaders(req),
-      params: req.query // Forward query params (type, search)
+      params: req.query
     });
     res.status(200).json(response.data);
   } catch (error) {

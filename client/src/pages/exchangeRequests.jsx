@@ -15,22 +15,18 @@ function ExchangeRequestsPage() {
 
   useEffect(() => {
     fetchExchangeRequests();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [exchangeId]);
 
   const fetchExchangeRequests = async () => {
     try {
       if (exchangeId) {
-        // Fetch single exchange request
         const response = await listingAPI.getExchangeById(exchangeId);
         setRequests([response.data]);
       } else {
-        // Fetch all exchange requests
         const response = await listingAPI.getAllExchanges();
         setRequests(response.data);
       }
     } catch (error) {
-      console.error('Error fetching exchange requests:', error);
       toast.error('Failed to load exchange requests');
     } finally {
       setLoading(false);
@@ -41,9 +37,8 @@ function ExchangeRequestsPage() {
     try {
       await listingAPI.respondExchange(exchangeId, { status: 'ACCEPTED' });
       toast.success('Exchange request accepted! You can now message the user.');
-      fetchExchangeRequests(); // Refresh list
+      fetchExchangeRequests();
     } catch (error) {
-      console.error('Error accepting request:', error);
       toast.error(error.response?.data?.message || 'Failed to accept request');
     }
   };
@@ -52,9 +47,8 @@ function ExchangeRequestsPage() {
     try {
       await listingAPI.respondExchange(exchangeId, { status: 'DECLINED' });
       toast.success('Exchange request declined');
-      fetchExchangeRequests(); // Refresh list
+      fetchExchangeRequests();
     } catch (error) {
-      console.error('Error declining request:', error);
       toast.error(error.response?.data?.message || 'Failed to decline request');
     }
   };

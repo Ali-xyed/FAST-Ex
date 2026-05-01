@@ -24,7 +24,6 @@ const ProtectedAdminRoute = ({ children }) => {
           setIsAdmin(true);
         }
       } catch (error) {
-        console.error('Admin check failed:', error);
         localStorage.removeItem('adminToken');
       } finally {
         setChecking(false);

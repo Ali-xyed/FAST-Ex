@@ -34,7 +34,6 @@ function RegisterPage() {
     const handleInputChange = (e) => {
         const { name, value } = e.target;
         
-        // If email is being changed, auto-extract roll number
         if (name === 'email') {
             setFormData(prev => ({ 
                 ...prev, 
@@ -46,7 +45,6 @@ function RegisterPage() {
         }
     };
 
-    // Extract roll number from email (l233067@lhr.nu.edu.pk → 23L-3067)
     const extractRollNo = (email) => {
         const match = email.match(/^l(\d{2})(\d{4})@/);
         if (match) {
@@ -96,7 +94,6 @@ function RegisterPage() {
             return;
         }
 
-        // Password validation
         const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]).{10,}$/;
         if (!passwordRegex.test(formData.password)) {
             toast.error("Password must contain at least 1 uppercase, 1 lowercase, 1 digit, and 1 special character.");

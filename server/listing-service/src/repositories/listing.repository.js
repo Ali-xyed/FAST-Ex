@@ -39,15 +39,12 @@ class ListingRepository {
 
   async deleteListing(id) {
     return prisma.$transaction(async (tx) => {
-      // deleting associated sub-models
       await tx.sellListing.deleteMany({ where: { listingId: id } });
       await tx.rentListing.deleteMany({ where: { listingId: id } });
       await tx.exchangeListing.deleteMany({ where: { listingId: id } });
 
-      // deleting associated comments
       await tx.comment.deleteMany({ where: { listingId: id } });
 
-      // and in last deleting the parent listing
       return tx.listing.delete({ where: { id } });
     });
   }
@@ -116,7 +113,6 @@ class ListingRepository {
 
   async deleteAllListingsByUser(userEmail) {
     return prisma.$transaction(async (tx) => {
-      // Find all listings by user
       const userListings = await tx.listing.findMany({
         where: { userEmail },
         select: { id: true }
@@ -126,7 +122,6 @@ class ListingRepository {
 
       if (listingIds.length === 0) return;
 
-      // Delete all associated data
       await tx.sellListing.deleteMany({ where: { listingId: { in: listingIds } } });
       await tx.rentListing.deleteMany({ where: { listingId: { in: listingIds } } });
       await tx.exchangeListing.deleteMany({ where: { listingId: { in: listingIds } } });
@@ -134,7 +129,6 @@ class ListingRepository {
       await tx.bargain.deleteMany({ where: { listingId: { in: listingIds } } });
       await tx.exchange.deleteMany({ where: { listingId: { in: listingIds } } });
 
-      // Delete all listings
       await tx.listing.deleteMany({ where: { userEmail } });
 
       console.log(`Deleted ${listingIds.length} listings for user ${userEmail}`);

@@ -275,7 +275,6 @@ const updateProfile = async (req, res) => {
 
     console.log(`[AUTH] Updating profile for ${email}:`, { name, rollNo });
 
-    // Update profile in Auth Service database
     await authRepo.updateUserProfile(email, { name, rollNo });
 
     console.log(`[AUTH] Profile updated successfully in auth database for ${email}`);
@@ -295,7 +294,6 @@ const getToken = async (req, res) => {
     const user = await authRepo.findUserByEmail(email);
     if (!user) return res.status(404).json({ message: 'User not found' });
 
-    // Get user from Clerk
     const users = await clerk.users.getUserList({ emailAddress: [email] });
     const clerkUser = users.data?.[0];
 
@@ -303,12 +301,10 @@ const getToken = async (req, res) => {
       return res.status(404).json({ message: 'User not found in authentication service' });
     }
 
-    // Create sign-in token
     const signInToken = await clerk.signInTokens.createSignInToken({
       userId: clerkUser.id
     });
     
-    // Exchange for session
     const signInResponse = await fetch(`${CLERK_FAPI_URL}/v1/client/sign_ins?_clerk_js_version=5`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },

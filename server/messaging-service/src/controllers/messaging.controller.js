@@ -64,7 +64,6 @@ const createOrGetChat = async (req, res) => {
       console.log(`[MESSAGING] Chat already exists: ${chat.id}`);
     }
 
-    // If this is a new chat and we have an initial message, send it
     if (isNewChat && initialMessage) {
       console.log(`[MESSAGING] Sending initial message`);
       const message = await messagingRepo.createMessage(
@@ -75,7 +74,6 @@ const createOrGetChat = async (req, res) => {
         listingReference
       );
 
-      // Send notification event
       try {
         await sendEvent('message.sent', { 
           chatId: chat.id, 
@@ -88,7 +86,6 @@ const createOrGetChat = async (req, res) => {
         console.error('[MESSAGING] Kafka error:', kafkaErr.message);
       }
 
-      // Emit via WebSocket
       try {
         const { getIo } = require('../socket');
         getIo().to(chat.id).emit('new_message', message);

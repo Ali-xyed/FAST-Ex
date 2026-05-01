@@ -21,7 +21,6 @@ const allowedOrigins = [
 
 const corsOptions = {
   origin: (origin, callback) => {
-    // Allow requests with no origin (like mobile apps, Postman, or server-to-server)
     if (!origin) {
       callback(null, true);
     } else if (allowedOrigins.includes(origin)) {
@@ -43,12 +42,10 @@ app.use('/api/users', userRoutes);
 
 const PORT = process.env.USER_PORT || 5003;
 
-// Daily reputation bonus
 cron.schedule('0 0 * * *', async () => {
   try {
     console.log('[CRON] Running daily reputation bonus...');
     
-    // Get all users
     const users = await prisma.userProfile.findMany({
       where: { isBan: false }
     });

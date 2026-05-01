@@ -25,7 +25,6 @@ const allowedOrigins = [
 
 const corsOptions = {
   origin: (origin, callback) => {
-    // Allow requests with no origin (like mobile apps, Postman, or server-to-server)
     if (!origin) {
       callback(null, true);
     } else if (allowedOrigins.includes(origin)) {
@@ -57,13 +56,11 @@ const io = new Server(server, {
 });
 initSocket(io);
 
-// Kafka event handler for user deletion
 const handleUserDeleted = async (data) => {
   try {
     const { email } = data;
     console.log(`Received user.deleted event for: ${email}`);
     
-    // Delete all listings, comments, bargains, and exchanges by this user
     await listingRepository.deleteAllListingsByUser(email);
     await listingRepository.deleteAllCommentsByUser(email);
     await listingRepository.deleteAllBargainsByUser(email);

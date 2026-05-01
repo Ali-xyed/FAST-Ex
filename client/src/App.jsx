@@ -33,8 +33,6 @@ function App() {
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-
-          {/* Admin Routes - Public (no auth required) */}
           <Route path="/admin" element={<AdminLoginPage />} />
           <Route path="/admin/users" element={<AdminPage />} />
           <Route path="/admin/listings" element={<AdminListingsPage />} />
@@ -54,7 +52,6 @@ function App() {
           <Route path="/exchange-requests" element={<ExchangeRequestsPage />} />
           <Route path="/exchange-request/:listingId" element={<CreateExchangeRequestPage />} />
 
-          {/* Catch all */}
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </AuthProvider>

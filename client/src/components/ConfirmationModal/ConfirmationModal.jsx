@@ -18,7 +18,6 @@ function ConfirmationModal({ isOpen, onClose, onConfirm, title, message, confirm
     if (onConfirm) {
       onConfirm();
     }
-    // Don't close here - let the parent component close after async operation completes
   };
 
   const getIconAndColor = () => {

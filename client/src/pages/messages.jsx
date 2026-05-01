@@ -18,28 +18,20 @@ function MessagesPage() {
   const messagesEndRef = useRef(null);
   const currentChatIdRef = useRef(null);
 
-  // Initialize socket connection on mount
   useEffect(() => {
     initSocket();
     fetchConversations();
 
-    // Cleanup on unmount
     return () => {
       offNewMessage();
       disconnectSocket();
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Listen for new messages via WebSocket
   useEffect(() => {
     onNewMessage((message) => {
-      console.log('Received new message via socket:', message);
-      
-      // Only add message if it belongs to the currently selected chat
       if (currentChatIdRef.current === message.chatId) {
         setMessages((prev) => {
-          // Avoid duplicates
           if (prev.some(m => m.id === message.id)) {
             return prev;
           }
@@ -47,7 +39,6 @@ function MessagesPage() {
         });
       }
 
-      // Update last message in conversations list
       setConversations((prev) =>
         prev.map((conv) =>
           conv.id === message.chatId
@@ -67,13 +58,11 @@ function MessagesPage() {
     const chatId = searchParams.get('chat');
     const prefilledMessage = searchParams.get('message');
     
-    // Set prefilled message if provided
     if (prefilledMessage) {
       setNewMessage(decodeURIComponent(prefilledMessage));
     }
     
     if (chatId && !loading && conversations) {
-      // Find conversation by chat ID
       const conv = conversations.find(c => c.id === chatId);
       if (conv) {
         setSelectedConversation(conv);
@@ -82,23 +71,19 @@ function MessagesPage() {
         joinChat(conv.id);
       }
     } else if (userEmail && !loading && conversations) {
-      // Check if conversation exists
       const conv = conversations.find(c => 
         c.user1 === userEmail || c.user2 === userEmail
       );
       
       if (conv) {
-        // Existing conversation found
         setSelectedConversation(conv);
         currentChatIdRef.current = conv.id;
         fetchMessages(conv.id);
         joinChat(conv.id);
       } else {
-        // No conversation exists, create one
         createNewConversation(userEmail);
       }
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams, conversations, loading]);
 
   const fetchConversations = async () => {
@@ -106,7 +91,6 @@ function MessagesPage() {
       const response = await messageAPI.getAllChats();
       setConversations(response.data);
     } catch (error) {
-      console.error('Error fetching conversations:', error);
       toast.error('Failed to load conversations');
     } finally {
       setLoading(false);
@@ -119,7 +103,6 @@ function MessagesPage() {
         otherEmail: otherUserEmail,
       });
       
-      // Add to conversations list
       const newConv = response.data;
       setConversations(prev => [newConv, ...prev]);
       setSelectedConversation(newConv);
@@ -128,7 +111,6 @@ function MessagesPage() {
       joinChat(newConv.id);
       toast.success('Chat opened! Start messaging.');
     } catch (error) {
-      console.error('Error creating conversation:', error);
       toast.error('Failed to open chat');
     }
   };
@@ -138,7 +120,6 @@ function MessagesPage() {
       const response = await messageAPI.getChatById(chatId);
       setMessages(response.data.messages || []);
     } catch (error) {
-      console.error('Error fetching messages:', error);
       toast.error('Failed to load messages');
     }
   };
@@ -148,16 +129,15 @@ function MessagesPage() {
     if (!newMessage.trim() || !selectedConversation) return;
 
     const messageContent = newMessage;
-    setNewMessage(''); // Clear input immediately for better UX
+    setNewMessage('');
 
     try {
       await messageAPI.sendMessage(selectedConversation.id, {
         content: messageContent,
       });
-      // Message will be added via WebSocket event
     } catch (error) {
       toast.error('Failed to send message');
-      setNewMessage(messageContent); // Restore message on error
+      setNewMessage(messageContent);
     }
   };
 
@@ -165,9 +145,8 @@ function MessagesPage() {
     setSelectedConversation(conversation);
     currentChatIdRef.current = conversation.id;
     fetchMessages(conversation.id);
-    setShowMobileChat(true); // Show chat on mobile
+    setShowMobileChat(true);
     
-    // Join the chat room via WebSocket
     joinChat(conversation.id);
   };
 
@@ -176,19 +155,15 @@ function MessagesPage() {
     setSelectedConversation(null);
   };
 
-  // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  // Get current user's email from user object
   const getCurrentUserEmail = () => {
-    // Try different possible field names
     return user?.email || user?.clerkId || user?.userEmail || localStorage.getItem('userEmail');
   };
 
   const getOtherParticipant = (conversation) => {
-    // Backend now provides otherUserName directly
     return {
       email: conversation.otherUserEmail,
       name: conversation.otherUserName,

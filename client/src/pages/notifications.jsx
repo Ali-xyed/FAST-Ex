@@ -18,7 +18,6 @@ function NotificationsPage() {
       const response = await notificationAPI.getAll();
       setNotifications(response.data);
     } catch (error) {
-      console.error('Error fetching notifications:', error);
       toast.error('Failed to load notifications');
     } finally {
       setLoading(false);

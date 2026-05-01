@@ -15,22 +15,18 @@ function BargainOffersPage() {
 
   useEffect(() => {
     fetchBargainOffers();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [bargainId]);
 
   const fetchBargainOffers = async () => {
     try {
       if (bargainId) {
-        // Fetch single bargain
         const response = await listingAPI.getBargainById(bargainId);
         setOffers([response.data]);
       } else {
-        // Fetch all bargains
         const response = await listingAPI.getAllBargains();
         setOffers(response.data);
       }
     } catch (error) {
-      console.error('Error fetching bargain offers:', error);
       toast.error('Failed to load bargain offers');
     } finally {
       setLoading(false);
@@ -52,9 +48,8 @@ function BargainOffersPage() {
     try {
       await listingAPI.respondBargain(bargainId, { status: 'DECLINED' });
       toast.success('Offer declined');
-      fetchBargainOffers(); // Refresh list
+      fetchBargainOffers();
     } catch (error) {
-      console.error('Error declining offer:', error);
       toast.error(error.response?.data?.message || 'Failed to decline offer');
     }
   };

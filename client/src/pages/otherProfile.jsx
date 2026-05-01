@@ -16,7 +16,6 @@ function OtherProfilePage() {
 
   useEffect(() => {
     fetchUserData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [email]);
 
   const fetchUserData = async () => {
@@ -24,15 +23,13 @@ function OtherProfilePage() {
       setLoading(true);
       const [userRes, listingsRes] = await Promise.all([
         userAPI.getPublicProfile(email),
-        listingAPI.getAll({ email }), // Filter by email on client side
+        listingAPI.getAll({ email }),
       ]);
       
       setUser(userRes.data);
-      // Filter listings by email since backend doesn't have user-specific endpoint
       const userListings = listingsRes.data.filter(listing => listing.email === email);
       setListings(userListings);
     } catch (error) {
-      console.error('Error fetching user data:', error);
       toast.error('Failed to load user profile');
     } finally {
       setLoading(false);
@@ -60,7 +57,6 @@ function OtherProfilePage() {
       toast.success('Chat started!');
       navigate(`/messages?chat=${chatId}`);
     } catch (error) {
-      console.error('Error creating chat:', error);
       toast.error('Failed to start chat');
     }
   };

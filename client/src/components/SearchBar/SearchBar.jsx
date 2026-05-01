@@ -3,11 +3,10 @@ import { useState, useEffect } from 'react';
 const SearchBar = ({ onSearch }) => {
   const [query, setQuery] = useState('');
 
-  // Real-time search as user types
   useEffect(() => {
     const timeoutId = setTimeout(() => {
       onSearch(query);
-    }, 300); // Debounce for 300ms
+    }, 300);
 
     return () => clearTimeout(timeoutId);
   }, [query, onSearch]);

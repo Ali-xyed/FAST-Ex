@@ -6,13 +6,12 @@ import toast from 'react-hot-toast';
 const NotificationDropdown = ({ onClose }) => {
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState('all'); // 'all' or 'unread'
+  const [filter, setFilter] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   const navigate = useNavigate();
 
   useEffect(() => {
     fetchNotifications();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const fetchNotifications = async () => {
@@ -20,7 +19,6 @@ const NotificationDropdown = ({ onClose }) => {
       const response = await notificationAPI.getAll();
       setNotifications(response.data);
     } catch (error) {
-      console.error('Error fetching notifications:', error);
     } finally {
       setLoading(false);
     }
