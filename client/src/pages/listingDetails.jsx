@@ -12,7 +12,7 @@ function ListingDetailsPage() {
   const { user } = useAuth();
   const [listing, setListing] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState('comments'); // 'comments' or 'offer'
+  const [activeTab, setActiveTab] = useState('details'); // 'details', 'comments', or 'offer'
   const [offerPrice, setOfferPrice] = useState('');
   const [showImageModal, setShowImageModal] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
@@ -224,7 +224,7 @@ function ListingDetailsPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-white md:bg-gray-50">
         <Navbar />
         <div className="flex items-center justify-center py-20">
           <p className="text-gray-400 font-medium">Loading...</p>
@@ -239,10 +239,10 @@ function ListingDetailsPage() {
   const image = listing.imageUrl;
 
   return (
-    <div className="min-h-screen bg-gray-50 text-black font-sans selection:bg-black selection:text-white">
+    <div className="min-h-screen bg-white md:bg-gray-50 text-black font-sans selection:bg-black selection:text-white">
       <Navbar />
 
-      <main className="px-12 lg:px-20 py-6 max-w-[1600px] mx-auto">
+      <main className="px-4 sm:px-12 lg:px-20 py-6 max-w-[1600px] mx-auto">
         <button
           onClick={() => navigate(-1)}
           className="flex items-center gap-2 text-sm font-bold text-gray-400 hover:text-black transition-colors mb-4"
@@ -253,9 +253,47 @@ function ListingDetailsPage() {
           Back
         </button>
 
+        {/* Mobile Tab Navigation */}
+        <div className="lg:hidden mb-4 flex gap-2 overflow-x-auto pb-2">
+          <button
+            onClick={() => setActiveTab('details')}
+            className={`flex-shrink-0 px-4 py-2 rounded-xl text-xs font-black uppercase tracking-wider transition-all ${
+              activeTab === 'details'
+                ? 'bg-black text-white'
+                : 'bg-gray-100 text-gray-600'
+            }`}
+          >
+            Details
+          </button>
+          <button
+            onClick={() => setActiveTab('comments')}
+            className={`flex-shrink-0 px-4 py-2 rounded-xl text-xs font-black uppercase tracking-wider transition-all ${
+              activeTab === 'comments'
+                ? 'bg-black text-white'
+                : 'bg-gray-100 text-gray-600'
+            }`}
+          >
+            Comments
+          </button>
+          {!isOwner && isBargainingAllowed && listing.marked === 'PENDING' && (
+            <button
+              onClick={() => setActiveTab('offer')}
+              className={`flex-shrink-0 px-4 py-2 rounded-xl text-xs font-black uppercase tracking-wider transition-all ${
+                activeTab === 'offer'
+                  ? 'bg-black text-white'
+                  : 'bg-gray-100 text-gray-600'
+              }`}
+            >
+              Bargain
+            </button>
+          )}
+        </div>
+
         <div className="grid grid-cols-1 lg:grid-cols-9 gap-6">
           {/* Left Side - Item Details Card (4/9 width) */}
-          <div className="lg:col-span-4 bg-white border-2 border-gray-200 rounded-2xl overflow-hidden flex flex-col">
+          <div className={`lg:col-span-4 bg-white md:border-2 md:border-gray-200 md:rounded-2xl overflow-hidden flex flex-col ${
+            activeTab !== 'details' ? 'hidden lg:flex' : ''
+          }`}>
             {/* Image */}
             <div 
               className="relative h-64 bg-gray-50"
@@ -450,7 +488,11 @@ function ListingDetailsPage() {
                         </button>
                         {isBargainingAllowed && (
                           <button
-                            onClick={() => setActiveTab(activeTab === 'offer' ? 'comments' : 'offer')}
+                            onClick={() => {
+                              setActiveTab('offer');
+                              // Scroll to top on mobile
+                              window.scrollTo({ top: 0, behavior: 'smooth' });
+                            }}
                             className={`w-full py-3 rounded-xl text-sm font-black uppercase tracking-widest transition-all ${
                               activeTab === 'offer'
                                 ? 'bg-black text-white'
@@ -572,7 +614,9 @@ function ListingDetailsPage() {
           </div>
 
           {/* Right Side - Comments/Offer Section (5/9 width) */}
-          <div className="lg:col-span-5 bg-white border-2 border-gray-200 rounded-2xl overflow-hidden flex flex-col">
+          <div className={`lg:col-span-5 bg-white md:border-2 md:border-gray-200 md:rounded-2xl overflow-hidden flex flex-col ${
+            activeTab === 'details' ? 'hidden lg:flex' : ''
+          }`}>
             {activeTab === 'comments' ? (
               <>
                 <div className="p-4 border-b-2 border-gray-200 flex-shrink-0">

@@ -3,11 +3,13 @@ import { useAuth } from '../../context/AuthContext';
 import { messageAPI, listingAPI } from '../../utils/api';
 import toast from 'react-hot-toast';
 import { useState, useEffect } from 'react';
+import ConfirmationModal from '../ConfirmationModal/ConfirmationModal';
 
 const ListingCard = ({ listing, isOwnProfile = false, onDelete }) => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [isSent, setIsSent] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
 
   // Check if listing has been sent on mount
   useEffect(() => {
@@ -106,9 +108,10 @@ const ListingCard = ({ listing, isOwnProfile = false, onDelete }) => {
 
   const handleDeleteClick = async (e) => {
     e.stopPropagation();
-    
-    if (!confirm('Are you sure you want to delete this listing?')) return;
-    
+    setShowDeleteModal(true);
+  };
+
+  const confirmDelete = async () => {
     try {
       await listingAPI.delete(listing.id);
       toast.success('Listing deleted successfully');
@@ -122,10 +125,22 @@ const ListingCard = ({ listing, isOwnProfile = false, onDelete }) => {
   const statusInfo = getStatusInfo(listing.marked, listing.type);
 
   return (
-    <div 
-      onClick={() => navigate(`/listing/${listing.id}`)}
-      className="relative bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 group cursor-pointer"
-    >
+    <>
+      <ConfirmationModal
+        isOpen={showDeleteModal}
+        onClose={() => setShowDeleteModal(false)}
+        onConfirm={confirmDelete}
+        title="Delete Listing"
+        message="Are you sure you want to delete this listing? This action cannot be undone."
+        confirmText="Delete"
+        cancelText="Cancel"
+        type="danger"
+      />
+      
+      <div 
+        onClick={() => navigate(`/listing/${listing.id}`)}
+        className="relative bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 group cursor-pointer"
+      >
       <div className="relative aspect-[4/3] bg-gray-50 overflow-hidden">
         {listing.imageUrl ? (
           <img
@@ -249,6 +264,7 @@ const ListingCard = ({ listing, isOwnProfile = false, onDelete }) => {
         </div>
       </div>
     </div>
+    </>
   );
 };
 

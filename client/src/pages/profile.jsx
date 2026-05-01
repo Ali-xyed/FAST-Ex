@@ -58,11 +58,11 @@ function ProfilePage() {
   if (!user) return null;
 
   return (
-    <div className="min-h-screen bg-gray-50 text-black font-sans selection:bg-black selection:text-white">
+    <div className="min-h-screen bg-white md:bg-gray-50 text-black font-sans selection:bg-black selection:text-white">
       <Navbar />
 
-      <main className="px-8 lg:px-20 py-8 max-w-7xl mx-auto">
-        <div className="bg-white border border-gray-100 rounded-2xl p-8 mb-8">
+      <main className="px-4 sm:px-8 lg:px-20 py-8 max-w-7xl mx-auto">
+        <div className="bg-white md:border md:border-gray-100 md:rounded-2xl md:p-8 mb-8">
           <div className="flex flex-col md:flex-row gap-8">
             <div className="flex flex-col items-center">
               <div className="relative">
