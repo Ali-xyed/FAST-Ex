@@ -1,7 +1,16 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 const SearchBar = ({ onSearch }) => {
   const [query, setQuery] = useState('');
+
+  // Real-time search as user types
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      onSearch(query);
+    }, 300); // Debounce for 300ms
+
+    return () => clearTimeout(timeoutId);
+  }, [query, onSearch]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -14,7 +23,7 @@ const SearchBar = ({ onSearch }) => {
         type="text"
         value={query}
         onChange={(e) => setQuery(e.target.value)}
-        placeholder="Search for items, categories, or sellers..."
+        placeholder="Search by post title..."
         className="w-full bg-white border-2 border-gray-200 rounded-2xl py-4 pl-14 pr-6 text-sm font-semibold focus:ring-2 focus:ring-black focus:border-black transition-all outline-none placeholder:text-gray-400"
       />
       <svg 

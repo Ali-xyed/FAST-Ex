@@ -99,21 +99,24 @@ function ProfilePage() {
               <div className="bg-gray-50 border border-gray-200 rounded-xl p-4">
                 <p className="text-xs font-black text-gray-900 uppercase tracking-wider mb-2">Account Management</p>
                 <p className="text-xs text-gray-500 font-medium mb-3">
-                  Click the button below to manage your account settings
+                  Manage your account settings, password, and security
                 </p>
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-3 bg-white p-3 rounded-lg border border-gray-200">
                   <UserButton 
                     appearance={{
                       elements: {
-                        avatarBox: "w-10 h-10",
+                        avatarBox: "w-10 h-10 rounded-lg",
                         userButtonPopoverCard: "shadow-2xl",
+                        userButtonTrigger: "focus:shadow-none",
                       }
                     }}
-                    showName={false}
                   />
-                  <span className="text-xs font-bold text-gray-600">
-                    Click to manage your name, password, and security settings
-                  </span>
+                  <div className="flex-1">
+                    <p className="text-xs font-bold text-gray-900">Clerk Account Settings</p>
+                    <p className="text-[10px] text-gray-500 font-medium">
+                      Click the avatar to manage your profile
+                    </p>
+                  </div>
                 </div>
               </div>
             </div>

@@ -2,10 +2,20 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { messageAPI, listingAPI } from '../../utils/api';
 import toast from 'react-hot-toast';
+import { useState, useEffect } from 'react';
 
 const ListingCard = ({ listing, isOwnProfile = false, onDelete }) => {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const [isSent, setIsSent] = useState(false);
+
+  // Check if listing has been sent on mount
+  useEffect(() => {
+    const sentListings = JSON.parse(localStorage.getItem('sentListings') || '{}');
+    if (sentListings[listing.id]) {
+      setIsSent(true);
+    }
+  }, [listing.id]);
 
   // Debug logging
   console.log('ListingCard - User:', user?.email, 'Listing Owner:', listing.email, 'Show Chat:', user?.email !== listing.email);
@@ -80,8 +90,14 @@ const ListingCard = ({ listing, isOwnProfile = false, onDelete }) => {
         listingReference
       });
       
+      // Mark listing as sent in localStorage
+      const sentListings = JSON.parse(localStorage.getItem('sentListings') || '{}');
+      sentListings[listing.id] = true;
+      localStorage.setItem('sentListings', JSON.stringify(sentListings));
+      setIsSent(true);
+      
       navigate('/messages');
-      toast.success('Chat started!');
+      toast.success('Listing sent in chat!');
     } catch (error) {
       console.error('Error creating chat:', error);
       toast.error('Failed to start chat');
@@ -190,15 +206,25 @@ const ListingCard = ({ listing, isOwnProfile = false, onDelete }) => {
             </button>
           ) : (
             <div className="flex items-center gap-3">
-              {/* Chat Button - simple black icon */}
+              {/* Chat Button - with sent indicator */}
               <button
                 onClick={handleChatClick}
-                className="w-10 h-10 rounded-full bg-black text-white flex items-center justify-center hover:bg-gray-800 transition-all shadow-md border-2 border-white"
-                title="Send Message"
+                className={`relative w-10 h-10 rounded-full flex items-center justify-center transition-all shadow-md border-2 border-white ${
+                  isSent 
+                    ? 'bg-green-600 text-white hover:bg-green-700' 
+                    : 'bg-black text-white hover:bg-gray-800'
+                }`}
+                title={isSent ? "Listing sent" : "Send Message"}
               >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-                </svg>
+                {isSent ? (
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                  </svg>
+                ) : (
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                  </svg>
+                )}
               </button>
               
               {/* Profile Button - show user image or "L" */}

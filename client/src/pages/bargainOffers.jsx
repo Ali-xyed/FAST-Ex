@@ -50,12 +50,12 @@ function BargainOffersPage() {
 
   const handleReject = async (bargainId) => {
     try {
-      await listingAPI.respondBargain(bargainId, { status: 'REJECTED' });
-      toast.success('Offer rejected');
+      await listingAPI.respondBargain(bargainId, { status: 'DECLINED' });
+      toast.success('Offer declined');
       fetchBargainOffers(); // Refresh list
     } catch (error) {
-      console.error('Error rejecting offer:', error);
-      toast.error(error.response?.data?.message || 'Failed to reject offer');
+      console.error('Error declining offer:', error);
+      toast.error(error.response?.data?.message || 'Failed to decline offer');
     }
   };
 
@@ -156,9 +156,9 @@ function BargainOffersPage() {
                     <p className="text-sm font-black text-green-600 uppercase tracking-wider">Accepted</p>
                   </div>
                 )}
-                {offer.status === 'REJECTED' && (
+                {offer.status === 'DECLINED' && (
                   <div className="mt-6 p-3 bg-red-50 border-2 border-red-200 rounded-xl text-center">
-                    <p className="text-sm font-black text-red-600 uppercase tracking-wider">Rejected</p>
+                    <p className="text-sm font-black text-red-600 uppercase tracking-wider">Declined</p>
                   </div>
                 )}
               </div>

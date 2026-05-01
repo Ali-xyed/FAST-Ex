@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import AdminNavbar from '../components/AdminNavbar/AdminNavbar';
+import ConfirmationModal from '../components/ConfirmationModal/ConfirmationModal';
 import { adminAPI } from '../utils/api';
 import toast from 'react-hot-toast';
 
@@ -8,6 +9,8 @@ function AdminPage() {
   const navigate = useNavigate();
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [userToBan, setUserToBan] = useState(null);
 
   // Check admin session
   useEffect(() => {
@@ -26,7 +29,11 @@ function AdminPage() {
     try {
       setLoading(true);
       const response = await adminAPI.getAllUsers();
-      setUsers(response.data);
+      // Filter out admin users (role === 'ADMIN' or role === 'admin')
+      const nonAdminUsers = response.data.filter(user => 
+        user.role?.toUpperCase() !== 'ADMIN'
+      );
+      setUsers(nonAdminUsers);
     } catch (error) {
       console.error('Error fetching users:', error);
       toast.error('Failed to load users');
@@ -37,19 +44,27 @@ function AdminPage() {
 
   const handleToggleBan = async (email) => {
     const userToUpdate = users.find(u => u.email === email);
-    const action = userToUpdate.isBan ? 'unban' : 'ban';
+    setUserToBan(userToUpdate);
+    setShowConfirmModal(true);
+  };
+
+  const confirmBanToggle = async () => {
+    if (!userToBan) return;
     
-    if (!confirm(`Are you sure you want to ${action} this user?`)) return;
+    const action = userToBan.isBan ? 'unban' : 'ban';
     
     try {
-      const response = await adminAPI.toggleBanUser(email);
+      const response = await adminAPI.toggleBanUser(userToBan.email);
       setUsers(users.map(u => 
-        u.email === email ? { ...u, isBan: response.data.isBan } : u
+        u.email === userToBan.email ? { ...u, isBan: response.data.isBan } : u
       ));
       toast.success(`User ${action}ned successfully`);
     } catch (error) {
       console.error('Error toggling ban:', error);
       toast.error(`Failed to ${action} user`);
+    } finally {
+      setShowConfirmModal(false);
+      setUserToBan(null);
     }
   };
 
@@ -149,6 +164,21 @@ function AdminPage() {
           </div>
         </div>
       </main>
+
+      {/* Confirmation Modal */}
+      {showConfirmModal && userToBan && (
+        <ConfirmationModal
+          title={userToBan.isBan ? "Unban User" : "Ban User"}
+          message={`Are you sure you want to ${userToBan.isBan ? 'unban' : 'ban'} ${userToBan.name || userToBan.email}?`}
+          onConfirm={confirmBanToggle}
+          onCancel={() => {
+            setShowConfirmModal(false);
+            setUserToBan(null);
+          }}
+          confirmText={userToBan.isBan ? "Unban" : "Ban"}
+          confirmColor={userToBan.isBan ? "green" : "red"}
+        />
+      )}
     </div>
   );
 }

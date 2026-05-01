@@ -1,14 +1,12 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import NotificationDropdown from '../NotificationDropdown/NotificationDropdown';
 
 const Navbar = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, logout } = useAuth();
   const [showProfileMenu, setShowProfileMenu] = useState(false);
-  const [showNotifications, setShowNotifications] = useState(false);
   const [scrolled, setScrolled] = useState(false);
 
   // Handle scroll effect
@@ -91,25 +89,22 @@ const Navbar = () => {
             <span className="hidden sm:inline">Create</span>
           </button>
 
-          {/* Notifications */}
-          <div className="relative">
-            <button
-              onClick={() => setShowNotifications(!showNotifications)}
-              className="relative w-11 h-11 flex items-center justify-center rounded-xl bg-gray-50 border border-gray-200 hover:bg-gray-100 hover:border-gray-300 transition-all duration-300 group"
-            >
-              <svg className="w-5 h-5 text-gray-700 group-hover:scale-110 transition-transform" fill="currentColor" viewBox="0 0 20 20">
-                <path d="M10 2a6 6 0 00-6 6v3.586l-.707.707A1 1 0 004 14h12a1 1 0 00.707-1.707L16 11.586V8a6 6 0 00-6-6zM10 18a3 3 0 01-3-3h6a3 3 0 01-3 3z" />
-              </svg>
-              <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full animate-pulse" />
-            </button>
-            {showNotifications && <NotificationDropdown onClose={() => setShowNotifications(false)} />}
-          </div>
+          {/* Notifications - Navigate to page */}
+          <button
+            onClick={() => navigate('/notifications')}
+            className="relative w-11 h-11 flex items-center justify-center rounded-xl bg-gray-50 border border-gray-200"
+          >
+            <svg className="w-5 h-5 text-gray-700" fill="currentColor" viewBox="0 0 20 20">
+              <path d="M10 2a6 6 0 00-6 6v3.586l-.707.707A1 1 0 004 14h12a1 1 0 00.707-1.707L16 11.586V8a6 6 0 00-6-6zM10 18a3 3 0 01-3-3h6a3 3 0 01-3 3z" />
+            </svg>
+            <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full animate-pulse" />
+          </button>
 
           {/* Profile Menu */}
           <div className="relative">
             <button
               onClick={() => setShowProfileMenu(!showProfileMenu)}
-              className="w-11 h-11 rounded-xl bg-gradient-to-br from-black to-gray-700 flex items-center justify-center border-2 border-white shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden hover:scale-105"
+              className="w-11 h-11 rounded-xl bg-gradient-to-br from-black to-gray-700 flex items-center justify-center border-2 border-white shadow-lg overflow-hidden"
             >
               {user?.imageUrl ? (
                 <img src={user.imageUrl} className="w-full h-full object-cover" alt="profile" />

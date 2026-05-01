@@ -50,12 +50,12 @@ function ExchangeRequestsPage() {
 
   const handleReject = async (exchangeId) => {
     try {
-      await listingAPI.respondExchange(exchangeId, { status: 'REJECTED' });
-      toast.success('Exchange request rejected');
+      await listingAPI.respondExchange(exchangeId, { status: 'DECLINED' });
+      toast.success('Exchange request declined');
       fetchExchangeRequests(); // Refresh list
     } catch (error) {
-      console.error('Error rejecting request:', error);
-      toast.error(error.response?.data?.message || 'Failed to reject request');
+      console.error('Error declining request:', error);
+      toast.error(error.response?.data?.message || 'Failed to decline request');
     }
   };
 
@@ -180,9 +180,9 @@ function ExchangeRequestsPage() {
                       <p className="text-sm font-black text-green-600 uppercase tracking-wider">Accepted</p>
                     </div>
                   )}
-                  {request.status === 'REJECTED' && (
+                  {request.status === 'DECLINED' && (
                     <div className="mt-6 p-3 bg-red-50 border-2 border-red-200 rounded-xl text-center">
-                      <p className="text-sm font-black text-red-600 uppercase tracking-wider">Rejected</p>
+                      <p className="text-sm font-black text-red-600 uppercase tracking-wider">Declined</p>
                     </div>
                   )}
                 </div>
