@@ -124,9 +124,9 @@ deploy-infrastructure:
     - ssh ubuntu@$EC2_IP "mkdir -p ~/fast-ex/shared"
     - scp -r ./server/shared/* ubuntu@$EC2_IP:~/fast-ex/shared/
     - ssh ubuntu@$EC2_IP "docker network create fast-ex-network || true"
-    - ssh ubuntu@$EC2_IP "export KAFKA_EC2_PUBLIC_IP=$EC2_IP && cd ~/fast-ex/shared/apache-kafka/prod && docker compose up -d"
-    - ssh ubuntu@$EC2_IP "export REDIS_PASSWORD=$REDIS_PASSWORD && cd ~/fast-ex/shared/redis/prod && docker compose up -d"
-    - ssh ubuntu@$EC2_IP "export RABBITMQ_USER=$RABBITMQ_USER RABBITMQ_PASSWORD=$RABBITMQ_PASSWORD RABBITMQ_VHOST=$RABBITMQ_VHOST && cd ~/fast-ex/shared/rabbit-mq/prod && docker compose up -d"
+    - ssh ubuntu@$EC2_IP "export KAFKA_EC2_PUBLIC_IP=$EC2_IP && cd ~/fast-ex/shared/apache-kafka/prod && docker-compose up -d"
+    - ssh ubuntu@$EC2_IP "export REDIS_PASSWORD=$REDIS_PASSWORD && cd ~/fast-ex/shared/redis/prod && docker-compose up -d"
+    - ssh ubuntu@$EC2_IP "export RABBITMQ_USER=$RABBITMQ_USER RABBITMQ_PASSWORD=$RABBITMQ_PASSWORD RABBITMQ_VHOST=$RABBITMQ_VHOST && cd ~/fast-ex/shared/rabbit-mq/prod && docker-compose up -d"
     - echo "Infrastructure deployed successfully"
   only:
     - main
@@ -144,11 +144,11 @@ deploy-databases:
     - scp -r ./server/listing-service/mongodb/prod/* ubuntu@$EC2_IP:~/fast-ex/databases/listing/
     - scp -r ./server/messaging-service/mongodb/prod/* ubuntu@$EC2_IP:~/fast-ex/databases/messaging/
     - scp -r ./server/notification-service/mongodb/prod/* ubuntu@$EC2_IP:~/fast-ex/databases/notification/
-    - ssh ubuntu@$EC2_IP "cd ~/fast-ex/databases/auth && docker compose up -d"
-    - ssh ubuntu@$EC2_IP "cd ~/fast-ex/databases/user && docker compose up -d"
-    - ssh ubuntu@$EC2_IP "cd ~/fast-ex/databases/listing && docker compose up -d"
-    - ssh ubuntu@$EC2_IP "cd ~/fast-ex/databases/messaging && docker compose up -d"
-    - ssh ubuntu@$EC2_IP "cd ~/fast-ex/databases/notification && docker compose up -d"
+    - ssh ubuntu@$EC2_IP "cd ~/fast-ex/databases/auth && docker-compose up -d"
+    - ssh ubuntu@$EC2_IP "cd ~/fast-ex/databases/user && docker-compose up -d"
+    - ssh ubuntu@$EC2_IP "cd ~/fast-ex/databases/listing && docker-compose up -d"
+    - ssh ubuntu@$EC2_IP "cd ~/fast-ex/databases/messaging && docker-compose up -d"
+    - ssh ubuntu@$EC2_IP "cd ~/fast-ex/databases/notification && docker-compose up -d"
     - sleep 15
     - echo "All MongoDB instances deployed"
   only:
