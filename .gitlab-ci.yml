@@ -11,7 +11,7 @@ default:
     - aws
 
 services:
-  - name: docker:24.0.5-dind
+  - name: docker:27-dind
     alias: docker
 
 .docker-login: &docker-login
@@ -22,7 +22,7 @@ services:
 build-client:
   <<: *docker-login
   stage: build
-  image: docker:24.0.5
+  image: docker:27
   script:
     - docker build -t $DOCKER_USERNAME/web-client:latest ./client
     - docker push $DOCKER_USERNAME/web-client:latest
@@ -33,7 +33,7 @@ build-client:
 build-gateway:
   <<: *docker-login
   stage: build
-  image: docker:24.0.5
+  image: docker:27
   script:
     - docker build -t $DOCKER_USERNAME/web-api-gateway:latest ./server/api-gateway
     - docker push $DOCKER_USERNAME/web-api-gateway:latest
@@ -44,7 +44,7 @@ build-gateway:
 build-auth:
   <<: *docker-login
   stage: build
-  image: docker:24.0.5
+  image: docker:27
   script:
     - docker build -t $DOCKER_USERNAME/web-auth:latest ./server/auth-service
     - docker push $DOCKER_USERNAME/web-auth:latest
@@ -55,7 +55,7 @@ build-auth:
 build-user:
   <<: *docker-login
   stage: build
-  image: docker:24.0.5
+  image: docker:27
   script:
     - docker build -t $DOCKER_USERNAME/web-user:latest ./server/user-service
     - docker push $DOCKER_USERNAME/web-user:latest
@@ -66,7 +66,7 @@ build-user:
 build-listing:
   <<: *docker-login
   stage: build
-  image: docker:24.0.5
+  image: docker:27
   script:
     - docker build -t $DOCKER_USERNAME/web-listing:latest ./server/listing-service
     - docker push $DOCKER_USERNAME/web-listing:latest
@@ -77,7 +77,7 @@ build-listing:
 build-messaging:
   <<: *docker-login
   stage: build
-  image: docker:24.0.5
+  image: docker:27
   script:
     - docker build -t $DOCKER_USERNAME/web-messages:latest ./server/messaging-service
     - docker push $DOCKER_USERNAME/web-messages:latest
@@ -88,7 +88,7 @@ build-messaging:
 build-notification:
   <<: *docker-login
   stage: build
-  image: docker:24.0.5
+  image: docker:27
   script:
     - docker build -t $DOCKER_USERNAME/web-notifications:latest ./server/notification-service
     - docker push $DOCKER_USERNAME/web-notifications:latest
@@ -99,7 +99,7 @@ build-notification:
 build-admin:
   <<: *docker-login
   stage: build
-  image: docker:24.0.5
+  image: docker:27
   script:
     - docker build -t $DOCKER_USERNAME/web-admin:latest ./server/admin-service
     - docker push $DOCKER_USERNAME/web-admin:latest
