@@ -57,9 +57,9 @@ const CommentSection = ({ listingId }) => {
 
   return (
     <>
-      <div className="flex flex-col h-full p-4">
+      <div className="flex flex-col h-full">
         {/* Comments List - Scrollable */}
-        <div className="flex-1 overflow-y-auto space-y-3 mb-4" style={{
+        <div className="flex-1 overflow-y-auto space-y-3 p-4 pb-20 lg:pb-4" style={{
           scrollbarWidth: 'thin',
           scrollbarColor: '#9CA3AF #F3F4F6'
         }}>
@@ -131,9 +131,9 @@ const CommentSection = ({ listingId }) => {
           )}
         </div>
 
-        {/* Comment Input at Bottom - Fixed */}
-        <form onSubmit={handleSubmit} className="border-t border-gray-200 pt-3 flex-shrink-0">
-          <div className="flex gap-2 items-center">
+        {/* Comment Input at Bottom - Fixed on mobile, relative on desktop */}
+        <form onSubmit={handleSubmit} className="fixed lg:relative bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 lg:pt-3 flex-shrink-0 z-10">
+          <div className="flex gap-2 items-center max-w-[1600px] mx-auto">
             <div className="w-8 h-8 rounded-full bg-black flex items-center justify-center overflow-hidden flex-shrink-0">
               {user?.imageUrl ? (
                 <img src={user.imageUrl} className="w-full h-full object-cover" alt="You" />

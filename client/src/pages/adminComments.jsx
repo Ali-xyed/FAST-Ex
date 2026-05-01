@@ -72,6 +72,9 @@ function AdminCommentsPage() {
       await adminAPI.deleteComment(commentToDelete.listingId, commentToDelete.commentId);
       setComments(comments.filter(c => c.id !== commentToDelete.commentId));
       toast.success('Comment deleted successfully');
+      
+      // Refetch to update dashboard counts
+      await fetchAllComments();
     } catch (error) {
       toast.error('Failed to delete comment');
     } finally {
@@ -80,15 +83,26 @@ function AdminCommentsPage() {
     }
   };
 
-  const handleVerifyComment = async (commentId) => {
+  const handleVerifyComment = async (commentId, action) => {
     try {
-      await adminAPI.verifyComment(commentId);
-      setComments(comments.map(c => 
-        c.id === commentId ? { ...c, isVerified: true } : c
-      ));
-      toast.success('Comment verified successfully');
+      await adminAPI.verifyComment(commentId, action);
+      
+      if (action === 'reject') {
+        // Remove from list if rejected
+        setComments(comments.filter(c => c.id !== commentId));
+        toast.success('Comment rejected! User reputation -10');
+      } else {
+        // Update verification status if approved
+        setComments(comments.map(c => 
+          c.id === commentId ? { ...c, isVerified: true } : c
+        ));
+        toast.success('Comment approved! User reputation +1');
+      }
+      
+      // Refetch to update dashboard counts
+      await fetchAllComments();
     } catch (error) {
-      toast.error('Failed to verify comment');
+      toast.error(`Failed to ${action} comment`);
     }
   };
 
@@ -246,19 +260,29 @@ function AdminCommentsPage() {
                         {/* Actions */}
                         <div className="flex flex-col sm:flex-row gap-2 ml-0 sm:ml-13">
                           {!comment.isVerified && (
+                            <>
+                              <button
+                                onClick={() => handleVerifyComment(comment.id, 'approve')}
+                                className="flex-1 sm:flex-none bg-green-600 text-white px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest hover:bg-green-700 transition-all whitespace-nowrap"
+                              >
+                                Approve
+                              </button>
+                              <button
+                                onClick={() => handleVerifyComment(comment.id, 'reject')}
+                                className="flex-1 sm:flex-none bg-red-600 text-white px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest hover:bg-red-700 transition-all whitespace-nowrap"
+                              >
+                                Reject
+                              </button>
+                            </>
+                          )}
+                          {comment.isVerified && (
                             <button
-                              onClick={() => handleVerifyComment(comment.id)}
-                              className="flex-1 sm:flex-none bg-black text-white px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest hover:bg-gray-800 transition-all whitespace-nowrap"
+                              onClick={() => handleDeleteComment(comment.listingId, comment.id)}
+                              className="flex-1 sm:flex-none bg-white text-black border-2 border-black px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest hover:bg-gray-100 transition-all whitespace-nowrap"
                             >
-                              Verify
+                              Delete
                             </button>
                           )}
-                          <button
-                            onClick={() => handleDeleteComment(comment.listingId, comment.id)}
-                            className="flex-1 sm:flex-none bg-white text-black border-2 border-black px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest hover:bg-gray-100 transition-all whitespace-nowrap"
-                          >
-                            Delete
-                          </button>
                         </div>
                       </div>
                     </div>

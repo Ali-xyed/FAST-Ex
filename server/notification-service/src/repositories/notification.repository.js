@@ -19,6 +19,17 @@ class NotificationRepository {
   async createNotification(data) {
     return prisma.notification.create({ data });
   }
+
+  async deleteNotificationsByEmail(email) {
+    return prisma.notification.deleteMany({
+      where: {
+        OR: [
+          { to: email },
+          { from: email }
+        ]
+      }
+    });
+  }
 }
 
 module.exports = new NotificationRepository();

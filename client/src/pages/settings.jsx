@@ -21,6 +21,7 @@ function SettingsPage() {
   const [uploadingImage, setUploadingImage] = useState(false);
   const [showDeleteAccountModal, setShowDeleteAccountModal] = useState(false);
   const [deletingAccount, setDeletingAccount] = useState(false);
+  const [deleteConfirmEmail, setDeleteConfirmEmail] = useState('');
   const fileInputRef = useRef(null);
 
   const handleImageUpload = async (e) => {
@@ -125,12 +126,24 @@ function SettingsPage() {
   };
 
   const handleDeleteAccount = async () => {
+    // Validate email confirmation
+    if (deleteConfirmEmail !== user.email) {
+      toast.error('Email does not match. Please type your email to confirm.');
+      return;
+    }
+
     setDeletingAccount(true);
     try {
-      await userAPI.deleteAccount();
-      toast.success('Account deleted successfully');
+      // First, log out the user (clear local storage and auth state)
       localStorage.clear();
-      window.location.href = '/';
+      
+      // Then delete the account from the server
+      await userAPI.deleteAccount();
+      
+      toast.success('Account deleted successfully');
+      
+      // Navigate to landing page
+      navigate('/');
     } catch (error) {
       console.error('Error deleting account:', error);
       toast.error('Failed to delete account');
@@ -366,10 +379,32 @@ function SettingsPage() {
       {/* Delete Account Confirmation Modal */}
       <ConfirmationModal
         isOpen={showDeleteAccountModal}
-        onClose={() => setShowDeleteAccountModal(false)}
+        onClose={() => {
+          setShowDeleteAccountModal(false);
+          setDeleteConfirmEmail('');
+        }}
         onConfirm={handleDeleteAccount}
         title="Delete Account Permanently?"
-        message="This action cannot be undone. All your data including profile, listings, comments, and messages will be permanently deleted from our servers."
+        message={
+          <div className="space-y-4">
+            <p className="text-center text-gray-600 leading-relaxed">
+              This action cannot be undone. All your data including profile, listings, comments, and messages will be permanently deleted from our servers.
+            </p>
+            <div className="text-left">
+              <label className="block text-sm font-bold text-gray-900 mb-2">
+                Type your email to confirm: <span className="text-red-600">{user.email}</span>
+              </label>
+              <input
+                type="email"
+                value={deleteConfirmEmail}
+                onChange={(e) => setDeleteConfirmEmail(e.target.value)}
+                placeholder="Enter your email"
+                className="w-full bg-gray-50 border-2 border-gray-300 rounded-xl py-2.5 px-4 text-sm font-medium text-gray-900 focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none transition-all"
+                onClick={(e) => e.stopPropagation()}
+              />
+            </div>
+          </div>
+        }
         confirmText={deletingAccount ? "Deleting..." : "Delete Account"}
         cancelText="Cancel"
         type="danger"

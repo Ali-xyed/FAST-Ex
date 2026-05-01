@@ -229,7 +229,7 @@ const toggleBan = async (req, res) => {
     const { email } = req.params;
     const { isBan } = req.body;
     const profile = await userRepo.updateUser(email, { isBan });
-    await delCache(`user:profile:${email}`, `user:public:${email}`, `user:rep:${email}`);
+    await delCache(`user:profile:${email}`, `user:public:${email}`, `user:rep:${email}`, 'users:all');
     res.status(200).json(profile);
   } catch (error) {
     if (error.code === 'P2025') return res.status(404).json({ message: 'User not found' });

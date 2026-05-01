@@ -129,10 +129,10 @@ export const adminAPI = {
   getAllUsers: () => api.get('/api/admin/users'),
   getAllListings: (params) => api.get('/api/admin/listings', { params }),
   toggleBanUser: (email) => api.patch(`/api/admin/users/${email}/toggle-ban`),
-  verifyListing: (id) => api.patch(`/api/admin/listings/${id}/verify`),
+  verifyListing: (id, action) => api.patch(`/api/admin/listings/${id}/verify`, { action }), // action: 'approve' or 'reject'
   deleteListing: (id) => api.delete(`/api/admin/listings/${id}`),
   deleteComment: (listingId, commentId) => api.delete(`/api/admin/listings/${listingId}/comments/${commentId}`),
-  verifyComment: (commentId) => api.patch(`/api/admin/comments/${commentId}/verify`),
+  verifyComment: (commentId, action) => api.patch(`/api/admin/comments/${commentId}/verify`, { action }), // action: 'approve' or 'reject'
 };
 
 export default api;

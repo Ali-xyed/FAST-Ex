@@ -34,6 +34,7 @@ const connectRabbitMQConsumer = async () => {
     const channel = await connection.createChannel();
 
     await channel.assertQueue('email.otp', { durable: true });
+    await channel.assertQueue('email.account.status', { durable: true });
     await channel.assertQueue('listing.request', { durable: true });
     await channel.assertQueue('bargain.accepted', { durable: true });
     await channel.assertQueue('bargain.requested', { durable: true });
@@ -62,6 +63,56 @@ const connectRabbitMQConsumer = async () => {
           channel.ack(msg);
         } catch (err) {
           console.error(`Failed to send OTP email to ${email}`, err);
+          channel.ack(msg);
+        }
+      }
+    });
+
+    channel.consume('email.account.status', async (msg) => {
+      if (msg !== null) {
+        const { email, name, status, isBanned } = JSON.parse(msg.content.toString());
+        try {
+          const subject = isBanned ? 'Account Suspended' : 'Account Reinstated';
+          const statusColor = isBanned ? '#ef4444' : '#10b981';
+          const statusText = isBanned ? 'SUSPENDED' : 'ACTIVE';
+          
+          await transporter.sendMail({
+            from: `"FAST-Ex" <${process.env.EMAIL_USER}>`,
+            to: email,
+            subject: subject,
+            html: createEmailTemplate(subject, `
+              <p>Hello ${name},</p>
+              <p>This is to inform you that your FAST-Ex account status has been updated.</p>
+              <div style="background-color: #f1f5f9; padding: 20px; border-radius: 6px; margin: 24px 0; border-left: 4px solid ${statusColor};">
+                <p style="margin: 0; font-weight: 700; color: #0f172a;">Account Status: <span style="color: ${statusColor};">${statusText}</span></p>
+              </div>
+              ${isBanned ? `
+                <p>Your account has been suspended due to a violation of our community guidelines or terms of service.</p>
+                <p>While your account is suspended, you will not be able to:</p>
+                <ul style="color: #475569; margin: 12px 0;">
+                  <li>Create new listings</li>
+                  <li>Make bargain offers</li>
+                  <li>Send messages</li>
+                  <li>Post comments</li>
+                </ul>
+                <p>If you believe this is a mistake or would like to appeal this decision, please contact our support team.</p>
+              ` : `
+                <p>Good news! Your account has been reinstated and you now have full access to all FAST-Ex features.</p>
+                <p>You can now:</p>
+                <ul style="color: #475569; margin: 12px 0;">
+                  <li>Create and manage listings</li>
+                  <li>Make bargain offers</li>
+                  <li>Send messages</li>
+                  <li>Post comments</li>
+                </ul>
+                <p>Thank you for being a part of the FAST-Ex community!</p>
+              `}
+            `)
+          });
+          console.log(`Account status email sent to ${email}: ${status}`);
+          channel.ack(msg);
+        } catch (err) {
+          console.error(`Failed to send account status email to ${email}`, err);
           channel.ack(msg);
         }
       }

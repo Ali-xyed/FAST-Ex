@@ -111,10 +111,10 @@ class ListingRepository {
     });
   }
 
-  async deleteAllListingsByUser(userEmail) {
+  async deleteAllListingsByUser(email) {
     return prisma.$transaction(async (tx) => {
       const userListings = await tx.listing.findMany({
-        where: { userEmail },
+        where: { email },
         select: { id: true }
       });
 
@@ -129,27 +129,41 @@ class ListingRepository {
       await tx.bargain.deleteMany({ where: { listingId: { in: listingIds } } });
       await tx.exchange.deleteMany({ where: { listingId: { in: listingIds } } });
 
-      await tx.listing.deleteMany({ where: { userEmail } });
+      await tx.listing.deleteMany({ where: { email } });
 
-      console.log(`Deleted ${listingIds.length} listings for user ${userEmail}`);
+      console.log(`Deleted ${listingIds.length} listings for user ${email}`);
     });
   }
 
-  async deleteAllCommentsByUser(userEmail) {
-    const result = await prisma.comment.deleteMany({ where: { userEmail } });
-    console.log(`Deleted ${result.count} comments for user ${userEmail}`);
+  async deleteAllCommentsByUser(email) {
+    const result = await prisma.comment.deleteMany({ where: { fromEmail: email } });
+    console.log(`Deleted ${result.count} comments for user ${email}`);
     return result;
   }
 
-  async deleteAllBargainsByUser(userEmail) {
-    const result = await prisma.bargain.deleteMany({ where: { userEmail } });
-    console.log(`Deleted ${result.count} bargains for user ${userEmail}`);
+  async deleteAllBargainsByUser(email) {
+    const result = await prisma.bargain.deleteMany({ 
+      where: { 
+        OR: [
+          { fromEmail: email },
+          { toEmail: email }
+        ]
+      } 
+    });
+    console.log(`Deleted ${result.count} bargains for user ${email}`);
     return result;
   }
 
-  async deleteAllExchangesByUser(userEmail) {
-    const result = await prisma.exchange.deleteMany({ where: { userEmail } });
-    console.log(`Deleted ${result.count} exchanges for user ${userEmail}`);
+  async deleteAllExchangesByUser(email) {
+    const result = await prisma.exchange.deleteMany({ 
+      where: { 
+        OR: [
+          { fromEmail: email },
+          { toEmail: email }
+        ]
+      } 
+    });
+    console.log(`Deleted ${result.count} exchanges for user ${email}`);
     return result;
   }
 }

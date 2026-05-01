@@ -30,7 +30,8 @@ function AdminPage() {
       setLoading(true);
       const response = await adminAPI.getAllUsers();
       const nonAdminUsers = response.data.filter(user => 
-        user.role?.toUpperCase() !== 'ADMIN'
+        user.role?.toUpperCase() !== 'ADMIN' && 
+        user.email !== 'm.ahmad.software.engineer@gmail.com'
       );
       setUsers(nonAdminUsers);
     } catch (error) {

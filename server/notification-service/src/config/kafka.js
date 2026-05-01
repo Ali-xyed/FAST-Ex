@@ -27,7 +27,8 @@ const connectKafkaConsumer = async () => {
     'comment.posted',
     'exchange.received',
     'exchange.accepted',
-    'exchange.declined'
+    'exchange.declined',
+    'user.deleted'
   ];
 
   for (const topic of topics) {
@@ -120,6 +121,12 @@ const connectKafkaConsumer = async () => {
           listingId: data.listingId,
           exchangeId: data.exchangeId
         };
+      } else if (topic === 'user.deleted') {
+        // Delete all notifications for this user
+        console.log(`[Kafka] Deleting notifications for user: ${data.email}`);
+        await notificationRepo.deleteNotificationsByEmail(data.email);
+        console.log(`[Kafka] Deleted notifications for user: ${data.email}`);
+        return; // No need to create notification
       }
 
       if (notifData) {

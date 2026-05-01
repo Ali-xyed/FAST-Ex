@@ -48,7 +48,13 @@ const connectKafkaConsumer = async () => {
           await userRepo.upsertUser(data.email, data.name || '', data.rollNo || '', data.role || 'STUDENT');
         }
         if (topic === 'reputation.updated') {
-          await userRepo.updateReputation(data.email, data.change).catch(console.error);
+          console.log(`[User Service] Processing reputation.updated for ${data.email}: ${data.change}`);
+          try {
+            await userRepo.updateReputation(data.email, data.change);
+            console.log(`[User Service] Successfully updated reputation for ${data.email}: ${data.change > 0 ? '+' : ''}${data.change}`);
+          } catch (error) {
+            console.error(`[User Service] Error updating reputation for ${data.email}:`, error);
+          }
         }
         if (topic === 'user.promoted') {
           await userRepo.updateUser(data.email, { role: data.role });

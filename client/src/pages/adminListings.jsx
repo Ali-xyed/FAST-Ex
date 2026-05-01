@@ -50,20 +50,34 @@ function AdminListingsPage() {
       toast.success('Listing deleted successfully');
       setShowDeleteModal(false);
       setListingToDelete(null);
+      
+      // Refetch to update dashboard counts
+      await fetchListings();
     } catch (error) {
       toast.error('Failed to delete listing');
     }
   };
 
-  const handleVerifyListing = async (id) => {
+  const handleVerifyListing = async (id, action) => {
     try {
-      await adminAPI.verifyListing(id);
-      setListings(listings.map(l => 
-        l.id === id ? { ...l, isVerified: true } : l
-      ));
-      toast.success('Listing verified successfully');
+      await adminAPI.verifyListing(id, action);
+      
+      if (action === 'reject') {
+        // Remove from list if rejected
+        setListings(listings.filter(l => l.id !== id));
+        toast.success('Listing rejected! User reputation -5');
+      } else {
+        // Update verification status if approved
+        setListings(listings.map(l => 
+          l.id === id ? { ...l, isVerified: true } : l
+        ));
+        toast.success('Listing approved! User reputation +1');
+      }
+      
+      // Refetch to update dashboard counts
+      await fetchListings();
     } catch (error) {
-      toast.error('Failed to verify listing');
+      toast.error(`Failed to ${action} listing`);
     }
   };
 
@@ -194,22 +208,32 @@ function AdminListingsPage() {
                       </div>
                       <div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto">
                         {!listing.isVerified && (
+                          <>
+                            <button
+                              onClick={() => handleVerifyListing(listing.id, 'approve')}
+                              className="flex-1 sm:flex-none bg-green-600 text-white px-4 sm:px-5 py-2.5 rounded-lg text-[10px] font-black uppercase tracking-widest hover:bg-green-700 transition-all"
+                            >
+                              Approve
+                            </button>
+                            <button
+                              onClick={() => handleVerifyListing(listing.id, 'reject')}
+                              className="flex-1 sm:flex-none bg-red-600 text-white px-4 sm:px-5 py-2.5 rounded-lg text-[10px] font-black uppercase tracking-widest hover:bg-red-700 transition-all"
+                            >
+                              Reject
+                            </button>
+                          </>
+                        )}
+                        {listing.isVerified && (
                           <button
-                            onClick={() => handleVerifyListing(listing.id)}
-                            className="flex-1 sm:flex-none bg-black text-white px-4 sm:px-5 py-2.5 rounded-lg text-[10px] font-black uppercase tracking-widest hover:bg-gray-800 transition-all"
+                            onClick={() => {
+                              setListingToDelete(listing);
+                              setShowDeleteModal(true);
+                            }}
+                            className="flex-1 sm:flex-none bg-white text-black border-2 border-black px-4 sm:px-5 py-2.5 rounded-lg text-[10px] font-black uppercase tracking-widest hover:bg-gray-100 transition-all"
                           >
-                            Verify
+                            Delete
                           </button>
                         )}
-                        <button
-                          onClick={() => {
-                            setListingToDelete(listing);
-                            setShowDeleteModal(true);
-                          }}
-                          className="flex-1 sm:flex-none bg-white text-black border-2 border-black px-4 sm:px-5 py-2.5 rounded-lg text-[10px] font-black uppercase tracking-widest hover:bg-gray-100 transition-all"
-                        >
-                          Delete
-                        </button>
                       </div>
                     </div>
                   ))

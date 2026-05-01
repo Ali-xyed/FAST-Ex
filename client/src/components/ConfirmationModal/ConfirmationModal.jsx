@@ -17,6 +17,8 @@ function ConfirmationModal({ isOpen, onClose, onConfirm, title, message, confirm
   const handleConfirm = () => {
     if (onConfirm) {
       onConfirm();
+    } else {
+      onClose();
     }
   };
 
@@ -58,9 +60,9 @@ function ConfirmationModal({ isOpen, onClose, onConfirm, title, message, confirm
           {title}
         </h2>
         
-        <p className="text-center text-gray-600 mb-6 leading-relaxed">
-          {message}
-        </p>
+        <div className="text-center text-gray-600 mb-6 leading-relaxed">
+          {typeof message === 'string' ? <p>{message}</p> : message}
+        </div>
         
         <div className="flex gap-3">
           {onConfirm && (

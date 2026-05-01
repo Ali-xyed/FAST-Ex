@@ -140,7 +140,8 @@ const toggleUserBan = async (req, res) => {
 const verifyListing = async (req, res) => {
   try {
     const { id } = req.params;
-    console.log(`[Admin Service] Verifying listing ${id}`);
+    const { action } = req.body; // 'approve' or 'reject'
+    console.log(`[Admin Service] ${action === 'reject' ? 'Rejecting' : 'Approving'} listing ${id}`);
 
     const listingRes = await axios.get(
       `${LISTING_SVC}/${id}`, 
@@ -153,19 +154,27 @@ const verifyListing = async (req, res) => {
       return res.status(400).json({ message: 'Listing invalid: missing email' });
     }
 
-    await axios.patch(
-      `${LISTING_SVC}/${id}/verify`, 
-      { isVerified: true }, 
-      { headers: getAdminHeaders(req) }
-    );
-
-    await sendEvent('reputation.updated', { email: listingEmail, change: 1 });
-
-    res.status(200).json({ message: 'Listing verified successfully' });
+    if (action === 'reject') {
+      // Delete the listing and decrease reputation by 5
+      await axios.delete(`${LISTING_SVC}/${id}`, { headers: getAdminHeaders(req) });
+      await sendEvent('reputation.updated', { email: listingEmail, change: -5 });
+      console.log(`[Admin Service] Listing ${id} rejected, reputation -5 for ${listingEmail}`);
+      return res.status(200).json({ message: 'Listing rejected and deleted successfully' });
+    } else {
+      // Approve the listing and increase reputation by 1
+      await axios.patch(
+        `${LISTING_SVC}/${id}/verify`, 
+        { isVerified: true }, 
+        { headers: getAdminHeaders(req) }
+      );
+      await sendEvent('reputation.updated', { email: listingEmail, change: 1 });
+      console.log(`[Admin Service] Listing ${id} approved, reputation +1 for ${listingEmail}`);
+      return res.status(200).json({ message: 'Listing approved successfully' });
+    }
   } catch (error) {
-    console.error(`[Admin Service] Error verifying listing:`, error.response?.data || error.message);
+    console.error(`[Admin Service] Error processing listing:`, error.response?.data || error.message);
     res.status(error.response?.status || 500).json({
-      message: 'Error verifying listing',
+      message: 'Error processing listing',
       error: error.message
     });
   }
@@ -218,16 +227,57 @@ const getAllUsers = async (req, res) => {
 const verifyComment = async (req, res) => {
   try {
     const { commentId } = req.params;
-    await axios.patch(
-      `${LISTING_SVC}/comments/${commentId}/verify`, 
-      { isVerified: true }, 
-      { headers: getAdminHeaders(req) }
-    );
-    res.status(200).json({ message: 'Comment verified successfully' });
+    const { action } = req.body; // 'approve' or 'reject'
+    console.log(`[Admin Service] ${action === 'reject' ? 'Rejecting' : 'Approving'} comment ${commentId}`);
+
+    // First get the comment to find the user email
+    const listingsRes = await axios.get(`${LISTING_SVC}/admin/all`, { 
+      headers: getAdminHeaders(req)
+    });
+    
+    let commentEmail = null;
+    let listingId = null;
+    
+    for (const listing of listingsRes.data) {
+      if (listing.comments && listing.comments.length > 0) {
+        const comment = listing.comments.find(c => c.id === commentId);
+        if (comment) {
+          commentEmail = comment.fromEmail;
+          listingId = listing.id;
+          break;
+        }
+      }
+    }
+
+    if (!commentEmail) {
+      console.error(`[Admin Service] Comment ${commentId} not found or has no email`);
+      return res.status(400).json({ message: 'Comment not found or invalid' });
+    }
+
+    if (action === 'reject') {
+      // Delete the comment and decrease reputation by 10
+      await axios.delete(
+        `${LISTING_SVC}/${listingId}/comments/${commentId}`, 
+        { headers: getAdminHeaders(req) }
+      );
+      await sendEvent('reputation.updated', { email: commentEmail, change: -10 });
+      console.log(`[Admin Service] Comment ${commentId} rejected, reputation -10 for ${commentEmail}`);
+      return res.status(200).json({ message: 'Comment rejected and deleted successfully' });
+    } else {
+      // Approve the comment and increase reputation by 1
+      await axios.patch(
+        `${LISTING_SVC}/comments/${commentId}/verify`, 
+        { isVerified: true }, 
+        { headers: getAdminHeaders(req) }
+      );
+      await sendEvent('reputation.updated', { email: commentEmail, change: 1 });
+      console.log(`[Admin Service] Comment ${commentId} approved, reputation +1 for ${commentEmail}`);
+      return res.status(200).json({ message: 'Comment approved successfully' });
+    }
   } catch (error) {
-    console.error(`[Admin Service] Error verifying comment:`, error.message);
+    console.error(`[Admin Service] Error processing comment:`, error.message);
     res.status(error.response?.status || 500).json({ 
-      message: 'Error verifying comment',
+      message: 'Error processing comment',
       error: error.message 
     });
   }

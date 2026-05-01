@@ -54,10 +54,24 @@ const handleUserDeleted = async (data) => {
   }
 };
 
+const handleReputationUpdated = async (data) => {
+  try {
+    const { email, change } = data;
+    console.log(`[Auth Service] Received reputation.updated event for: ${email}, change: ${change}`);
+    
+    await authRepo.updateReputation(email, change);
+    
+    console.log(`[Auth Service] Successfully updated reputation for ${email}: ${change > 0 ? '+' : ''}${change}`);
+  } catch (error) {
+    console.error('[Auth Service] Error handling reputation.updated event:', error);
+  }
+};
+
 app.listen(PORT, async () => {
   await connectKafka();
   await connectKafkaConsumer();
   await subscribeToTopic('user.deleted', handleUserDeleted);
+  await subscribeToTopic('reputation.updated', handleReputationUpdated);
   connectRabbitMQ();
 
   setInterval(async () => {

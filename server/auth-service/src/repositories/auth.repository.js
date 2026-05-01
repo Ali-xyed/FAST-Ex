@@ -79,6 +79,13 @@ class AuthRepository {
     });
   }
 
+  async updateReputation(email, change) {
+    return prisma.user.update({
+      where: { email },
+      data: { reputationScore: { increment: change } }
+    });
+  }
+
   async deleteUser(email) {
     return prisma.$transaction(async (tx) => {
       await tx.oTP.deleteMany({ where: { email } });

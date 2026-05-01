@@ -346,6 +346,16 @@ const toggleBan = async (req, res) => {
     const newBanStatus = !user.isBan;
     await authRepo.updateUserBanStatus(email, newBanStatus);
 
+    // Send email notification via RabbitMQ
+    const { publishMessage } = require('../config/rabbitmq');
+    publishMessage('email.account.status', {
+      email: email,
+      name: user.name || email.split('@')[0],
+      status: newBanStatus ? 'banned' : 'unbanned',
+      isBanned: newBanStatus
+    });
+    console.log(`[AUTH] Published account status email for ${email}: ${newBanStatus ? 'banned' : 'unbanned'}`);
+
     res.status(200).json({ 
       message: `User ${newBanStatus ? 'banned' : 'unbanned'} successfully`,
       isBan: newBanStatus
