@@ -95,10 +95,10 @@ function AdminPage() {
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
               <h2 className="text-lg sm:text-xl font-black tracking-tight">All Users</h2>
               <div className="flex items-center gap-2 text-xs sm:text-sm">
-                <span className="px-3 py-1 bg-green-50 text-green-600 rounded-lg font-bold">
+                <span className="px-3 py-1 bg-gray-100 text-gray-900 rounded-lg font-bold border border-gray-200">
                   {users.filter(u => !u.isBan).length} Active
                 </span>
-                <span className="px-3 py-1 bg-red-50 text-red-600 rounded-lg font-bold">
+                <span className="px-3 py-1 bg-black text-white rounded-lg font-bold">
                   {users.filter(u => u.isBan).length} Banned
                 </span>
               </div>
@@ -112,7 +112,7 @@ function AdminPage() {
               <div className="space-y-3">
                 {users.map((userItem) => (
                   <div key={userItem.email} className={`flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 rounded-xl transition-all gap-4 ${
-                    userItem.isBan ? 'bg-red-50 border-2 border-red-200' : 'bg-gray-50 border-2 border-gray-100'
+                    userItem.isBan ? 'bg-gray-100 border-2 border-gray-300' : 'bg-white border-2 border-gray-200'
                   }`}>
                     <div className="flex items-center gap-4 flex-1 w-full sm:w-auto">
                       <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl bg-black overflow-hidden flex-shrink-0 shadow-lg">
@@ -128,36 +128,38 @@ function AdminPage() {
                         <div className="flex items-center gap-2 flex-wrap">
                           <p className="text-sm font-black text-gray-900 truncate">{userItem.name || 'Unknown'}</p>
                           {userItem.isBan && (
-                            <span className="px-2 py-0.5 bg-red-500 text-white text-[10px] font-black uppercase tracking-wider rounded">
+                            <span className="px-2 py-0.5 bg-black text-white text-[10px] font-black uppercase tracking-wider rounded">
                               Banned
                             </span>
                           )}
                         </div>
                         <p className="text-xs text-gray-500 font-medium truncate">{userItem.email}</p>
                       </div>
-                      <div className="hidden sm:flex items-center gap-2 bg-white px-4 py-2 rounded-lg border border-gray-200">
-                        <svg className="w-5 h-5 text-black" fill="currentColor" viewBox="0 0 20 20">
-                          <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                        </svg>
-                        <div>
-                          <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Reputation</p>
-                          <p className="text-lg font-black text-gray-900">{userItem.reputationScore || 0}</p>
-                        </div>
-                      </div>
                     </div>
                     <div className="flex items-center gap-3 w-full sm:w-auto">
+                      {/* Mobile reputation */}
                       <div className="sm:hidden flex items-center gap-2 bg-white px-3 py-2 rounded-lg border border-gray-200 flex-1">
                         <svg className="w-4 h-4 text-black" fill="currentColor" viewBox="0 0 20 20">
                           <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
                         </svg>
                         <span className="text-sm font-black text-gray-900">{userItem.reputationScore || 0}</span>
                       </div>
+                      {/* Desktop reputation - same height as button */}
+                      <div className="hidden sm:flex items-center gap-2 bg-white px-4 rounded-lg border border-gray-200 h-[42px] min-w-[140px]">
+                        <svg className="w-5 h-5 text-black flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                          <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                        </svg>
+                        <div className="flex flex-col justify-center">
+                          <p className="text-[9px] font-bold text-gray-500 uppercase tracking-wider leading-none">Reputation</p>
+                          <p className="text-lg font-black text-gray-900 leading-tight">{userItem.reputationScore || 0}</p>
+                        </div>
+                      </div>
                       <button
                         onClick={() => handleToggleBan(userItem.email)}
-                        className={`flex-1 sm:flex-none px-4 sm:px-5 py-2.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${
+                        className={`flex-1 sm:flex-none px-5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all h-[42px] min-w-[80px] ${
                           userItem.isBan
-                            ? 'bg-green-600 text-white hover:bg-green-700'
-                            : 'bg-red-600 text-white hover:bg-red-700'
+                            ? 'bg-white text-black border-2 border-black hover:bg-gray-100'
+                            : 'bg-black text-white hover:bg-gray-800'
                         }`}
                       >
                         {userItem.isBan ? 'Unban' : 'Ban'}

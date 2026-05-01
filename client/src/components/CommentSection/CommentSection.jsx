@@ -59,15 +59,18 @@ const CommentSection = ({ listingId }) => {
 
   return (
     <>
-      <div className="flex flex-col h-full">
-        {/* Comments List */}
-        <div className="flex-1 space-y-3 mb-4">
+      <div className="flex flex-col h-full p-4">
+        {/* Comments List - Scrollable */}
+        <div className="flex-1 overflow-y-auto space-y-3 mb-4" style={{
+          scrollbarWidth: 'thin',
+          scrollbarColor: '#9CA3AF #F3F4F6'
+        }}>
           {loading ? (
             <div className="h-full flex items-center justify-center">
               <p className="text-center text-gray-400 text-xs">Loading comments...</p>
             </div>
           ) : comments.length === 0 ? (
-            <div className="h-full flex flex-col items-center justify-center">
+            <div className="h-full flex flex-col items-center justify-center py-12">
               <svg className="w-16 h-16 text-gray-300 mb-4" fill="currentColor" viewBox="0 0 24 24">
                 <path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H6l-2 2V4h16v12z"/>
                 <path d="M7 9h2v2H7zm4 0h2v2h-2zm4 0h2v2h-2z"/>
@@ -130,8 +133,8 @@ const CommentSection = ({ listingId }) => {
           )}
         </div>
 
-        {/* Comment Input at Bottom */}
-        <form onSubmit={handleSubmit} className="border-t border-gray-200 pt-3">
+        {/* Comment Input at Bottom - Fixed */}
+        <form onSubmit={handleSubmit} className="border-t border-gray-200 pt-3 flex-shrink-0">
           <div className="flex gap-2 items-center">
             <div className="w-8 h-8 rounded-full bg-black flex items-center justify-center overflow-hidden flex-shrink-0">
               {user?.imageUrl ? (

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar/Navbar';
 import CommentSection from '../components/CommentSection/CommentSection';
+import ConfirmationModal from '../components/ConfirmationModal/ConfirmationModal';
 import { listingAPI, messageAPI } from '../utils/api';
 import { useAuth } from '../context/AuthContext';
 import toast from 'react-hot-toast';
@@ -27,6 +28,7 @@ function ListingDetailsPage() {
   const [saving, setSaving] = useState(false);
   const [showMarkAsDropdown, setShowMarkAsDropdown] = useState(false);
   const [updatingStatus, setUpdatingStatus] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
 
   useEffect(() => {
     fetchListing();
@@ -64,8 +66,10 @@ function ListingDetailsPage() {
   };
 
   const handleDelete = async () => {
-    if (!confirm('Are you sure you want to delete this listing?')) return;
-    
+    setShowDeleteModal(true);
+  };
+
+  const confirmDelete = async () => {
     try {
       await listingAPI.delete(id);
       toast.success('Listing deleted!');
@@ -614,7 +618,7 @@ function ListingDetailsPage() {
           </div>
 
           {/* Right Side - Comments/Offer Section (5/9 width) */}
-          <div className={`lg:col-span-5 bg-white md:border-2 md:border-gray-200 md:rounded-2xl overflow-hidden flex flex-col ${
+          <div className={`lg:col-span-5 bg-white md:border-2 md:border-gray-200 md:rounded-2xl overflow-hidden flex flex-col h-[calc(100vh-200px)] ${
             activeTab === 'details' ? 'hidden lg:flex' : ''
           }`}>
             {activeTab === 'comments' ? (
@@ -622,14 +626,7 @@ function ListingDetailsPage() {
                 <div className="p-4 border-b-2 border-gray-200 flex-shrink-0">
                   <h2 className="text-sm font-black uppercase tracking-wider">Comments</h2>
                 </div>
-                <div 
-                  className="flex-1 overflow-y-scroll p-4" 
-                  style={{ 
-                    maxHeight: 'calc(100vh - 200px)',
-                    scrollbarWidth: 'thin',
-                    scrollbarColor: '#9CA3AF #F3F4F6'
-                  }}
-                >
+                <div className="flex-1 overflow-hidden">
                   <CommentSection listingId={id} />
                 </div>
               </>
@@ -648,15 +645,11 @@ function ListingDetailsPage() {
                     </div>
                   </div>
                 </div>
-                <div 
-                  className="flex-1 overflow-y-scroll p-6" 
-                  style={{ 
-                    maxHeight: 'calc(100vh - 200px)',
+                <div className="flex-1 overflow-y-auto p-6" style={{ 
                     scrollbarWidth: 'thin',
                     scrollbarColor: '#9CA3AF #F3F4F6'
-                  }}
-                >
-                  <div className="space-y-6">
+                  }}>
+                  <div className="space-y-6 h-full flex flex-col">
                     {/* Price Range Info */}
                     <div className="bg-gradient-to-br from-gray-50 to-gray-100 border-2 border-gray-200 rounded-2xl p-4">
                       <div className="flex items-center gap-2 mb-3">
@@ -726,7 +719,7 @@ function ListingDetailsPage() {
                     <button
                       onClick={handleMakeOffer}
                       disabled={!offerPrice || parseFloat(offerPrice) <= 0 || parseFloat(offerPrice) > maxPrice}
-                      className={`w-full bg-black text-white py-4 rounded-xl text-sm font-black uppercase tracking-widest hover:bg-gray-800 transition-all shadow-lg hover:shadow-xl ${
+                      className={`w-full bg-black text-white py-4 rounded-xl text-sm font-black uppercase tracking-widest hover:bg-gray-800 transition-all shadow-lg hover:shadow-xl mt-auto ${
                         !offerPrice || parseFloat(offerPrice) <= 0 || parseFloat(offerPrice) > maxPrice
                           ? 'opacity-50 cursor-not-allowed'
                           : 'hover:scale-[1.02]'
@@ -788,6 +781,18 @@ function ListingDetailsPage() {
           />
         </div>
       )}
+      
+      {/* Delete Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={showDeleteModal}
+        onClose={() => setShowDeleteModal(false)}
+        onConfirm={confirmDelete}
+        title="Delete Listing"
+        message="Are you sure you want to delete this listing? This action cannot be undone."
+        confirmText="Delete"
+        cancelText="Cancel"
+        type="danger"
+      />
     </div>
   );
 }

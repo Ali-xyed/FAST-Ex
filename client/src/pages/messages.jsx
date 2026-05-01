@@ -14,6 +14,7 @@ function MessagesPage() {
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
   const [loading, setLoading] = useState(true);
+  const [showMobileChat, setShowMobileChat] = useState(false);
   const messagesEndRef = useRef(null);
   const currentChatIdRef = useRef(null);
 
@@ -164,9 +165,15 @@ function MessagesPage() {
     setSelectedConversation(conversation);
     currentChatIdRef.current = conversation.id;
     fetchMessages(conversation.id);
+    setShowMobileChat(true); // Show chat on mobile
     
     // Join the chat room via WebSocket
     joinChat(conversation.id);
+  };
+
+  const handleBackToList = () => {
+    setShowMobileChat(false);
+    setSelectedConversation(null);
   };
 
   // Auto-scroll to bottom when new messages arrive
@@ -190,7 +197,7 @@ function MessagesPage() {
   };
 
   return (
-    <div className="h-screen bg-gray-50 text-black font-sans selection:bg-black selection:text-white flex flex-col overflow-hidden">
+    <div className="h-screen bg-white md:bg-gray-50 text-black font-sans selection:bg-black selection:text-white flex flex-col overflow-hidden">
       <Navbar />
 
       <main className="flex-1 flex overflow-hidden">
@@ -198,7 +205,9 @@ function MessagesPage() {
           <div className="flex h-full w-full">
             {/* Conversations List */}
             <div 
-              className="w-80 border-r border-gray-100 overflow-y-auto flex-shrink-0"
+              className={`w-full md:w-80 border-r border-gray-100 overflow-y-auto flex-shrink-0 ${
+                showMobileChat ? 'hidden md:block' : 'block'
+              }`}
               style={{ 
                 scrollbarWidth: 'thin',
                 scrollbarColor: '#9CA3AF #F3F4F6'
@@ -231,8 +240,8 @@ function MessagesPage() {
                           <span className="text-sm font-bold">{(other?.name || other?.email)?.charAt(0).toUpperCase()}</span>
                         )}
                       </div>
-                      <div className="flex-1 text-left">
-                        <p className="text-sm font-black">{other?.name || other?.email}</p>
+                      <div className="flex-1 text-left min-w-0">
+                        <p className="text-sm font-black truncate">{other?.name || other?.email}</p>
                         <p className="text-xs text-gray-400 truncate">{conversation.messages?.[conversation.messages.length - 1]?.content || 'No messages yet'}</p>
                       </div>
                     </button>
@@ -242,11 +251,23 @@ function MessagesPage() {
             </div>
 
             {/* Messages Area */}
-            <div className="flex-1 flex flex-col">
+            <div className={`flex-1 flex flex-col ${
+              showMobileChat ? 'block' : 'hidden md:flex'
+            }`}>
               {selectedConversation ? (
                 <>
                   {/* Header */}
                   <div className="p-4 border-b border-gray-100 flex items-center gap-3">
+                    {/* Back Button - Mobile Only */}
+                    <button
+                      onClick={handleBackToList}
+                      className="md:hidden flex items-center justify-center w-10 h-10 rounded-xl hover:bg-gray-100 transition-colors"
+                    >
+                      <svg className="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                      </svg>
+                    </button>
+                    
                     <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden">
                       {getOtherParticipant(selectedConversation)?.imageUrl ? (
                         <img 
@@ -260,10 +281,10 @@ function MessagesPage() {
                         </span>
                       )}
                     </div>
-                    <div>
-                      <p className="text-sm font-black">{getOtherParticipant(selectedConversation)?.name || getOtherParticipant(selectedConversation)?.email}</p>
+                    <div className="min-w-0">
+                      <p className="text-sm font-black truncate">{getOtherParticipant(selectedConversation)?.name || getOtherParticipant(selectedConversation)?.email}</p>
                       {getOtherParticipant(selectedConversation)?.name && (
-                        <p className="text-[10px] text-gray-400 font-medium">{getOtherParticipant(selectedConversation)?.email}</p>
+                        <p className="text-[10px] text-gray-400 font-medium truncate">{getOtherParticipant(selectedConversation)?.email}</p>
                       )}
                     </div>
                   </div>
