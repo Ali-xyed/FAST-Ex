@@ -52,15 +52,20 @@ function AdminPage() {
     if (!userToBan) return;
     
     const action = userToBan.isBan ? 'unban' : 'ban';
+    console.log(`[ADMIN UI] Attempting to ${action} user:`, userToBan.email);
     
     try {
+      console.log(`[ADMIN UI] Calling API to toggle ban for:`, userToBan.email);
       const response = await adminAPI.toggleBanUser(userToBan.email);
+      console.log(`[ADMIN UI] API response:`, response.data);
+      
       setUsers(users.map(u => 
         u.email === userToBan.email ? { ...u, isBan: response.data.isBan } : u
       ));
       toast.success(`User ${action}ned successfully`);
     } catch (error) {
-      console.error('Error toggling ban:', error);
+      console.error('[ADMIN UI] Error toggling ban:', error);
+      console.error('[ADMIN UI] Error response:', error.response?.data);
       toast.error(`Failed to ${action} user`);
     } finally {
       setShowConfirmModal(false);
@@ -176,15 +181,16 @@ function AdminPage() {
       {/* Confirmation Modal */}
       {showConfirmModal && userToBan && (
         <ConfirmationModal
-          title={userToBan.isBan ? "Unban User" : "Ban User"}
-          message={`Are you sure you want to ${userToBan.isBan ? 'unban' : 'ban'} ${userToBan.name || userToBan.email}?`}
-          onConfirm={confirmBanToggle}
-          onCancel={() => {
+          isOpen={showConfirmModal}
+          onClose={() => {
             setShowConfirmModal(false);
             setUserToBan(null);
           }}
+          onConfirm={confirmBanToggle}
+          title={userToBan.isBan ? "Unban User" : "Ban User"}
+          message={`Are you sure you want to ${userToBan.isBan ? 'unban' : 'ban'} ${userToBan.name || userToBan.email}?`}
           confirmText={userToBan.isBan ? "Unban" : "Ban"}
-          confirmColor={userToBan.isBan ? "green" : "red"}
+          type="danger"
         />
       )}
     </div>

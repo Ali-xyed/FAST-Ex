@@ -104,30 +104,38 @@ const adminLogin = async (req, res) => {
 const toggleUserBan = async (req, res) => {
   try {
     const { email } = req.params;
+    console.log(`[ADMIN] Toggling ban for user: ${email}`);
 
+    // First toggle in auth service
+    console.log(`[ADMIN] Calling auth service to toggle ban`);
     const authRes = await axios.patch(
       `${AUTH_SVC}/toggle-ban`, 
       { email }, 
       { headers: getAdminHeaders(req) }
     );
     const isBan = authRes.data.isBan;
+    console.log(`[ADMIN] Auth service response - isBan: ${isBan}`);
 
+    // Then update user service
     try {
+      console.log(`[ADMIN] Calling user service to update ban status`);
       await axios.patch(
         `${USER_SVC}/${email}/ban`, 
         { isBan }, 
         { headers: getAdminHeaders(req) }
       );
+      console.log(`[ADMIN] User service updated successfully`);
     } catch (userErr) {
-      console.warn(`[Admin Service] User Service update failed for ${email}: ${userErr.message}`);
+      console.error(`[ADMIN] User Service update failed for ${email}:`, userErr.response?.data || userErr.message);
     }
 
+    console.log(`[ADMIN] Ban toggle completed for ${email}`);
     res.status(200).json({
       message: `User ${email} ${isBan ? 'banned' : 'unbanned'} successfully`,
       isBan
     });
   } catch (error) {
-    console.error(`[Admin Service] Error toggling ban for ${req.params.email}:`, error.response?.data || error.message);
+    console.error(`[ADMIN] Error toggling ban for ${req.params.email}:`, error.response?.data || error.message);
     res.status(error.response?.status || 500).json({
       message: 'Server error toggling user ban',
       error: error.message

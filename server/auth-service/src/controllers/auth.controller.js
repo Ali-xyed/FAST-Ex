@@ -273,12 +273,16 @@ const updateProfile = async (req, res) => {
     const email = req.headers['x-user-email'];
     const { name, rollNo } = req.body;
 
-    // Update profile in Auth Service
+    console.log(`[AUTH] Updating profile for ${email}:`, { name, rollNo });
+
+    // Update profile in Auth Service database
     await authRepo.updateUserProfile(email, { name, rollNo });
+
+    console.log(`[AUTH] Profile updated successfully in auth database for ${email}`);
 
     res.status(200).json({ message: 'Profile updated successfully' });
   } catch (err) {
-    console.error('Error updating profile:', err);
+    console.error('[AUTH] Error updating profile:', err);
     res.status(500).json({ message: 'Server error updating profile', error: err.message });
   }
 };

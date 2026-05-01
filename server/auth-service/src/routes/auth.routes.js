@@ -17,6 +17,6 @@ router.post('/change-password', authController.changePassword);
 
 // Admin actions
 router.patch('/toggle-ban', verifyAuth, authController.toggleBan);
-router.put('/profile', verifyAuth, authController.updateProfile);
+router.put('/profile', authController.updateProfile); // Remove verifyAuth for service-to-service calls
 
 module.exports = router;

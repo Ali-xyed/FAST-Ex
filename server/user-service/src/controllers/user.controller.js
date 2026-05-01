@@ -1,6 +1,7 @@
 const userRepo = require('../repositories/user.repository');
 const redis = require('../config/redis');
 const { sendEvent } = require('../config/kafka');
+const axios = require('axios');
 
 const CACHE_TTL = 300;
 
@@ -70,13 +71,18 @@ const updateProfile = async (req, res) => {
     const email = req.headers['x-user-email'];
     const { name, rollNo } = req.body;
     
+    console.log(`[USER] Updating profile for ${email}:`, { name, rollNo });
+    
     // Update profile in User Service
     const profile = await userRepo.updateUser(email, { name, rollNo });
+    console.log(`[USER] Profile updated in user database for ${email}`);
 
     // Also update the Auth Service
     try {
-      const axios = require('axios');
-      await axios.put(`${process.env.AUTH_SERVICE_URL}/api/auth/profile`, {
+      const authServiceUrl = `${process.env.AUTH_SERVICE_URL}/api/auth/profile`;
+      console.log(`[USER] Calling auth service at: ${authServiceUrl}`);
+      
+      const response = await axios.put(authServiceUrl, {
         name,
         rollNo
       }, {
@@ -85,8 +91,14 @@ const updateProfile = async (req, res) => {
           'x-user-role': req.headers['x-user-role']
         }
       });
+      
+      console.log(`[USER] Auth service response:`, response.data);
     } catch (authServiceError) {
-      console.error('Failed to update profile in Auth Service:', authServiceError.message);
+      console.error('[USER] Failed to update profile in Auth Service:', authServiceError.message);
+      if (authServiceError.response) {
+        console.error('[USER] Auth service error response:', authServiceError.response.data);
+        console.error('[USER] Auth service error status:', authServiceError.response.status);
+      }
       // Don't fail the update if auth service is down
     }
 
@@ -98,15 +110,15 @@ const updateProfile = async (req, res) => {
       const keys = await redis.keys('listings:all:*');
       if (keys.length > 0) {
         await redis.del(...keys);
-        console.log(`Cleared ${keys.length} listing cache keys after profile update`);
+        console.log(`[USER] Cleared ${keys.length} listing cache keys after profile update`);
       }
     } catch (cacheErr) {
-      console.error('Error clearing listing caches:', cacheErr);
+      console.error('[USER] Error clearing listing caches:', cacheErr);
     }
 
     res.status(200).json({message:"Profile has been updated!"});
   } catch (error) {
-    console.error(error);
+    console.error('[USER] Error in updateProfile:', error);
     res.status(500).json({ message: 'Server error' });
   }
 };
