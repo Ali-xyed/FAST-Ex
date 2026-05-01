@@ -37,6 +37,27 @@ class MessagingRepository {
       data: { chatId, sender, receiver, content, listingReference }
     });
   }
+
+  async deleteAllMessagesForUser(email) {
+    return prisma.$transaction(async (tx) => {
+      // Delete all messages where user is sender or receiver
+      const deletedMessages = await tx.message.deleteMany({
+        where: {
+          OR: [{ sender: email }, { receiver: email }]
+        }
+      });
+
+      // Delete all chats where user is participant
+      const deletedChats = await tx.chat.deleteMany({
+        where: {
+          OR: [{ user1: email }, { user2: email }]
+        }
+      });
+
+      console.log(`Deleted ${deletedMessages.count} messages and ${deletedChats.count} chats for user ${email}`);
+      return { deletedMessages: deletedMessages.count, deletedChats: deletedChats.count };
+    });
+  }
 }
 
 module.exports = new MessagingRepository();

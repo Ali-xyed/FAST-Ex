@@ -7,8 +7,9 @@ const http = require('http');
 const { Server } = require('socket.io');
 
 const msgRoutes = require('./routes/messaging.routes');
-const { connectKafkaProducer } = require('./config/kafka');
+const { connectKafkaProducer, connectKafkaConsumer, subscribeToTopic } = require('./config/kafka');
 const { initSocket } = require('./socket');
+const messagingRepository = require('./repositories/messaging.repository');
 
 const app = express();
 const server = http.createServer(app);
@@ -55,7 +56,24 @@ const io = new Server(server, {
 });
 initSocket(io);
 
+// Kafka event handler for user deletion
+const handleUserDeleted = async (data) => {
+  try {
+    const { email } = data;
+    console.log(`Received user.deleted event for: ${email}`);
+    
+    // Delete all messages and chats for this user
+    await messagingRepository.deleteAllMessagesForUser(email);
+    
+    console.log(`Successfully cleaned up all messaging data for user: ${email}`);
+  } catch (error) {
+    console.error('Error handling user.deleted event:', error);
+  }
+};
+
 server.listen(PORT, async () => {
-  connectKafkaProducer();
+  await connectKafkaProducer();
+  await connectKafkaConsumer();
+  await subscribeToTopic('user.deleted', handleUserDeleted);
   console.log(`Messaging service running on port ${PORT}`);
 });

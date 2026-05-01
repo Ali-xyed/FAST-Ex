@@ -113,6 +113,51 @@ class ListingRepository {
       orderBy: { createdAt: 'desc' }
     });
   }
+
+  async deleteAllListingsByUser(userEmail) {
+    return prisma.$transaction(async (tx) => {
+      // Find all listings by user
+      const userListings = await tx.listing.findMany({
+        where: { userEmail },
+        select: { id: true }
+      });
+
+      const listingIds = userListings.map(l => l.id);
+
+      if (listingIds.length === 0) return;
+
+      // Delete all associated data
+      await tx.sellListing.deleteMany({ where: { listingId: { in: listingIds } } });
+      await tx.rentListing.deleteMany({ where: { listingId: { in: listingIds } } });
+      await tx.exchangeListing.deleteMany({ where: { listingId: { in: listingIds } } });
+      await tx.comment.deleteMany({ where: { listingId: { in: listingIds } } });
+      await tx.bargain.deleteMany({ where: { listingId: { in: listingIds } } });
+      await tx.exchange.deleteMany({ where: { listingId: { in: listingIds } } });
+
+      // Delete all listings
+      await tx.listing.deleteMany({ where: { userEmail } });
+
+      console.log(`Deleted ${listingIds.length} listings for user ${userEmail}`);
+    });
+  }
+
+  async deleteAllCommentsByUser(userEmail) {
+    const result = await prisma.comment.deleteMany({ where: { userEmail } });
+    console.log(`Deleted ${result.count} comments for user ${userEmail}`);
+    return result;
+  }
+
+  async deleteAllBargainsByUser(userEmail) {
+    const result = await prisma.bargain.deleteMany({ where: { userEmail } });
+    console.log(`Deleted ${result.count} bargains for user ${userEmail}`);
+    return result;
+  }
+
+  async deleteAllExchangesByUser(userEmail) {
+    const result = await prisma.exchange.deleteMany({ where: { userEmail } });
+    console.log(`Deleted ${result.count} exchanges for user ${userEmail}`);
+    return result;
+  }
 }
 
 module.exports = new ListingRepository();

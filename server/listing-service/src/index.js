@@ -7,9 +7,10 @@ const http = require('http');
 const { Server } = require('socket.io');
 
 const listingRoutes = require('./routes/listing.routes');
-const { connectKafkaProducer } = require('./config/kafka');
+const { connectKafkaProducer, connectKafkaConsumer, subscribeToTopic } = require('./config/kafka');
 const { initSocket } = require('./socket');
 const { connectRabbitMQ } = require('./config/rabbitmq');
+const listingRepository = require('./repositories/listing.repository');
 
 const app = express();
 const server = http.createServer(app);
@@ -56,8 +57,28 @@ const io = new Server(server, {
 });
 initSocket(io);
 
+// Kafka event handler for user deletion
+const handleUserDeleted = async (data) => {
+  try {
+    const { email } = data;
+    console.log(`Received user.deleted event for: ${email}`);
+    
+    // Delete all listings, comments, bargains, and exchanges by this user
+    await listingRepository.deleteAllListingsByUser(email);
+    await listingRepository.deleteAllCommentsByUser(email);
+    await listingRepository.deleteAllBargainsByUser(email);
+    await listingRepository.deleteAllExchangesByUser(email);
+    
+    console.log(`Successfully cleaned up all listing data for user: ${email}`);
+  } catch (error) {
+    console.error('Error handling user.deleted event:', error);
+  }
+};
+
 server.listen(PORT, async () => {
-  connectKafkaProducer();
+  await connectKafkaProducer();
+  await connectKafkaConsumer();
+  await subscribeToTopic('user.deleted', handleUserDeleted);
   connectRabbitMQ();
   console.log(`Listing service running on port ${PORT}`);
 });

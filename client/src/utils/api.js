@@ -69,6 +69,9 @@ export const userAPI = {
   getProfile: () => api.get('/api/users/profile'),
   getPublicProfile: (email) => api.get(`/api/users/public/${email}`),
   updateProfile: (data) => api.put('/api/users/profile', data),
+  uploadImage: (formData) => api.post('/api/users/upload-image', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  }),
   uploadProfileImage: (formData) => api.post('/api/users/upload-image', formData, {
     headers: { 'Content-Type': 'multipart/form-data' },
   }),

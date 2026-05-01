@@ -20,6 +20,7 @@ import AdminCommentsPage from './pages/adminComments';
 import BargainOffersPage from './pages/bargainOffers';
 import ExchangeRequestsPage from './pages/exchangeRequests';
 import CreateExchangeRequestPage from './pages/createExchangeRequest';
+import SettingsPage from './pages/settings';
 
 function App() {
   return (
@@ -42,6 +43,7 @@ function App() {
           {/* Protected Routes */}
           <Route path="/home" element={<HomePage />} />
           <Route path="/profile" element={<ProfilePage />} />
+          <Route path="/settings" element={<SettingsPage />} />
           <Route path="/profile/:email" element={<OtherProfilePage />} />
           <Route path="/create-listing" element={<CreateListingPage />} />
           <Route path="/edit-listing/:id" element={<EditListingPage />} />

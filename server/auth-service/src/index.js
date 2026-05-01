@@ -4,7 +4,7 @@ if (!process.env.DATABASE_URL) process.env.DATABASE_URL = process.env.AUTH_DATAB
 const express = require('express');
 const cors = require('cors');
 const authRoutes = require('./routes/auth.routes');
-const { connectKafka } = require('./config/kafka');
+const { connectKafka, connectKafkaConsumer, subscribeToTopic } = require('./config/kafka');
 const { connectRabbitMQ } = require('./config/rabbitmq');
 const authRepo = require('./repositories/auth.repository');
 
@@ -42,8 +42,25 @@ app.use('/api/auth', authRoutes);
 
 const PORT = process.env.AUTH_PORT || 5002;
 
+// Kafka event handler for user deletion
+const handleUserDeleted = async (data) => {
+  try {
+    const { email } = data;
+    console.log(`Received user.deleted event for: ${email}`);
+    
+    // Delete user from auth database
+    await authRepo.deleteUser(email);
+    
+    console.log(`Successfully deleted user from auth database: ${email}`);
+  } catch (error) {
+    console.error('Error handling user.deleted event:', error);
+  }
+};
+
 app.listen(PORT, async () => {
-  connectKafka();
+  await connectKafka();
+  await connectKafkaConsumer();
+  await subscribeToTopic('user.deleted', handleUserDeleted);
   connectRabbitMQ();
 
   // Cleanup expired OTPs every 10 minutes

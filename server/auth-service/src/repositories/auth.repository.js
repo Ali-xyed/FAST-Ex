@@ -78,6 +78,19 @@ class AuthRepository {
       data
     });
   }
+
+  async deleteUser(email) {
+    return prisma.$transaction(async (tx) => {
+      // Delete all OTPs for this user
+      await tx.oTP.deleteMany({ where: { email } });
+      
+      // Delete the user
+      const deletedUser = await tx.user.delete({ where: { email } });
+      
+      console.log(`Deleted user from auth database: ${email}`);
+      return deletedUser;
+    });
+  }
 }
 
 module.exports = new AuthRepository();

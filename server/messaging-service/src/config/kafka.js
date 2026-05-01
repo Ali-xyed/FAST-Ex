@@ -6,6 +6,7 @@ const kafka = new Kafka({
 });
 
 const producer = kafka.producer();
+const consumer = kafka.consumer({ groupId: 'messaging-service-group' });
 
 const connectKafkaProducer = async () => {
   try {
@@ -13,6 +14,34 @@ const connectKafkaProducer = async () => {
     console.log('Kafka Producer connected (messaging-service)');
   } catch (error) {
     console.error('Failed to connect Kafka Producer', error);
+  }
+};
+
+const connectKafkaConsumer = async () => {
+  try {
+    await consumer.connect();
+    console.log('Kafka Consumer connected (messaging-service)');
+  } catch (error) {
+    console.error('Failed to connect Kafka Consumer', error);
+  }
+};
+
+const subscribeToTopic = async (topic, handler) => {
+  try {
+    await consumer.subscribe({ topic, fromBeginning: false });
+    await consumer.run({
+      eachMessage: async ({ topic, partition, message }) => {
+        try {
+          const data = JSON.parse(message.value.toString());
+          await handler(data);
+        } catch (error) {
+          console.error(`Error processing message from ${topic}:`, error);
+        }
+      }
+    });
+    console.log(`Subscribed to Kafka topic: ${topic}`);
+  } catch (error) {
+    console.error(`Failed to subscribe to topic ${topic}:`, error);
   }
 };
 
@@ -27,4 +56,4 @@ const sendEvent = async (topic, message) => {
   }
 };
 
-module.exports = { connectKafkaProducer, sendEvent };
+module.exports = { connectKafkaProducer, connectKafkaConsumer, subscribeToTopic, sendEvent };
