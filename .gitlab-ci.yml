@@ -243,12 +243,16 @@ verify-deployment:
   stage: deploy
   image: alpine:latest
   needs: ["deploy-frontend"]
+  before_script:
+    - apk add --no-cache openssh-client curl
+    - mkdir -p ~/.ssh
+    - echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
+    - chmod 600 ~/.ssh/id_rsa
+    - ssh-keyscan -H $EC2_IP >> ~/.ssh/known_hosts
   script:
-    - *ssh-setup
     - echo "Verifying deployment on $EC2_IP"
     - ssh ubuntu@$EC2_IP "docker ps"
     - echo "Checking service health..."
-    - apk add --no-cache curl
     - sleep 10
     - curl -f http://$EC2_IP || echo "Frontend not responding yet"
     - curl -f http://$EC2_IP:5000 || echo "API Gateway not responding yet"
@@ -260,8 +264,8 @@ verify-deployment:
     - curl -f http://$EC2_IP:5007 || echo "Admin Service not responding yet"
     - echo "========================================="
     - echo "Deployment Complete!"
-    - echo "Frontend URL: $DOMAIN_URL"
-    - echo "API Gateway: http://$EC2_IP:5000"
+    - echo "Frontend URL - $DOMAIN_URL"
+    - echo "API Gateway - http://$EC2_IP:5000"
     - echo "========================================="
   only:
     - main
