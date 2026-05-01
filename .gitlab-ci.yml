@@ -107,17 +107,6 @@ build-admin:
     - main
     - develop
 
-build-shared:
-  <<: *docker-login
-  stage: build
-  image: docker:24.0.5
-  script:
-    - docker build -t $DOCKER_USERNAME/web-shared:latest ./server/shared
-    - docker push $DOCKER_USERNAME/web-shared:latest
-  only:
-    - main
-    - develop
-
 # --- DEPLOY JOBS ---
 .ssh-setup: &ssh-setup
   - apk add --no-cache openssh-client
