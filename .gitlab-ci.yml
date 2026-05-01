@@ -219,65 +219,23 @@ deploy-frontend:
   stage: deploy
   image: alpine:latest
   needs: ["deploy-backend-services", "build-client"]
+  before_script:
+    - apk add --no-cache openssh-client
+    - mkdir -p ~/.ssh
+    - echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
+    - chmod 600 ~/.ssh/id_rsa
+    - ssh-keyscan -H $EC2_IP >> ~/.ssh/known_hosts
   script:
-    - *ssh-setup
     - echo "Deploying frontend client to $EC2_IP"
     - ssh ubuntu@$EC2_IP "sudo apt update && sudo apt install -y nginx"
     - ssh ubuntu@$EC2_IP "docker pull $DOCKER_USERNAME/web-client:latest && docker rm -f client || true"
     - ssh ubuntu@$EC2_IP "docker run -d --name client -p 3000:80 --restart unless-stopped -e VITE_API_BASE_URL=$DOMAIN_URL -e VITE_SOCKET_URL=$DOMAIN_URL $DOCKER_USERNAME/web-client:latest"
-    - |
-      ssh ubuntu@$EC2_IP "sudo tee /etc/nginx/sites-available/fast-ex > /dev/null <<'EOF'
-      server {
-          listen 80;
-          server_name fast-ex.duckdns.org;
-
-          # Frontend - Serve from Docker container
-          location / {
-              proxy_pass http://localhost:3000;
-              proxy_http_version 1.1;
-              proxy_set_header Upgrade \$http_upgrade;
-              proxy_set_header Connection 'upgrade';
-              proxy_set_header Host \$host;
-              proxy_cache_bypass \$http_upgrade;
-              proxy_set_header X-Real-IP \$remote_addr;
-              proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
-              proxy_set_header X-Forwarded-Proto \$scheme;
-          }
-
-          # API Gateway - Backend
-          location /api/ {
-              proxy_pass http://localhost:5000/api/;
-              proxy_http_version 1.1;
-              proxy_set_header Upgrade \$http_upgrade;
-              proxy_set_header Connection 'upgrade';
-              proxy_set_header Host \$host;
-              proxy_cache_bypass \$http_upgrade;
-              proxy_set_header X-Real-IP \$remote_addr;
-              proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
-              proxy_set_header X-Forwarded-Proto \$scheme;
-          }
-
-          # Socket.IO for real-time features
-          location /socket.io/ {
-              proxy_pass http://localhost:5000/socket.io/;
-              proxy_http_version 1.1;
-              proxy_set_header Upgrade \$http_upgrade;
-              proxy_set_header Connection "upgrade";
-              proxy_set_header Host \$host;
-              proxy_cache_bypass \$http_upgrade;
-              proxy_set_header X-Real-IP \$remote_addr;
-              proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
-          }
-      }
-      EOF"
-    
-    # Enable the site and restart Nginx
+    - ssh ubuntu@$EC2_IP 'echo "server { listen 80; server_name fast-ex.duckdns.org; location / { proxy_pass http://localhost:3000; proxy_http_version 1.1; proxy_set_header Upgrade \$http_upgrade; proxy_set_header Connection \"upgrade\"; proxy_set_header Host \$host; proxy_cache_bypass \$http_upgrade; proxy_set_header X-Real-IP \$remote_addr; proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for; proxy_set_header X-Forwarded-Proto \$scheme; } location /api/ { proxy_pass http://localhost:5000/api/; proxy_http_version 1.1; proxy_set_header Upgrade \$http_upgrade; proxy_set_header Connection \"upgrade\"; proxy_set_header Host \$host; proxy_cache_bypass \$http_upgrade; proxy_set_header X-Real-IP \$remote_addr; proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for; proxy_set_header X-Forwarded-Proto \$scheme; } location /socket.io/ { proxy_pass http://localhost:5000/socket.io/; proxy_http_version 1.1; proxy_set_header Upgrade \$http_upgrade; proxy_set_header Connection \"upgrade\"; proxy_set_header Host \$host; proxy_cache_bypass \$http_upgrade; proxy_set_header X-Real-IP \$remote_addr; proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for; } }" | sudo tee /etc/nginx/sites-available/fast-ex'
     - ssh ubuntu@$EC2_IP "sudo ln -sf /etc/nginx/sites-available/fast-ex /etc/nginx/sites-enabled/fast-ex"
     - ssh ubuntu@$EC2_IP "sudo rm -f /etc/nginx/sites-enabled/default"
     - ssh ubuntu@$EC2_IP "sudo nginx -t && sudo systemctl restart nginx"
-    
     - echo "Frontend deployed successfully at http://fast-ex.duckdns.org"
-    - echo "Note: DuckDNS provides HTTPS automatically, access via https://fast-ex.duckdns.org"
+    - echo "Note - DuckDNS provides HTTPS automatically, access via https://fast-ex.duckdns.org"
   only:
     - main
 
