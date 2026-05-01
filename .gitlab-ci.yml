@@ -222,15 +222,9 @@ deploy-frontend:
   script:
     - *ssh-setup
     - echo "Deploying frontend client to $EC2_IP"
-    
-    # Install Nginx if not already installed
     - ssh ubuntu@$EC2_IP "sudo apt update && sudo apt install -y nginx"
-    
-    # Deploy Frontend Container
     - ssh ubuntu@$EC2_IP "docker pull $DOCKER_USERNAME/web-client:latest && docker rm -f client || true"
     - ssh ubuntu@$EC2_IP "docker run -d --name client -p 3000:80 --restart unless-stopped -e VITE_API_BASE_URL=$DOMAIN_URL -e VITE_SOCKET_URL=$DOMAIN_URL $DOCKER_USERNAME/web-client:latest"
-    
-    # Configure Nginx as reverse proxy with domain
     - |
       ssh ubuntu@$EC2_IP "sudo tee /etc/nginx/sites-available/fast-ex > /dev/null <<'EOF'
       server {
