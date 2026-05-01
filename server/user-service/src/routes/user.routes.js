@@ -15,6 +15,7 @@ router.get('/profile', verifyAuth, userController.getProfile);
 router.put('/profile', verifyAuth, userController.updateProfile);
 router.post('/profile', verifyAuth, userController.createProfile); // Add this route
 router.post('/upload-image', verifyAuth, upload.single('imageUrl'), userController.uploadImage);
+router.delete('/account', verifyAuth, userController.deleteAccount);
 
 // Public profile
 router.get('/public/:email', userController.getPublicProfile);

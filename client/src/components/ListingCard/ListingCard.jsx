@@ -138,8 +138,10 @@ const ListingCard = ({ listing, isOwnProfile = false, onDelete }) => {
       />
       
       <div 
-        onClick={() => navigate(`/listing/${listing.id}`)}
-        className="relative bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 group cursor-pointer"
+        onClick={isOwnProfile ? undefined : () => navigate(`/listing/${listing.id}`)}
+        className={`relative bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 group ${
+          isOwnProfile ? '' : 'cursor-pointer'
+        }`}
       >
       <div className="relative aspect-[4/3] bg-gray-50 overflow-hidden">
         {listing.imageUrl ? (
@@ -204,7 +206,7 @@ const ListingCard = ({ listing, isOwnProfile = false, onDelete }) => {
               {listing.sellListing?.price ? `Rs ${listing.sellListing.price}` : 
                listing.rentListing?.pricePerHour ? `Rs ${listing.rentListing.pricePerHour}/hr` : 
                listing.exchangeListing?.withTitle ? listing.exchangeListing.withTitle :
-               'Negotiable'}
+               listing.type === 'EXCHANGE' ? 'Negotiable' : 'FREE'}
             </p>
           </div>
           

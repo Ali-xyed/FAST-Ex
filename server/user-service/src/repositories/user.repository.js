@@ -29,6 +29,10 @@ class UserRepository {
       orderBy: { createdAt: 'desc' }
     });
   }
+
+  async deleteUser(email) {
+    return prisma.userProfile.delete({ where: { email } });
+  }
 }
 
 module.exports = new UserRepository();

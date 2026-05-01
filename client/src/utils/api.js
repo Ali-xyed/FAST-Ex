@@ -72,6 +72,7 @@ export const userAPI = {
   uploadProfileImage: (formData) => api.post('/api/users/upload-image', formData, {
     headers: { 'Content-Type': 'multipart/form-data' },
   }),
+  deleteAccount: () => api.delete('/api/users/account'),
 };
 
 // Listing API

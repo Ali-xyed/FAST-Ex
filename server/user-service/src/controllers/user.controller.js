@@ -260,4 +260,34 @@ const getAllUsers = async (req, res) => {
   }
 };
 
-module.exports = { getProfile, createProfile, updateProfile, uploadImage, getPublicProfile, getReputation, addReputation, deductReputation, toggleBan, getAllUsers };
+const deleteAccount = async (req, res) => {
+  try {
+    const email = req.headers['x-user-email'];
+    
+    // Send event to delete all user data across services
+    await sendEvent('user.deleted', { email });
+    
+    // Delete user from user service
+    await userRepo.deleteUser(email);
+    
+    // Clear all caches related to this user
+    await delCache(`user:profile:${email}`, `user:public:${email}`, `user:rep:${email}`);
+    
+    // Clear all listing caches
+    try {
+      const keys = await redis.keys('listings:all:*');
+      if (keys.length > 0) {
+        await redis.del(...keys);
+      }
+    } catch (cacheErr) {
+      console.error('Error clearing listing caches:', cacheErr);
+    }
+    
+    res.status(200).json({ message: 'Account deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting account:', error);
+    res.status(500).json({ message: 'Failed to delete account' });
+  }
+};
+
+module.exports = { getProfile, createProfile, updateProfile, uploadImage, getPublicProfile, getReputation, addReputation, deductReputation, toggleBan, getAllUsers, deleteAccount };

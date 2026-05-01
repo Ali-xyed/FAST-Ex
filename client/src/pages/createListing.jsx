@@ -132,14 +132,15 @@ function CreateListingPage() {
             <div className="space-y-5">
               <div>
                 <label className="block text-[12px] font-black text-gray-400 uppercase tracking-widest mb-2">
-                  Title
+                  Title <span className="text-gray-300">({formData.title.length}/10)</span>
                 </label>
                 <input
                   type="text"
                   name="title"
                   value={formData.title}
                   onChange={handleInputChange}
-                  placeholder="e.g. iPhone 13 Pro Max"
+                  maxLength={10}
+                  placeholder="e.g. iPhone 13"
                   className="w-full bg-gray-50 border-none rounded-xl py-3 px-4 text-sm font-bold focus:ring-2 focus:ring-black/5 outline-none"
                   required
                 />
@@ -147,14 +148,15 @@ function CreateListingPage() {
 
               <div>
                 <label className="block text-[12px] font-black text-gray-400 uppercase tracking-widest mb-2">
-                  Description
+                  Description <span className="text-gray-300">({formData.description.length}/30)</span>
                 </label>
                 <textarea
                   name="description"
                   value={formData.description}
                   onChange={handleInputChange}
-                  placeholder="Describe your item in detail..."
-                  rows="5"
+                  maxLength={30}
+                  placeholder="Describe your item..."
+                  rows="3"
                   className="w-full bg-gray-50 border-none rounded-xl py-3 px-4 text-sm font-bold focus:ring-2 focus:ring-black/5 outline-none resize-none"
                   required
                 />
@@ -247,16 +249,28 @@ function CreateListingPage() {
               {/* Only show bargaining option for SELL and RENT types */}
               {(formData.type === 'SELL' || formData.type === 'RENT') && (
                 <div>
-                  <label className="flex items-center gap-3 cursor-pointer group">
+                  <label className={`flex items-center gap-3 cursor-pointer group ${
+                    (formData.type === 'SELL' && !formData.price) || (formData.type === 'RENT' && !formData.pricePerHour) 
+                      ? 'opacity-50 cursor-not-allowed' 
+                      : ''
+                  }`}>
                     <input
                       type="checkbox"
                       name="isBargaining"
                       checked={formData.isBargaining}
                       onChange={handleInputChange}
-                      className="w-4 h-4 text-black focus:ring-black rounded"
+                      disabled={
+                        (formData.type === 'SELL' && !formData.price) || 
+                        (formData.type === 'RENT' && !formData.pricePerHour)
+                      }
+                      className="w-4 h-4 text-black focus:ring-black rounded disabled:opacity-50"
                     />
                     <span className="text-sm font-bold group-hover:text-black transition-colors">
-                      Allow bargaining
+                      Allow bargaining {
+                        ((formData.type === 'SELL' && !formData.price) || (formData.type === 'RENT' && !formData.pricePerHour)) 
+                          ? '(Price required)' 
+                          : ''
+                      }
                     </span>
                   </label>
                 </div>
