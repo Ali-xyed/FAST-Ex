@@ -8,6 +8,7 @@ router.get('/health', (req, res) => res.json({ status: 'ok', service: 'auth' }))
 
 router.post('/register', authController.register);
 router.post('/verify-otp', authController.verifyOTP);
+router.post('/verify-otp-only', authController.verifyOTPOnly);
 router.post('/send-otp', authController.sendOTP);
 router.post('/login', authController.login);
 router.post('/token', authController.getToken);

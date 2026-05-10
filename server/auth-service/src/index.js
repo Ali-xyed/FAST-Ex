@@ -1,4 +1,11 @@
-require('dotenv').config({ path: require('path').resolve(__dirname, '../../.env') });
+const path = require('path');
+const fs = require('fs');
+const envPath = path.resolve(__dirname, '../../../.env');
+if (fs.existsSync(envPath)) {
+    require('dotenv').config({ path: envPath });
+} else {
+    require('dotenv').config();
+}
 if (!process.env.DATABASE_URL) process.env.DATABASE_URL = process.env.AUTH_DATABASE_URL;
 
 const express = require('express');

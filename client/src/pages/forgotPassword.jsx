@@ -34,9 +34,10 @@ function ForgotPasswordPage() {
             toast.success("Email verified successfully!");
             setButtonText("Sending OTP...");
 
-            await new Promise(resolve => setTimeout(resolve, 1000));
+            // Actually send the OTP
+            await authAPI.sendOTP({ email });
             
-            toast.success("OTP sent to your email! (Use: 123123)");
+            toast.success("OTP sent to your email!");
             setStep(2);
             setButtonText("Verify Email");
         } catch (err) {
@@ -55,21 +56,10 @@ function ForgotPasswordPage() {
             return;
         }
 
-        setIsLoading(true);
-        try {
-            await new Promise(resolve => setTimeout(resolve, 800));
-            
-            if (code === "123123") {
-                toast.success("OTP verified successfully!");
-                setStep(3);
-            } else {
-                toast.error("Invalid OTP code. Please try again.");
-            }
-        } catch (err) {
-            toast.error("Verification failed. Please try again.");
-        } finally {
-            setIsLoading(false);
-        }
+        // Just validate the format and move to next step
+        // OTP will be verified when changing password
+        toast.success("Please set your new password");
+        setStep(3);
     };
 
     const handleOtpChange = (element, index) => {
@@ -98,8 +88,18 @@ function ForgotPasswordPage() {
             return;
         }
 
+        const code = otpCode.join("");
+        if (code.length < 6) {
+            toast.error("Invalid OTP code.");
+            return;
+        }
+
         setIsLoading(true);
         try {
+            // First verify the OTP
+            await authAPI.verifyOTPOnly({ email, code });
+            
+            // Then change the password
             await authAPI.changePassword({
                 email,
                 password: newPassword,
@@ -107,7 +107,13 @@ function ForgotPasswordPage() {
             toast.success("Password changed successfully!");
             navigate("/login");
         } catch (err) {
-            toast.error(err.response?.data?.message || "Failed to change password.");
+            if (err.response?.data?.message?.includes("OTP") || err.response?.data?.message?.includes("Invalid")) {
+                toast.error("Invalid or expired OTP. Please request a new one.");
+                setStep(1);
+                setOtpCode(["", "", "", "", "", ""]);
+            } else {
+                toast.error(err.response?.data?.message || "Failed to change password.");
+            }
         } finally {
             setIsLoading(false);
         }
@@ -203,23 +209,6 @@ function ForgotPasswordPage() {
                                     >
                                         {showPassword ? "Hide" : "Show"}
                                     </button>
-                                </div>
-                                <div className="mt-2 space-y-1">
-                                    <p className={`text-[10px] font-medium ${newPassword.length >= 10 ? 'text-green-600' : 'text-gray-400'}`}>
-                                        ✓ At least 10 characters
-                                    </p>
-                                    <p className={`text-[10px] font-medium ${/[A-Z]/.test(newPassword) ? 'text-green-600' : 'text-gray-400'}`}>
-                                        ✓ One uppercase letter
-                                    </p>
-                                    <p className={`text-[10px] font-medium ${/[a-z]/.test(newPassword) ? 'text-green-600' : 'text-gray-400'}`}>
-                                        ✓ One lowercase letter
-                                    </p>
-                                    <p className={`text-[10px] font-medium ${/\d/.test(newPassword) ? 'text-green-600' : 'text-gray-400'}`}>
-                                        ✓ One digit
-                                    </p>
-                                    <p className={`text-[10px] font-medium ${/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(newPassword) ? 'text-green-600' : 'text-gray-400'}`}>
-                                        ✓ One special character (!@#$%^&*)
-                                    </p>
                                 </div>
                             </div>
                             <div>

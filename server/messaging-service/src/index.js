@@ -1,4 +1,4 @@
-require('dotenv').config({ path: require('path').resolve(__dirname, '../../.env') });
+require('dotenv').config({ path: require('path').resolve(__dirname, '../../../.env') });
 if (!process.env.DATABASE_URL) process.env.DATABASE_URL = process.env.MESSAGING_DATABASE_URL;
 
 const express = require('express');

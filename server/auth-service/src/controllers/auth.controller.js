@@ -89,6 +89,26 @@ const verifyOTP = async (req, res) => {
   }
 };
 
+const verifyOTPOnly = async (req, res) => {
+  try {
+    const { email, code } = req.body;
+
+    const otpRecord = await authRepo.findLatestOTP(email, code);
+    if (!otpRecord) return res.status(400).json({ message: 'Invalid or expired OTP' });
+
+    const user = await authRepo.findUserByEmail(email);
+    if (!user) return res.status(404).json({ message: 'User not found' });
+
+    // Delete the OTP after verification
+    await authRepo.deleteOTPs(email);
+
+    res.status(200).json({ message: 'OTP verified successfully.' });
+  } catch (error) {
+    console.error('Verify OTP error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
 const login = async (req, res) => {
   try {
     const { email, emailAddress, password } = req.body;
@@ -366,4 +386,4 @@ const toggleBan = async (req, res) => {
   }
 };
 
-module.exports = { register, verifyOTP, sendOTP, login, checkEmail, changePassword, updateProfile, getToken, toggleBan };
+module.exports = { register, verifyOTP, verifyOTPOnly, sendOTP, login, checkEmail, changePassword, updateProfile, getToken, toggleBan };
